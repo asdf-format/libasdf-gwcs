@@ -1,0 +1,11 @@
+# The Makefile by default assumes a local .data directory containing ASDF,
+# as that is where I extracted them for ease of use.  Make sure this directory
+# is not committed.
+.data
+
+# Python
+# The Makefile by default makes a virtualenv for the analysis scripts under ./.venv/
+.venv
+
+# Build outputs
+roman_wcs_ast
