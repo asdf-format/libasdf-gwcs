@@ -1,0 +1,114 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: '*'
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1'  # every Monday at 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      make_flags:
+        description: Extra flags to pass to make
+        required: false
+        default: 'CFLAGS=-Werror'
+
+jobs:
+  build-and-test:
+    name: Build and run `make check`
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            cc: clang
+            asan: no
+          - os: ubuntu-latest
+            cc: gcc
+            asan: no
+          - os: ubuntu-latest
+            cc: gcc
+            asan: yes
+          - os: ubuntu-latest
+            cc: clang
+            asan: no
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Install dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf \
+            automake \
+            libtool \
+            build-essential \
+            libfyaml-dev \
+            libbz2-dev \
+            liblz4-dev \
+            zlib1g-dev \
+            libbsd-dev \
+            libstatgrab-dev
+
+          if [ "${{ matrix.cc }}" = "clang" ]; then
+            sudo apt-get install -y clang
+          fi
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew update
+          brew install \
+            autoconf \
+            automake \
+            libtool \
+            libfyaml \
+            argp-standalone \
+            libstatgrab \
+            libbsd
+
+      - name: Setup ccache action
+        uses: Chocobo1/setup-ccache-action@v1.5.1
+
+      - name: Build and install libasdf
+        run: |
+          git clone --depth=1 https://github.com/asdf-format/libasdf.git /tmp/libasdf-src
+          cd /tmp/libasdf-src
+          ./autogen.sh
+          ./configure --prefix=/usr/local CC=${{ matrix.cc }}
+          make -j$(nproc)
+          sudo make install
+
+      - name: Bootstrap autotools
+        run: ./autogen.sh
+
+      - name: Configure
+        run: |
+          CONFIGURE_FLAGS=""
+          if [ "${{ matrix.asan }}" = "yes" ]; then
+            CONFIGURE_FLAGS="--enable-asan"
+          fi
+          PKG_CONFIG_PATH=/tmp/libasdf-inst/lib/pkgconfig \
+            ./configure CC=${{ matrix.cc }} $CONFIGURE_FLAGS
+
+      # If make fails re-run with V=1 so we can inspect
+      - name: Build
+        run: |
+          make ${{ github.event.inputs.make_flags }} || \
+          make ${{ github.event.inputs.make_flags }} V=1
+
+      - name: Check
+        run: make check ${{ github.event.inputs.make_flags }}
+
+      - name: Output test logs on failure
+        if: failure()
+        run: |
+          tail -n +1 tests/*.log

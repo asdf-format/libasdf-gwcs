@@ -1,0 +1,166 @@
+name: CMake Build
+
+on:
+  push:
+    branches: [main]
+    tags: '*'
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1'  # every Monday at 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      cmake_flags:
+        description: Extra flags to pass to CMake
+        required: false
+        default: ''
+      ctest_flags:
+        description: Extra flags to pass to CTest
+        required: false
+        default: ''
+      make_flags:
+        description: Extra flags to pass to make
+        required: false
+        default: ''
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BUILD_TYPE: RelWithDebInfo
+  LIBASDF_PREFIX: /usr/local
+
+jobs:
+  build_matrix:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-14]
+        cc: [clang, gcc]
+        cmake_options: ["", "-DENABLE_ASAN=ON"]
+        exclude:
+          - os: macos-14
+            cc: gcc
+            cmake_options: ""
+          - os: macos-14
+            cc: gcc
+            cmake_options: "-DENABLE_ASAN=ON"
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: Linux dependencies
+      if: startsWith(matrix.os, 'ubuntu')
+      run: |
+        sudo apt update
+        sudo apt install -y \
+            build-essential \
+            clang \
+            libfyaml-dev \
+            libbz2-dev \
+            liblz4-dev \
+            zlib1g-dev \
+            libbsd-dev \
+            libstatgrab-dev
+
+    - name: MacOS dependencies
+      if: startsWith(matrix.os, 'macos')
+      run: |
+        brew update
+        brew install \
+            argp-standalone \
+            libfyaml \
+            libstatgrab \
+            libbsd
+
+    - name: Setup ccache action
+      uses: Chocobo1/setup-ccache-action@v1.5.1
+
+    - name: Build and install libasdf (Linux)
+      if: startsWith(matrix.os, 'ubuntu')
+      env:
+        CC: ${{ matrix.cc }}
+      run: |
+        git clone --depth=1 https://github.com/asdf-format/libasdf.git /tmp/libasdf-src
+        cd /tmp/libasdf-src && mkdir build && cd build
+        cmake .. \
+          -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+          -DCMAKE_INSTALL_PREFIX=${{ env.LIBASDF_PREFIX }}
+        sudo make -j$(nproc) install
+
+    - name: Build and install libasdf (macOS)
+      if: startsWith(matrix.os, 'macos')
+      env:
+        CC: ${{ matrix.cc }}
+        PKG_CONFIG_PATH: /opt/homebrew/lib/pkgconfig:/usr/local/lib/pkgconfig
+      run: |
+        git clone --depth=1 https://github.com/asdf-format/libasdf.git /tmp/libasdf-src
+        cd /tmp/libasdf-src && mkdir build && cd build
+        export SDKROOT="$(xcrun --show-sdk-path)"
+        hbroot=/opt/homebrew
+        cmake .. \
+          -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+          -DCMAKE_INSTALL_PREFIX=${{ env.LIBASDF_PREFIX }} \
+          -DARGP_NO_PKGCONFIG=YES \
+          -DARGP_LIBDIR=${hbroot}/lib \
+          -DARGP_INCLUDEDIR=${hbroot}/include
+        sudo make -j$(nproc) install
+
+    - name: Linux build
+      if: startsWith(matrix.os, 'ubuntu')
+      env:
+        CC: ${{ matrix.cc }}
+      run: |
+        mkdir -p build
+        cd build
+        cmake .. \
+          -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+          -DCMAKE_PREFIX_PATH=${{ env.LIBASDF_PREFIX }} \
+          -DENABLE_TESTING=YES \
+          ${{ matrix.cmake_options }} \
+          ${{ github.event.inputs.cmake_flags }}
+        make VERBOSE=1 ${{ github.event.inputs.make_flags }}
+
+    - name: MacOS build
+      if: startsWith(matrix.os, 'macos')
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cc }}++
+        PKG_CONFIG_PATH: /opt/homebrew/lib/pkgconfig:/usr/local/lib/pkgconfig
+      run: |
+        mkdir -p build
+        cd build
+        export SDKROOT="$(xcrun --show-sdk-path)"
+        cmake .. \
+          -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+          -DCMAKE_PREFIX_PATH=${{ env.LIBASDF_PREFIX }} \
+          -DENABLE_TESTING=YES \
+          ${{ matrix.cmake_options }} \
+          ${{ github.event.inputs.cmake_flags }}
+        make VERBOSE=1 ${{ github.event.inputs.make_flags }}
+
+    - name: Install
+      run: |
+        cd build
+        make VERBOSE=1 install
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      run: |
+        ctest -C ${{env.BUILD_TYPE}} \
+            ${{ github.event.inputs.ctest_flags }}
+
+    - name: Output test logs on failure
+      if: failure()
+      working-directory: ${{github.workspace}}/build
+      run: |
+        logfile=Testing/Temporary/LastTest.log
+        if ! [ -f "$logfile" ]; then
+            echo "No log file. Did the tests run at all?"
+            exit 0
+        fi
+        cat "$logfile"
