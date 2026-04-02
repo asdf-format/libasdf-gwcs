@@ -1,5 +1,9 @@
 #include <stdlib.h>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <asdf/extension_util.h>
 #include <asdf/log.h>
 #include <asdf/value.h>
@@ -77,8 +81,9 @@ static asdf_value_err_t asdf_gwcs_bounding_box_deserialize(
 
     if (n_intervals < 1) {
 #ifdef ASDF_LOG_ENABLED
+        const asdf_file_t *file = asdf_value_file(value);
         const char *path = asdf_value_path(value);
-        ASDF_LOG(value->file, ASDF_LOG_WARN, "insufficient intervals in bounding_box at %s", path);
+        ASDF_LOG(file, ASDF_LOG_WARN, "insufficient intervals in bounding_box at %s", path);
 #endif
         err = ASDF_VALUE_ERR_PARSE_FAILURE;
         goto cleanup;

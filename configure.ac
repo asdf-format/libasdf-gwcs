@@ -43,6 +43,17 @@ AS_IF([test "x$enable_debug" = "xyes"], [
   AC_DEFINE([DEBUG], [1], [Define if debugging is enabled])
 ])
 
+# Logging flags
+AC_ARG_ENABLE([logging],
+  [AS_HELP_STRING([--enable-logging], [Enable logging (default: yes)])],
+  [enable_logging=$enableval],
+  [enable_logging=yes]
+)
+
+AS_IF([test "x$enable_logging" = "xyes"],
+  [AC_DEFINE([ASDF_LOG_ENABLED], [1], [Enable logging])]
+)
+
 # Dependencies
 PKG_CHECK_MODULES([LIBASDF], [libasdf])
 

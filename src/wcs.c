@@ -1,5 +1,9 @@
 #include <stdlib.h>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <asdf/extension_util.h>
 #include <asdf/log.h>
 #include <asdf/value.h>

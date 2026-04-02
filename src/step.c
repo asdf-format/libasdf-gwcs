@@ -1,6 +1,10 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <asdf/extension_util.h>
 #include <asdf/log.h>
 #include <asdf/value.h>
@@ -19,6 +23,7 @@ static asdf_value_err_t asdf_gwcs_step_deserialize(
     asdf_mapping_t *step_map = NULL;
     asdf_gwcs_frame_t *frame = NULL;
     asdf_gwcs_transform_t *transform = NULL;
+    const asdf_file_t *file = asdf_value_file(value);
 
     if (asdf_value_as_mapping(value, &step_map) != ASDF_VALUE_OK)
         goto failure;
@@ -49,7 +54,7 @@ static asdf_value_err_t asdf_gwcs_step_deserialize(
     if (ASDF_IS_ERR(err) || !frame) {
 #ifdef ASDF_LOG_ENABLED
         const char *path = asdf_value_path(value);
-        ASDF_LOG(value->file, ASDF_LOG_WARN, "invalid frame value for step at %s", path);
+        ASDF_LOG(file, ASDF_LOG_WARN, "invalid frame value for step at %s", path);
 #endif
         goto failure;
     }
@@ -70,7 +75,7 @@ static asdf_value_err_t asdf_gwcs_step_deserialize(
     if (ASDF_IS_ERR(err)) {
 #ifdef ASDF_LOG_ENABLED
         const char *path = asdf_value_path(value);
-        ASDF_LOG(value->file, ASDF_LOG_WARN, "invalid transform value for step at %s", path);
+        ASDF_LOG(file, ASDF_LOG_WARN, "invalid transform value for step at %s", path);
 #endif
         goto failure;
     }

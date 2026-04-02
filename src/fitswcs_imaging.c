@@ -1,6 +1,10 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <asdf/core/ndarray.h>
 #include <asdf/extension_util.h>
 #include <asdf/log.h>
@@ -17,6 +21,8 @@ static asdf_value_err_t get_coordinates_prop(asdf_mapping_t *value, const char *
     asdf_ndarray_t *ndarray = NULL;
     const void *data = NULL;
     size_t size = 0;
+    asdf_value_t *mapping_val = asdf_value_of_mapping(value);
+    const asdf_file_t *file = asdf_value_file(mapping_val);
 
     assert(value);
 
@@ -31,8 +37,8 @@ static asdf_value_err_t get_coordinates_prop(asdf_mapping_t *value, const char *
     if (ndarray->ndim != 1 || ndarray->shape[0] != 2 ||
         ndarray->datatype.type != ASDF_DATATYPE_FLOAT64) {
 #ifdef ASDF_LOG_ENABLED
-        const char *path = asdf_value_path(&value->value);
-        ASDF_LOG(value->value.file, ASDF_LOG_ERROR, "invalid %s array in %s", name, path);
+        const char *path = asdf_value_path(mapping_val);
+        ASDF_LOG(file, ASDF_LOG_ERROR, "invalid %s array in %s", name, path);
 #endif
         goto failure;
     }
@@ -41,8 +47,8 @@ static asdf_value_err_t get_coordinates_prop(asdf_mapping_t *value, const char *
 
     if (size != 2 * sizeof(double)) {
 #ifdef ASDF_LOG_ENABLED
-        const char *path = asdf_value_path(&value->value);
-        ASDF_LOG(value->value.file, ASDF_LOG_ERROR, "invalid array data for %s in %s", name, path);
+        const char *path = asdf_value_path(mapping_val);
+        ASDF_LOG(file, ASDF_LOG_ERROR, "invalid array data for %s in %s", name, path);
 #endif
         goto failure;
     }
@@ -61,6 +67,8 @@ static asdf_value_err_t get_matrix_prop(asdf_mapping_t *value, const char *name,
     asdf_ndarray_t *ndarray = NULL;
     const void *data = NULL;
     size_t size = 0;
+    asdf_value_t *mapping_val = asdf_value_of_mapping(value);
+    const asdf_file_t *file = asdf_value_file(mapping_val);
 
     assert(value);
 
@@ -73,8 +81,8 @@ static asdf_value_err_t get_matrix_prop(asdf_mapping_t *value, const char *name,
     if (ndarray->ndim != 2 || ndarray->shape[0] != 2 || ndarray->shape[1] != 2 ||
         ndarray->datatype.type != ASDF_DATATYPE_FLOAT64) {
 #ifdef ASDF_LOG_ENABLED
-        const char *path = asdf_value_path(&value->value);
-        ASDF_LOG(value->value.file, ASDF_LOG_ERROR, "invalid %s array in %s", name, path);
+        const char *path = asdf_value_path(mapping_val);
+        ASDF_LOG(file, ASDF_LOG_ERROR, "invalid %s array in %s", name, path);
 #endif
         goto failure;
     }
@@ -83,8 +91,8 @@ static asdf_value_err_t get_matrix_prop(asdf_mapping_t *value, const char *name,
 
     if (size != 2UL * 2UL * sizeof(double)) {
 #ifdef ASDF_LOG_ENABLED
-        const char *path = asdf_value_path(&value->value);
-        ASDF_LOG(value->value.file, ASDF_LOG_ERROR, "invalid array data for %s in %s", name, path);
+        const char *path = asdf_value_path(mapping_val);
+        ASDF_LOG(file, ASDF_LOG_ERROR, "invalid array data for %s in %s", name, path);
 #endif
         goto failure;
     }
