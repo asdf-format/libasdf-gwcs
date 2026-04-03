@@ -34,11 +34,13 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED TRUE)
 
 # Update git submodules
-list(APPEND submodules
-    third_party/STC
-    tests/munit
-)
-submodule_init("${submodules}")
+if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
+    list(APPEND submodules
+        third_party/STC
+        tests/munit
+    )
+    submodule_init("${submodules}")
+endif()
 
 include(ASDFGWCSOptions)
 
