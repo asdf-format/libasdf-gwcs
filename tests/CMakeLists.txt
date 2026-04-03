@@ -1,8 +1,10 @@
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/tests)
 set(CTEST_BINARY_DIRECTORY ${CMAKE_BINARY_DIR}/tests)
-set(MUNIT_DIR ${CMAKE_SOURCE_DIR}/tests/munit)
 set(FIXTURES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/fixtures)
 set(TEMP_DIR ${CMAKE_CURRENT_BINARY_DIR}/tmp)
+set(nix_gnu_cflags -Wall -Wextra)
+set(nix_clang_cflags -Wall -Wextra)
+set(win_msvc_cflags /Wall)
 
 # Build munit+util static library
 add_library(munit ${MUNIT_DIR}/munit.c)
@@ -22,33 +24,51 @@ target_include_directories(util PRIVATE
     ${LIBASDF_INCLUDE_DIRS}
 )
 
-# test-gwcs
-add_executable(test-gwcs test-gwcs.c)
-target_compile_definitions(test-gwcs PRIVATE
-    REFERENCE_FILES_DIR=\"${FIXTURES_DIR}\"
-    FIXTURES_DIR=\"${FIXTURES_DIR}\"
-    TEMP_DIR=\"${TEMP_DIR}\"
-    _GNU_SOURCE
-)
-target_include_directories(test-gwcs PRIVATE
-    ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/tests
-    ${MUNIT_DIR}
-    ${LIBASDF_INCLUDE_DIRS}
-)
-target_link_libraries(test-gwcs PRIVATE
-    libasdf-gwcs
-    munit
-    util
-    ${LIBASDF_LIBRARIES}
-)
-target_link_directories(test-gwcs PRIVATE ${LIBASDF_LIBRARY_DIRS})
+# GWCS tests
+file(GLOB source_files "test-*.c")
+set(ext_pattern "(^.*/|\\.[^.]*$)")
 
-add_test(NAME test-gwcs COMMAND test-gwcs)
-set_tests_properties(test-gwcs PROPERTIES
-    TIMEOUT 240
-    SKIP_RETURN_CODE 127
-    ENVIRONMENT_MODIFICATION
-        "LD_LIBRARY_PATH=path_list_prepend:${CMAKE_BINARY_DIR}/src;LD_LIBRARY_PATH=path_list_prepend:${LIBASDF_LIBRARY_DIRS}"
-)
+foreach(source_file ${source_files})
+    string(REGEX REPLACE ${ext_pattern} "" test_executable ${source_file})
+    add_executable(${test_executable} ${source_file})
+    if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
+        target_compile_options(${test_executable} PRIVATE ${nix_cflags} ${nix_gnu_cflags})
+    elseif (CMAKE_C_COMPILER_ID MATCHES "Clang")
+        target_compile_options(${test_executable} PRIVATE ${nix_cflags} ${nix_clang_cflags})
+    elseif (CMAKE_C_COMPILER_ID STREQUAL "MSVC")
+        target_compile_options(${test_executable} PRIVATE ${win_cflags} ${win_msvc_cflags})
+    endif()
+
+    target_compile_definitions(${test_executable} PRIVATE
+        REFERENCE_FILES_DIR=\"${FIXTURES_DIR}\"
+        FIXTURES_DIR=\"${FIXTURES_DIR}\"
+        TEMP_DIR=\"${TEMP_DIR}\"
+        _GNU_SOURCE
+    )
+
+    target_include_directories(${test_executable} SYSTEM PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+        ${CMAKE_SOURCE_DIR}/src
+        ${CMAKE_SOURCE_DIR}/tests
+        ${MUNIT_DIR}
+        ${LIBASDF_INCLUDE_DIRS}
+    )
+
+    target_link_libraries(${test_executable} PRIVATE
+        libasdf-gwcs
+        munit
+        util
+        ${LIBASDF_LIBRARIES}
+    )
+
+    add_test(${test_executable} ${test_executable})
+    set_tests_properties(${test_executable}
+        PROPERTIES TIMEOUT 240)
+    set_tests_properties(${test_executable}
+        PROPERTIES
+        SKIP_RETURN_CODE 127)
+
+    set(ENV{OBJC_DISABLE_INITIALIZE_FORK_SAFETY} "YES")
+    set_property(TEST ${test_executable}
+        PROPERTY ENVIRONMENT_MODIFICATION "${runtime}")
+endforeach()
