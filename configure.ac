@@ -56,6 +56,9 @@ AS_IF([test "x$enable_logging" = "xyes"],
 
 # Dependencies
 PKG_CHECK_MODULES([LIBASDF], [libasdf])
+dnl Workaround for https://github.com/pantoniou/libfyaml/pull/275 leaking
+dnl through libasdf's Requires: libfyaml into LIBASDF_LIBS
+LIBASDF_LIBS=$(printf '%s\n' "$LIBASDF_LIBS" | sed 's/none required//g')
 
 # STC (header-only hashmap library) -- git submodule at third_party/STC
 AC_MSG_CHECKING([for STC headers])
