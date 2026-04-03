@@ -119,6 +119,7 @@ jobs:
         cd build
         cmake .. \
           -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+          -DCMAKE_INSTALL_PREFIX=${{ env.LIBASDF_PREFIX }} \
           -DCMAKE_PREFIX_PATH=${{ env.LIBASDF_PREFIX }} \
           -DENABLE_TESTING=YES \
           ${{ matrix.cmake_options }} \
@@ -137,6 +138,7 @@ jobs:
         export SDKROOT="$(xcrun --show-sdk-path)"
         cmake .. \
           -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+          -DCMAKE_INSTALL_PREFIX=${{ env.LIBASDF_PREFIX }} \
           -DCMAKE_PREFIX_PATH=${{ env.LIBASDF_PREFIX }} \
           -DENABLE_TESTING=YES \
           ${{ matrix.cmake_options }} \
