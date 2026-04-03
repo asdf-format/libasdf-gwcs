@@ -1,0 +1,21 @@
+[tool.towncrier]
+name = "libasdf-gwcs"
+version = "0.1.0"
+directory = "changes"
+filename = "CHANGES.rst"
+issue_format = "`#{issue} <https://github.com/asdf-format/libasdf-gwcs/issues/{issue}>`_"
+wrap = true
+
+[[tool.towncrier.type]]
+name = "General"
+[[tool.towncrier.type]]
+name = "Feature"
+[[tool.towncrier.type]]
+name = "Bugfix"
+[[tool.towncrier.type]]
+name = "Documentation"
+directory = "doc"
+[[tool.towncrier.type]]
+name = "Removal"
+[[tool.towncrier.type]]
+name = "Misc"

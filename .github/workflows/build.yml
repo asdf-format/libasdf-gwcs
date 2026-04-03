@@ -84,7 +84,7 @@ jobs:
           cd /tmp/libasdf-src
           ./autogen.sh
           ./configure --prefix=/usr/local CC=${{ matrix.cc }}
-          make -j$(nproc)
+          make
           sudo make install
 
       - name: Bootstrap autotools

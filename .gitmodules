@@ -1,0 +1,6 @@
+[submodule "third_party/STC"]
+	path = third_party/STC
+	url = https://github.com/stclib/STC.git
+[submodule "tests/munit"]
+	path = tests/munit
+	url = https://github.com/nemequ/munit.git
