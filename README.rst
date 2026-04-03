@@ -11,7 +11,7 @@ for reading ASDF files containing WCS transforms and coordinate frames.
 
 
 Getting Started
----------------
+===============
 
 libasdf-gwcs is a plugin library for libasdf. Install libasdf first, then build
 libasdf-gwcs pointing to it via ``PKG_CONFIG_PATH``.
