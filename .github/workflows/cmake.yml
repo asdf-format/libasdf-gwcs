@@ -29,7 +29,7 @@ concurrency:
 
 env:
   BUILD_TYPE: RelWithDebInfo
-  LIBASDF_PREFIX: /usr/local
+  LIBASDF_PREFIX: /tmp/libasdf
 
 jobs:
   build_matrix:
@@ -90,7 +90,7 @@ jobs:
         cmake .. \
           -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
           -DCMAKE_INSTALL_PREFIX=${{ env.LIBASDF_PREFIX }}
-        sudo make install
+        make install
 
     - name: Build and install libasdf (macOS)
       if: startsWith(matrix.os, 'macos')
@@ -108,7 +108,7 @@ jobs:
           -DARGP_NO_PKGCONFIG=YES \
           -DARGP_LIBDIR=${hbroot}/lib \
           -DARGP_INCLUDEDIR=${hbroot}/include
-        sudo make install
+        make install
 
     - name: Linux build
       if: startsWith(matrix.os, 'ubuntu')
