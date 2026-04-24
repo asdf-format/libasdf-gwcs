@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include <asdf/extension_util.h>
 #include <asdf/value.h>
 #include "util.h"

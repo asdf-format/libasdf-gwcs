@@ -76,7 +76,7 @@ asdf_value_err_t asdf_gwcs_transform_parse(asdf_value_t *value, asdf_gwcs_transf
     err = ASDF_VALUE_OK;
 
 failure:
-    asdf_tag_free(parsed_tag);
+    asdf_tag_destroy(parsed_tag);
     return err;
 }
 
@@ -114,7 +114,7 @@ asdf_value_err_t asdf_value_as_gwcs_transform(asdf_value_t *value, asdf_gwcs_tra
     const char *tag_str = asdf_value_tag(value);
     asdf_tag_t *tag = asdf_tag_parse(tag_str);
     asdf_gwcs_transform_type_t type = asdf_gwcs_transform_type_get(tag->name);
-    asdf_tag_free(tag);
+    asdf_tag_destroy(tag);
 
     switch (type) {
     case ASDF_GWCS_TRANSFORM_INVALID:
