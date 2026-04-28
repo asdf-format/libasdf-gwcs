@@ -29,7 +29,24 @@ For convenience a `Makefile` is provided which orchestrates the analysis.
 
 ## Prerequisites
 
-**AST** (version with YAML/ASDF support, built against libyaml); e.g.
+**AST**
+
+This currently requires my custom branch of AST which can be downloaded from
+my fork at: https://github.com/embray/ast/tree/roman-wcs
+
+On top of the upstream AST this branch adds:
+
+- Support for additional GWCS transforms required for the Roman L2 calibration
+  files
+
+- Improved autotools-based build system that simplifies building the project
+  without requiring the full Starlink toolchain.
+
+As an alternative to the latter, Tim Jenness recently added a new CMake build
+system for AST which can now also be used.  My patches will eventually land in
+upstream as well but for now my fork is required.  You can then build AST
+like:
+
 ```sh
 $ ./configure --prefix=$HOME/.local --without-fortran
 $ make -j$(nproc) install
