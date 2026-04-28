@@ -130,12 +130,13 @@ static asdf_value_err_t asdf_gwcs_deserialize(
 
     gwcs->steps = steps;
 
-    asdf_sequence_iter_t iter = asdf_sequence_iter_init();
-    asdf_value_t *item = NULL;
+    asdf_sequence_iter_t *iter = asdf_sequence_iter_init(steps_seq);
     asdf_gwcs_step_t *step_tmp = steps;
-    while ((item = asdf_sequence_iter(steps_seq, &iter)) != NULL) {
-        if (ASDF_VALUE_OK != asdf_value_as_gwcs_step(item, &step_tmp))
+    while (asdf_sequence_iter_next(&iter)) {
+        if (ASDF_VALUE_OK != asdf_value_as_gwcs_step(iter->value, &step_tmp)) {
+            asdf_sequence_iter_destroy(iter);
             goto cleanup;
+        }
 
         step_tmp++;
     }

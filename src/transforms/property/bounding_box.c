@@ -14,14 +14,13 @@
 
 /** Helper to parse bounding box intervals from mapping items */
 static asdf_value_err_t asdf_gwcs_interval_parse(
-    asdf_mapping_item_t *item, asdf_gwcs_interval_t *out) {
-    asdf_value_t *bounds = NULL;
+    const char *key, asdf_value_t *bounds, asdf_gwcs_interval_t *out) {
     asdf_sequence_t *bounds_seq = NULL;
     asdf_value_t *bound_val = NULL;
     asdf_value_err_t err = ASDF_VALUE_ERR_PARSE_FAILURE;
 
-    out->input_name = asdf_mapping_item_key(item);
-    bounds = asdf_mapping_item_value(item);
+    // TODO: Probably memory leak; needs test
+    out->input_name = key;
 
     if (asdf_value_as_sequence(bounds, &bounds_seq) != ASDF_VALUE_OK)
         goto cleanup;
@@ -96,15 +95,16 @@ static asdf_value_err_t asdf_gwcs_bounding_box_deserialize(
         goto cleanup;
     }
 
-    asdf_mapping_iter_t iter = asdf_mapping_iter_init();
-    asdf_mapping_item_t *item = NULL;
+    asdf_mapping_iter_t *iter = asdf_mapping_iter_init(intervals_map);
     asdf_gwcs_interval_t *interval_tmp = intervals;
 
-    while ((item = asdf_mapping_iter(intervals_map, &iter))) {
-        err = asdf_gwcs_interval_parse(item, interval_tmp);
+    while (asdf_mapping_iter_next(&iter)) {
+        err = asdf_gwcs_interval_parse(iter->key, iter->value, interval_tmp);
 
-        if (err != ASDF_VALUE_OK)
+        if (err != ASDF_VALUE_OK) {
+            asdf_mapping_iter_destroy(iter);
             goto cleanup;
+        }
 
         interval_tmp++;
     }
