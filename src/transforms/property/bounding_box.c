@@ -8,20 +8,19 @@
 #include <asdf/log.h>
 #include <asdf/value.h>
 
+#include "asdf/gwcs/transforms/property/bounding_box.h"
 #include "../../gwcs.h"
 #include "../../util.h"
 
 
 /** Helper to parse bounding box intervals from mapping items */
 static asdf_value_err_t asdf_gwcs_interval_parse(
-    asdf_mapping_item_t *item, asdf_gwcs_interval_t *out) {
-    asdf_value_t *bounds = NULL;
+    const char *key, asdf_value_t *bounds, asdf_gwcs_interval_t *out) {
     asdf_sequence_t *bounds_seq = NULL;
     asdf_value_t *bound_val = NULL;
     asdf_value_err_t err = ASDF_VALUE_ERR_PARSE_FAILURE;
 
-    out->input_name = asdf_mapping_item_key(item);
-    bounds = asdf_mapping_item_value(item);
+    out->input_name = strdup(key);
 
     if (asdf_value_as_sequence(bounds, &bounds_seq) != ASDF_VALUE_OK)
         goto cleanup;
@@ -49,6 +48,15 @@ static asdf_value_err_t asdf_gwcs_interval_parse(
 cleanup:
     asdf_value_destroy(bound_val);
     return err;
+}
+
+
+static void asdf_gwcs_interval_cleanup(asdf_gwcs_interval_t *interval) {
+    if (!interval)
+        return;
+
+    free((void *)interval->input_name);
+    ZERO_MEMORY(interval, sizeof(asdf_gwcs_interval_t));
 }
 
 
@@ -96,15 +104,16 @@ static asdf_value_err_t asdf_gwcs_bounding_box_deserialize(
         goto cleanup;
     }
 
-    asdf_mapping_iter_t iter = asdf_mapping_iter_init();
-    asdf_mapping_item_t *item = NULL;
+    asdf_mapping_iter_t *iter = asdf_mapping_iter_init(intervals_map);
     asdf_gwcs_interval_t *interval_tmp = intervals;
 
-    while ((item = asdf_mapping_iter(intervals_map, &iter))) {
-        err = asdf_gwcs_interval_parse(item, interval_tmp);
+    while (asdf_mapping_iter_next(&iter)) {
+        err = asdf_gwcs_interval_parse(iter->key, iter->value, interval_tmp);
 
-        if (err != ASDF_VALUE_OK)
+        if (err != ASDF_VALUE_OK) {
+            asdf_mapping_iter_destroy(iter);
             goto cleanup;
+        }
 
         interval_tmp++;
     }
@@ -187,8 +196,12 @@ static void asdf_gwcs_bounding_box_dealloc(void *value) {
 
     asdf_gwcs_bounding_box_t *bounding_box = (asdf_gwcs_bounding_box_t *)value;
 
-    if (bounding_box->intervals)
+    if (bounding_box->intervals) {
+        for (uint32_t idx = 0; idx < bounding_box->n_intervals; idx++)
+            asdf_gwcs_interval_cleanup((asdf_gwcs_interval_t *)&bounding_box->intervals[idx]);
+
         free((void *)bounding_box->intervals);
+    }
 
     free(bounding_box);
 }

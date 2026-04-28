@@ -80,13 +80,13 @@ static asdf_value_err_t get_frame_axes_string_param(
         goto cleanup;
     }
 
-    asdf_sequence_iter_t iter = asdf_sequence_iter_init();
-    asdf_value_t *item = NULL;
+    asdf_sequence_iter_t *iter = asdf_sequence_iter_init(frames_seq);
     char **str_tmp = strings;
-    while ((item = asdf_sequence_iter(frames_seq, &iter)) != NULL) {
-        if (!ASDF_IS_OK(asdf_value_as_string0(item, (const char **)str_tmp))) {
+    while (asdf_sequence_iter_next(&iter)) {
+        if (!ASDF_IS_OK(asdf_value_as_string0(iter->value, (const char **)str_tmp))) {
             warn_invalid_frame_axes_param(
                 mapping_val, propname, ASDF_VALUE_STRING, min_axes, max_axes);
+            asdf_sequence_iter_destroy(iter);
             goto cleanup;
         }
         str_tmp++;
@@ -126,19 +126,20 @@ static asdf_value_err_t get_frame_axes_order_param(
         goto cleanup;
     }
 
-    asdf_sequence_iter_t iter = asdf_sequence_iter_init();
-    asdf_value_t *item = NULL;
+    asdf_sequence_iter_t *iter = asdf_sequence_iter_init(axes_seq);
     uint32_t *int_tmp = ints;
-    while ((item = asdf_sequence_iter(axes_seq, &iter)) != NULL) {
-        if (ASDF_VALUE_OK != asdf_value_as_uint32(item, int_tmp)) {
+    while (asdf_sequence_iter_next(&iter)) {
+        if (ASDF_VALUE_OK != asdf_value_as_uint32(iter->value, int_tmp)) {
             warn_invalid_frame_axes_param(
                 mapping_val, "axes_order", ASDF_VALUE_UINT32, min_axes, max_axes);
+            asdf_sequence_iter_destroy(iter);
             goto cleanup;
         }
 
         if (*int_tmp >= max_axes) {
             warn_invalid_frame_axes_param(
                 mapping_val, "axes_order", ASDF_VALUE_UINT32, min_axes, max_axes);
+            asdf_sequence_iter_destroy(iter);
             goto cleanup;
         }
 
