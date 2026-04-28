@@ -8,6 +8,7 @@
 #include <asdf/log.h>
 #include <asdf/value.h>
 
+#include "asdf/gwcs/transforms/property/bounding_box.h"
 #include "../../gwcs.h"
 #include "../../util.h"
 
@@ -19,8 +20,7 @@ static asdf_value_err_t asdf_gwcs_interval_parse(
     asdf_value_t *bound_val = NULL;
     asdf_value_err_t err = ASDF_VALUE_ERR_PARSE_FAILURE;
 
-    // TODO: Probably memory leak; needs test
-    out->input_name = key;
+    out->input_name = strdup(key);
 
     if (asdf_value_as_sequence(bounds, &bounds_seq) != ASDF_VALUE_OK)
         goto cleanup;
@@ -48,6 +48,15 @@ static asdf_value_err_t asdf_gwcs_interval_parse(
 cleanup:
     asdf_value_destroy(bound_val);
     return err;
+}
+
+
+static void asdf_gwcs_interval_cleanup(asdf_gwcs_interval_t *interval) {
+    if (!interval)
+        return;
+
+    free((void *)interval->input_name);
+    ZERO_MEMORY(interval, sizeof(asdf_gwcs_interval_t));
 }
 
 
@@ -187,8 +196,12 @@ static void asdf_gwcs_bounding_box_dealloc(void *value) {
 
     asdf_gwcs_bounding_box_t *bounding_box = (asdf_gwcs_bounding_box_t *)value;
 
-    if (bounding_box->intervals)
+    if (bounding_box->intervals) {
+        for (uint32_t idx = 0; idx < bounding_box->n_intervals; idx++)
+            asdf_gwcs_interval_cleanup((asdf_gwcs_interval_t *)&bounding_box->intervals[idx]);
+
         free((void *)bounding_box->intervals);
+    }
 
     free(bounding_box);
 }
