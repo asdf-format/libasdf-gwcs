@@ -70,10 +70,11 @@ just for convenience.  You can read the individual tools' docstrings for
 usage instructions.
 
 ### Individual steps:
-make prepare   # .data/inline/ files from original Roman calibration files
-make ast       # run roman_wcs_ast  -> ast_wcs_results.csv
-make gwcs      # run roman_wcs_gwcs -> gwcs_wcs_results.csv
-make compare   # run compare_wcs    -> wcs_comparison_summary.txt
+
+- `make prepare`   # .data/inline/ files from original Roman calibration files
+- `make ast`       # run roman_wcs_ast  -> ast_wcs_results.csv
+- `make gwcs`      # run roman_wcs_gwcs -> gwcs_wcs_results.csv
+- `make compare`   # run compare_wcs    -> wcs_comparison_summary.txt
 
 ### Override AST installation prefix (default: $HOME/.local):
 ```sh
