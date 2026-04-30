@@ -31,6 +31,8 @@ AX_CHECK_COMPILE_FLAG([-Wparentheses],  [ASDF_GWCS_CFLAGS="$ASDF_GWCS_CFLAGS -Wp
 AX_CHECK_COMPILE_FLAG([-Wpointer-sign], [ASDF_GWCS_CFLAGS="$ASDF_GWCS_CFLAGS -Wpointer-sign"])
 AX_CHECK_COMPILE_FLAG([-Wshadow],       [ASDF_GWCS_CFLAGS="$ASDF_GWCS_CFLAGS -Wshadow"])
 
+ASDF_GWCS_BUILD_MODE=
+
 # --enable-debug
 AC_ARG_ENABLE([debug],
   [AS_HELP_STRING([--enable-debug], [Enable debug build (-g -O0)])],
@@ -41,7 +43,10 @@ AC_ARG_ENABLE([debug],
 AS_IF([test "x$enable_debug" = "xyes"], [
   ASDF_GWCS_CFLAGS="$ASDF_GWCS_CFLAGS -g -O0"
   AC_DEFINE([DEBUG], [1], [Define if debugging is enabled])
+  ASDF_GWCS_BUILD_MODE="${ASDF_BUILD_MODE}debug "
 ])
+
+AM_CONDITIONAL([DEBUG], [test "x$enable_debug" = "xyes"])
 
 # Logging flags
 AC_ARG_ENABLE([logging],
@@ -85,4 +90,7 @@ printf "\n============= Configuration Summary =============\n"
 printf "  %22s %s\n" "libasdf-gwcs version:" "$VERSION"
 printf "  %22s %s\n" "compiler:" "$CC"
 printf "  %22s %s\n" "libasdf:" "$(pkg-config --modversion libasdf)"
+AS_IF([test "x$ASDF_GWCS_BUILD_MODE" != "x"], [
+  printf "  %22s %s\n" "build:" "$ASDF_GWCS_BUILD_MODE"
+])
 printf "=================================================\n"

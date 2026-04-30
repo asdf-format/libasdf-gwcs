@@ -173,7 +173,7 @@ MU_TEST(test_asdf_set_gwcs) {
 
 
 MU_TEST(test_asdf_get_gwcs_fits) {
-    const char *path = get_fixture_file_path("roman_wcs.asdf");
+    const char *path = get_fixture_file_path("roman_l3_wcs.asdf");
     asdf_file_t *file = asdf_open(path, "r");
     assert_not_null(file);
 
@@ -221,7 +221,7 @@ MU_TEST(test_asdf_get_gwcs_fits) {
 
 
 MU_TEST(test_asdf_get_gwcs) {
-    const char *path = get_fixture_file_path("roman_wcs.asdf");
+    const char *path = get_fixture_file_path("roman_l3_wcs.asdf");
     asdf_file_t *file = asdf_open(path, "r");
     assert_not_null(file);
 
