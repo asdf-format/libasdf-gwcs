@@ -9,6 +9,8 @@
 #include <asdf/gwcs/frame2d.h>
 #include <asdf/gwcs/frame_celestial.h>
 #include <asdf/gwcs/step.h>
+#include <asdf/gwcs/transform.h>
+#include <asdf/gwcs/transforms/shift.h>
 #include <asdf/gwcs/wcs.h>
 
 #endif /* ASDF_GWCS_GWCS_H */

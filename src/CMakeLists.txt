@@ -8,6 +8,7 @@ set(libasdf_gwcs_sources
     step.c
     transform.c
     transforms/property/bounding_box.c
+    transforms/shift.c
     wcs.c
 )
 

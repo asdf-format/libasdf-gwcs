@@ -4,6 +4,7 @@
 #include <asdf/extension.h>
 
 #include "gwcs.h"
+#include "transforms/shift.h"
 #include "types/asdf_gwcs_transform_map.h"
 #include "util.h"
 
@@ -49,10 +50,9 @@ asdf_value_err_t asdf_gwcs_transform_parse(asdf_value_t *value, asdf_gwcs_transf
 
     asdf_gwcs_transform_type_t type = asdf_gwcs_transform_type_get(parsed_tag->name);
 
-    if (ASDF_GWCS_TRANSFORM_INVALID == type) {
-        err = ASDF_VALUE_ERR_TYPE_MISMATCH;
-        goto failure;
-    }
+    /* Unknown tags are treated as generic rather than an error */
+    if (ASDF_GWCS_TRANSFORM_INVALID == type)
+        type = ASDF_GWCS_TRANSFORM_GENERIC;
 
     transform->type = type;
 
@@ -98,6 +98,9 @@ void asdf_gwcs_transform_destroy(asdf_gwcs_transform_t *transform) {
     case ASDF_GWCS_TRANSFORM_FITSWCS_IMAGING:
         asdf_gwcs_fits_destroy((asdf_gwcs_fits_t *)transform);
         return;
+    case ASDF_GWCS_TRANSFORM_SHIFT:
+        asdf_gwcs_shift_destroy((asdf_gwcs_shift_t *)transform);
+        return;
     default:
         break;
     }
@@ -113,19 +116,25 @@ asdf_value_err_t asdf_value_as_gwcs_transform(asdf_value_t *value, asdf_gwcs_tra
     // it will not scale so this needs to be totally rewritten later
     const char *tag_str = asdf_value_tag(value);
     asdf_tag_t *tag = asdf_tag_parse(tag_str);
+
+    if (UNLIKELY(!tag))
+        // No tag or invalid tag
+        return ASDF_VALUE_ERR_TYPE_MISMATCH;
+
     asdf_gwcs_transform_type_t type = asdf_gwcs_transform_type_get(tag->name);
     asdf_tag_destroy(tag);
 
     switch (type) {
-    case ASDF_GWCS_TRANSFORM_INVALID:
-        return ASDF_VALUE_ERR_TYPE_MISMATCH;
     case ASDF_GWCS_TRANSFORM_FITSWCS_IMAGING:
         return asdf_value_as_gwcs_fits(value, (asdf_gwcs_fits_t **)out);
+    case ASDF_GWCS_TRANSFORM_SHIFT:
+        return asdf_value_as_gwcs_shift(value, (asdf_gwcs_shift_t **)out);
+    case ASDF_GWCS_TRANSFORM_INVALID:
     default:
         break;
     }
 
-    // Generic case
+    // Generic / unknown transform: parse only the base fields
     asdf_gwcs_transform_t *transform = calloc(1, sizeof(asdf_gwcs_transform_t));
 
     if (!transform)
@@ -186,6 +195,8 @@ static const char *const transform_type_to_tag_map[ASDF_GWCS_TRANSFORM_LAST] = {
     "zenithal_equidistant",
     [ASDF_GWCS_TRANSFORM_ZENITHAL_PERSPECTIVE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX
     "zenithal_perspective",
+    [ASDF_GWCS_TRANSFORM_SHIFT] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "shift",
+    [ASDF_GWCS_TRANSFORM_SCALE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "scale",
 };
 
 
@@ -253,8 +264,14 @@ asdf_value_t *asdf_gwcs_transform_value_of(
     if (!transform)
         return NULL;
 
-    if (transform->type == ASDF_GWCS_TRANSFORM_FITSWCS_IMAGING)
+    switch (transform->type) {
+    case ASDF_GWCS_TRANSFORM_FITSWCS_IMAGING:
         return asdf_value_of_gwcs_fits(file, (const asdf_gwcs_fits_t *)transform);
+    case ASDF_GWCS_TRANSFORM_SHIFT:
+        return asdf_value_of_gwcs_shift(file, (const asdf_gwcs_shift_t *)transform);
+    default:
+        break;
+    }
 
     const char *tag = asdf_gwcs_transform_type_to_tag(transform->type);
 
@@ -326,7 +343,10 @@ ASDF_CONSTRUCTOR static void asdf_gwcs_transform_map_create() {
          {ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_equidistant",
           ASDF_GWCS_TRANSFORM_ZENITHAL_EQUIDISTANT},
          {ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_perspective",
-          ASDF_GWCS_TRANSFORM_ZENITHAL_PERSPECTIVE}});
+          ASDF_GWCS_TRANSFORM_ZENITHAL_PERSPECTIVE},
+         /* Atomic transforms */
+         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "shift", ASDF_GWCS_TRANSFORM_SHIFT},
+         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "scale", ASDF_GWCS_TRANSFORM_SCALE}});
 
     atomic_store_explicit(&global_transform_map_initialized, true, memory_order_release);
 }

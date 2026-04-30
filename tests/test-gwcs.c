@@ -1,7 +1,10 @@
+#include <stdlib.h>
+
 #include <asdf.h>
 #include <asdf/gwcs/fitswcs_imaging.h>
 #include <asdf/gwcs/gwcs.h>
 #include <asdf/gwcs/transform.h>
+#include <asdf/gwcs/transforms/shift.h>
 
 #include "munit.h"
 #include "util.h"
@@ -273,12 +276,67 @@ MU_TEST(test_asdf_get_gwcs) {
 }
 
 
+/** shift transform tests */
+
+static void check_shift_values(const asdf_gwcs_shift_t *shift, double expected_offset) {
+    assert_not_null(shift);
+    assert_int(((const asdf_gwcs_transform_t *)shift)->type, ==, ASDF_GWCS_TRANSFORM_SHIFT);
+    assert_double_equal(shift->offset, expected_offset, 10);
+}
+
+
+MU_TEST(test_asdf_set_gwcs_shift) {
+    const char *path = get_temp_file_path(fixture->tempfile_prefix, ".asdf");
+    asdf_file_t *file = asdf_open(NULL);
+    assert_not_null(file);
+
+    asdf_gwcs_shift_t shift = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_SHIFT},
+        .offset = 42.5,
+    };
+
+    assert_int(asdf_set_gwcs_shift(file, "transform", &shift), ==, ASDF_VALUE_OK);
+    assert_int(asdf_write_to(file, path), ==, 0);
+    asdf_close(file);
+
+    file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_shift_t *shift_out = NULL;
+    assert_int(asdf_get_gwcs_shift(file, "transform", &shift_out), ==, ASDF_VALUE_OK);
+    check_shift_values(shift_out, 42.5);
+
+    asdf_gwcs_shift_destroy(shift_out);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
+MU_TEST(test_asdf_get_gwcs_shift_from_fixture) {
+    const char *path = get_fixture_file_path("roman_l2_wcs.asdf");
+    asdf_file_t *file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_shift_t *shift = NULL;
+    assert_int(asdf_get_gwcs_shift(file,
+        "roman/meta/wcs/steps/0/transform/forward/0/forward/0/forward/0/forward/0",
+        &shift), ==, ASDF_VALUE_OK);
+    check_shift_values(shift, 1.0);
+
+    asdf_gwcs_shift_destroy(shift);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
 MU_TEST_SUITE(
     gwcs,
     MU_RUN_TEST(test_asdf_get_gwcs_fits),
     MU_RUN_TEST(test_asdf_get_gwcs),
     MU_RUN_TEST(test_asdf_set_gwcs_fits),
-    MU_RUN_TEST(test_asdf_set_gwcs)
+    MU_RUN_TEST(test_asdf_set_gwcs),
+    MU_RUN_TEST(test_asdf_set_gwcs_shift),
+    MU_RUN_TEST(test_asdf_get_gwcs_shift_from_fixture)
 );
 
 
