@@ -4,6 +4,7 @@
 #include <asdf/gwcs/fitswcs_imaging.h>
 #include <asdf/gwcs/gwcs.h>
 #include <asdf/gwcs/transform.h>
+#include <asdf/gwcs/transforms/polynomial.h>
 #include <asdf/gwcs/transforms/remap_axes.h>
 #include <asdf/gwcs/transforms/shift.h>
 
@@ -391,6 +392,70 @@ MU_TEST(test_asdf_get_gwcs_remap_axes_from_fixture) {
 }
 
 
+/* polynomial */
+
+static void check_polynomial_shape(
+    const asdf_gwcs_polynomial_t *poly, uint32_t ndim, uint32_t degree, uint32_t n_coeffs) {
+    assert_not_null(poly);
+    assert_int(((const asdf_gwcs_transform_t *)poly)->type, ==, ASDF_GWCS_TRANSFORM_POLYNOMIAL);
+    assert_uint32(poly->ndim, ==, ndim);
+    assert_uint32(poly->degree, ==, degree);
+    assert_uint32(poly->n_coeffs, ==, n_coeffs);
+    assert_not_null(poly->coefficients);
+}
+
+
+MU_TEST(test_asdf_set_gwcs_polynomial) {
+    const char *path = get_temp_file_path(fixture->tempfile_prefix, ".asdf");
+    asdf_file_t *file = asdf_open(NULL);
+    assert_not_null(file);
+
+    double coeffs[4] = {1.0, 2.0, 3.0, 4.0};
+    asdf_gwcs_polynomial_t poly = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_POLYNOMIAL},
+        .ndim = 2,
+        .degree = 1,
+        .n_coeffs = 4,
+        .coefficients = coeffs,
+    };
+
+    assert_int(asdf_set_gwcs_polynomial(file, "transform", &poly), ==, ASDF_VALUE_OK);
+    assert_int(asdf_write_to(file, path), ==, 0);
+    asdf_close(file);
+
+    file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_polynomial_t *poly_out = NULL;
+    assert_int(asdf_get_gwcs_polynomial(file, "transform", &poly_out), ==, ASDF_VALUE_OK);
+    check_polynomial_shape(poly_out, 2, 1, 4);
+    for (int idx = 0; idx < 4; idx++)
+        assert_double_equal(poly_out->coefficients[idx], coeffs[idx], 10);
+
+    asdf_gwcs_polynomial_destroy(poly_out);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
+MU_TEST(test_asdf_get_gwcs_polynomial_from_fixture) {
+    const char *path = get_fixture_file_path("roman_l2_wcs.asdf");
+    asdf_file_t *file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    /* First polynomial in the first compose|concatenate block: shape [6,6] */
+    asdf_gwcs_polynomial_t *poly = NULL;
+    assert_int(asdf_get_gwcs_polynomial(file,
+        "roman/meta/wcs/steps/0/transform/forward/0/forward/1/forward/0/forward/1/forward/0",
+        &poly), ==, ASDF_VALUE_OK);
+    check_polynomial_shape(poly, 2, 5, 36);
+
+    asdf_gwcs_polynomial_destroy(poly);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
 MU_TEST_SUITE(
     gwcs,
     MU_RUN_TEST(test_asdf_get_gwcs_fits),
@@ -400,7 +465,9 @@ MU_TEST_SUITE(
     MU_RUN_TEST(test_asdf_set_gwcs_shift),
     MU_RUN_TEST(test_asdf_get_gwcs_shift_from_fixture),
     MU_RUN_TEST(test_asdf_set_gwcs_remap_axes),
-    MU_RUN_TEST(test_asdf_get_gwcs_remap_axes_from_fixture)
+    MU_RUN_TEST(test_asdf_get_gwcs_remap_axes_from_fixture),
+    MU_RUN_TEST(test_asdf_set_gwcs_polynomial),
+    MU_RUN_TEST(test_asdf_get_gwcs_polynomial_from_fixture)
 );
 
 

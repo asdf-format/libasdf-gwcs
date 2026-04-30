@@ -4,6 +4,7 @@
 #include <asdf/extension.h>
 
 #include "gwcs.h"
+#include "transforms/polynomial.h"
 #include "transforms/remap_axes.h"
 #include "transforms/shift.h"
 #include "types/asdf_gwcs_transform_map.h"
@@ -105,6 +106,9 @@ void asdf_gwcs_transform_destroy(asdf_gwcs_transform_t *transform) {
     case ASDF_GWCS_TRANSFORM_REMAP_AXES:
         asdf_gwcs_remap_axes_destroy((asdf_gwcs_remap_axes_t *)transform);
         return;
+    case ASDF_GWCS_TRANSFORM_POLYNOMIAL:
+        asdf_gwcs_polynomial_destroy((asdf_gwcs_polynomial_t *)transform);
+        return;
     default:
         break;
     }
@@ -135,6 +139,8 @@ asdf_value_err_t asdf_value_as_gwcs_transform(asdf_value_t *value, asdf_gwcs_tra
         return asdf_value_as_gwcs_shift(value, (asdf_gwcs_shift_t **)out);
     case ASDF_GWCS_TRANSFORM_REMAP_AXES:
         return asdf_value_as_gwcs_remap_axes(value, (asdf_gwcs_remap_axes_t **)out);
+    case ASDF_GWCS_TRANSFORM_POLYNOMIAL:
+        return asdf_value_as_gwcs_polynomial(value, (asdf_gwcs_polynomial_t **)out);
     case ASDF_GWCS_TRANSFORM_INVALID:
     default:
         break;
@@ -204,6 +210,7 @@ static const char *const transform_type_to_tag_map[ASDF_GWCS_TRANSFORM_LAST] = {
     [ASDF_GWCS_TRANSFORM_SHIFT] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "shift",
     [ASDF_GWCS_TRANSFORM_SCALE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "scale",
     [ASDF_GWCS_TRANSFORM_REMAP_AXES] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes",
+    [ASDF_GWCS_TRANSFORM_POLYNOMIAL] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "polynomial",
 };
 
 
@@ -278,6 +285,8 @@ asdf_value_t *asdf_gwcs_transform_value_of(
         return asdf_value_of_gwcs_shift(file, (const asdf_gwcs_shift_t *)transform);
     case ASDF_GWCS_TRANSFORM_REMAP_AXES:
         return asdf_value_of_gwcs_remap_axes(file, (const asdf_gwcs_remap_axes_t *)transform);
+    case ASDF_GWCS_TRANSFORM_POLYNOMIAL:
+        return asdf_value_of_gwcs_polynomial(file, (const asdf_gwcs_polynomial_t *)transform);
     default:
         break;
     }
@@ -356,7 +365,8 @@ ASDF_CONSTRUCTOR static void asdf_gwcs_transform_map_create() {
          /* Atomic transforms */
          {ASDF_GWCS_TRANSFORM_TAG_PREFIX "shift", ASDF_GWCS_TRANSFORM_SHIFT},
          {ASDF_GWCS_TRANSFORM_TAG_PREFIX "scale", ASDF_GWCS_TRANSFORM_SCALE},
-         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes", ASDF_GWCS_TRANSFORM_REMAP_AXES}});
+         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes", ASDF_GWCS_TRANSFORM_REMAP_AXES},
+         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "polynomial", ASDF_GWCS_TRANSFORM_POLYNOMIAL}});
 
     atomic_store_explicit(&global_transform_map_initialized, true, memory_order_release);
 }
