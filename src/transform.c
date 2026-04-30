@@ -4,6 +4,7 @@
 #include <asdf/extension.h>
 
 #include "gwcs.h"
+#include "transforms/compose.h"
 #include "transforms/polynomial.h"
 #include "transforms/rotate_sequence_3d.h"
 #include "transforms/remap_axes.h"
@@ -113,6 +114,9 @@ void asdf_gwcs_transform_destroy(asdf_gwcs_transform_t *transform) {
     case ASDF_GWCS_TRANSFORM_ROTATE_SEQUENCE_3D:
         asdf_gwcs_rotate_sequence_3d_destroy((asdf_gwcs_rotate_sequence_3d_t *)transform);
         return;
+    case ASDF_GWCS_TRANSFORM_COMPOSE:
+        asdf_gwcs_compose_destroy((asdf_gwcs_compose_t *)transform);
+        return;
     default:
         break;
     }
@@ -148,6 +152,8 @@ asdf_value_err_t asdf_value_as_gwcs_transform(asdf_value_t *value, asdf_gwcs_tra
     case ASDF_GWCS_TRANSFORM_ROTATE_SEQUENCE_3D:
         return asdf_value_as_gwcs_rotate_sequence_3d(
             value, (asdf_gwcs_rotate_sequence_3d_t **)out);
+    case ASDF_GWCS_TRANSFORM_COMPOSE:
+        return asdf_value_as_gwcs_compose(value, (asdf_gwcs_compose_t **)out);
     case ASDF_GWCS_TRANSFORM_INVALID:
     default:
         break;
@@ -220,6 +226,7 @@ static const char *const transform_type_to_tag_map[ASDF_GWCS_TRANSFORM_LAST] = {
     [ASDF_GWCS_TRANSFORM_POLYNOMIAL] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "polynomial",
     [ASDF_GWCS_TRANSFORM_ROTATE_SEQUENCE_3D] = ASDF_GWCS_TRANSFORM_TAG_PREFIX
     "rotate_sequence_3d",
+    [ASDF_GWCS_TRANSFORM_COMPOSE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "compose",
 };
 
 
@@ -299,6 +306,8 @@ asdf_value_t *asdf_gwcs_transform_value_of(
     case ASDF_GWCS_TRANSFORM_ROTATE_SEQUENCE_3D:
         return asdf_value_of_gwcs_rotate_sequence_3d(
             file, (const asdf_gwcs_rotate_sequence_3d_t *)transform);
+    case ASDF_GWCS_TRANSFORM_COMPOSE:
+        return asdf_value_of_gwcs_compose(file, (const asdf_gwcs_compose_t *)transform);
     default:
         break;
     }
@@ -380,7 +389,8 @@ ASDF_CONSTRUCTOR static void asdf_gwcs_transform_map_create() {
          {ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes", ASDF_GWCS_TRANSFORM_REMAP_AXES},
          {ASDF_GWCS_TRANSFORM_TAG_PREFIX "polynomial", ASDF_GWCS_TRANSFORM_POLYNOMIAL},
          {ASDF_GWCS_TRANSFORM_TAG_PREFIX "rotate_sequence_3d",
-          ASDF_GWCS_TRANSFORM_ROTATE_SEQUENCE_3D}});
+          ASDF_GWCS_TRANSFORM_ROTATE_SEQUENCE_3D},
+         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "compose", ASDF_GWCS_TRANSFORM_COMPOSE}});
 
     atomic_store_explicit(&global_transform_map_initialized, true, memory_order_release);
 }

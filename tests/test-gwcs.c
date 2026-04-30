@@ -4,6 +4,7 @@
 #include <asdf/gwcs/fitswcs_imaging.h>
 #include <asdf/gwcs/gwcs.h>
 #include <asdf/gwcs/transform.h>
+#include <asdf/gwcs/transforms/compose.h>
 #include <asdf/gwcs/transforms/polynomial.h>
 #include <asdf/gwcs/transforms/remap_axes.h>
 #include <asdf/gwcs/transforms/rotate_sequence_3d.h>
@@ -525,6 +526,82 @@ MU_TEST(test_asdf_get_gwcs_rotate_sequence_3d_from_fixture) {
 }
 
 
+/* compose */
+
+MU_TEST(test_asdf_set_gwcs_compose) {
+    const char *path = get_temp_file_path(fixture->tempfile_prefix, ".asdf");
+    asdf_file_t *file = asdf_open(NULL);
+    assert_not_null(file);
+
+    double offset0 = 1.5, offset1 = 2.5;
+    asdf_gwcs_shift_t s0 = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_SHIFT},
+        .offset = offset0,
+    };
+    asdf_gwcs_shift_t s1 = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_SHIFT},
+        .offset = offset1,
+    };
+    asdf_gwcs_transform_t *fwd[2] = {
+        (asdf_gwcs_transform_t *)&s0,
+        (asdf_gwcs_transform_t *)&s1,
+    };
+    asdf_gwcs_compose_t compose = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_COMPOSE},
+        .n_forward = 2,
+        .forward = fwd,
+    };
+
+    assert_int(asdf_set_gwcs_compose(file, "transform", &compose), ==, ASDF_VALUE_OK);
+    assert_int(asdf_write_to(file, path), ==, 0);
+    asdf_close(file);
+
+    file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_compose_t *compose_out = NULL;
+    assert_int(asdf_get_gwcs_compose(file, "transform", &compose_out), ==, ASDF_VALUE_OK);
+    assert_not_null(compose_out);
+    assert_int(((const asdf_gwcs_transform_t *)compose_out)->type, ==,
+        ASDF_GWCS_TRANSFORM_COMPOSE);
+    assert_uint32(compose_out->n_forward, ==, 2);
+    assert_not_null(compose_out->forward[0]);
+    assert_int(compose_out->forward[0]->type, ==, ASDF_GWCS_TRANSFORM_SHIFT);
+    assert_double_equal(((asdf_gwcs_shift_t *)compose_out->forward[0])->offset, offset0, 10);
+    assert_not_null(compose_out->forward[1]);
+    assert_int(compose_out->forward[1]->type, ==, ASDF_GWCS_TRANSFORM_SHIFT);
+    assert_double_equal(((asdf_gwcs_shift_t *)compose_out->forward[1])->offset, offset1, 10);
+
+    asdf_gwcs_compose_destroy(compose_out);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
+MU_TEST(test_asdf_get_gwcs_compose_from_fixture) {
+    const char *path = get_fixture_file_path("roman_l2_wcs.asdf");
+    asdf_file_t *file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    /* Compose whose forward[1] is a rotate_sequence_3d */
+    asdf_gwcs_compose_t *compose = NULL;
+    assert_int(asdf_get_gwcs_compose(file,
+        "roman/meta/wcs/steps/2/transform"
+        "/forward/0/forward/0/forward/0/forward/0/forward/0/forward/0",
+        &compose), ==, ASDF_VALUE_OK);
+    assert_not_null(compose);
+    assert_int(((const asdf_gwcs_transform_t *)compose)->type, ==,
+        ASDF_GWCS_TRANSFORM_COMPOSE);
+    assert_uint32(compose->n_forward, ==, 2);
+    assert_not_null(compose->forward[1]);
+    assert_int(compose->forward[1]->type, ==, ASDF_GWCS_TRANSFORM_ROTATE_SEQUENCE_3D);
+
+    asdf_gwcs_compose_destroy(compose);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
 MU_TEST_SUITE(
     gwcs,
     MU_RUN_TEST(test_asdf_get_gwcs_fits),
@@ -538,7 +615,9 @@ MU_TEST_SUITE(
     MU_RUN_TEST(test_asdf_set_gwcs_polynomial),
     MU_RUN_TEST(test_asdf_get_gwcs_polynomial_from_fixture),
     MU_RUN_TEST(test_asdf_set_gwcs_rotate_sequence_3d),
-    MU_RUN_TEST(test_asdf_get_gwcs_rotate_sequence_3d_from_fixture)
+    MU_RUN_TEST(test_asdf_get_gwcs_rotate_sequence_3d_from_fixture),
+    MU_RUN_TEST(test_asdf_set_gwcs_compose),
+    MU_RUN_TEST(test_asdf_get_gwcs_compose_from_fixture)
 );
 
 

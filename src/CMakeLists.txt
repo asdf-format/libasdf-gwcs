@@ -7,6 +7,7 @@ set(libasdf_gwcs_sources
     frame_celestial.c
     step.c
     transform.c
+    transforms/compose.c
     transforms/polynomial.c
     transforms/property/bounding_box.c
     transforms/remap_axes.c

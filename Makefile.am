@@ -7,6 +7,7 @@ src_files = \
     src/frame_celestial.c \
     src/step.c \
     src/transform.c \
+    src/transforms/compose.c \
     src/transforms/polynomial.c \
     src/transforms/property/bounding_box.c \
     src/transforms/remap_axes.c \
@@ -20,6 +21,7 @@ src_headers = \
     src/gwcs.h \
     src/step.h \
     src/transform.h \
+    src/transforms/compose.h \
     src/transforms/polynomial.h \
     src/transforms/remap_axes.h \
     src/transforms/rotate_sequence_3d.h \
