@@ -4,6 +4,7 @@
 #include <asdf/gwcs/fitswcs_imaging.h>
 #include <asdf/gwcs/gwcs.h>
 #include <asdf/gwcs/transform.h>
+#include <asdf/gwcs/transforms/remap_axes.h>
 #include <asdf/gwcs/transforms/shift.h>
 
 #include "munit.h"
@@ -329,6 +330,67 @@ MU_TEST(test_asdf_get_gwcs_shift_from_fixture) {
 }
 
 
+/* remap_axes */
+
+static void check_remap_axes_values(
+    const asdf_gwcs_remap_axes_t *remap, uint32_t n, const uint32_t *expected) {
+    assert_not_null(remap);
+    assert_int(((const asdf_gwcs_transform_t *)remap)->type, ==, ASDF_GWCS_TRANSFORM_REMAP_AXES);
+    assert_uint32(remap->n_mapping, ==, n);
+    assert_not_null(remap->mapping);
+    for (uint32_t idx = 0; idx < n; idx++)
+        assert_uint32(remap->mapping[idx], ==, expected[idx]);
+}
+
+
+MU_TEST(test_asdf_set_gwcs_remap_axes) {
+    const char *path = get_temp_file_path(fixture->tempfile_prefix, ".asdf");
+    asdf_file_t *file = asdf_open(NULL);
+    assert_not_null(file);
+
+    uint32_t mapping[] = {1, 0, 2};
+    asdf_gwcs_remap_axes_t remap = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_REMAP_AXES},
+        .n_mapping = 3,
+        .mapping = mapping,
+    };
+
+    assert_int(asdf_set_gwcs_remap_axes(file, "transform", &remap), ==, ASDF_VALUE_OK);
+    assert_int(asdf_write_to(file, path), ==, 0);
+    asdf_close(file);
+
+    file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_remap_axes_t *remap_out = NULL;
+    assert_int(asdf_get_gwcs_remap_axes(file, "transform", &remap_out), ==, ASDF_VALUE_OK);
+    check_remap_axes_values(remap_out, 3, mapping);
+
+    asdf_gwcs_remap_axes_destroy(remap_out);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
+MU_TEST(test_asdf_get_gwcs_remap_axes_from_fixture) {
+    const char *path = get_fixture_file_path("roman_l2_wcs.asdf");
+    asdf_file_t *file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_remap_axes_t *remap = NULL;
+    assert_int(asdf_get_gwcs_remap_axes(file,
+        "roman/meta/wcs/steps/0/transform/forward/0/forward/1/forward/0/forward/0",
+        &remap), ==, ASDF_VALUE_OK);
+
+    uint32_t expected[] = {0, 1, 0, 1};
+    check_remap_axes_values(remap, 4, expected);
+
+    asdf_gwcs_remap_axes_destroy(remap);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
 MU_TEST_SUITE(
     gwcs,
     MU_RUN_TEST(test_asdf_get_gwcs_fits),
@@ -336,7 +398,9 @@ MU_TEST_SUITE(
     MU_RUN_TEST(test_asdf_set_gwcs_fits),
     MU_RUN_TEST(test_asdf_set_gwcs),
     MU_RUN_TEST(test_asdf_set_gwcs_shift),
-    MU_RUN_TEST(test_asdf_get_gwcs_shift_from_fixture)
+    MU_RUN_TEST(test_asdf_get_gwcs_shift_from_fixture),
+    MU_RUN_TEST(test_asdf_set_gwcs_remap_axes),
+    MU_RUN_TEST(test_asdf_get_gwcs_remap_axes_from_fixture)
 );
 
 

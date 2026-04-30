@@ -67,6 +67,7 @@ typedef enum {
     /* Atomic transforms */
     ASDF_GWCS_TRANSFORM_SHIFT,
     ASDF_GWCS_TRANSFORM_SCALE,
+    ASDF_GWCS_TRANSFORM_REMAP_AXES,
     ASDF_GWCS_TRANSFORM_LAST
 } asdf_gwcs_transform_type_t;
 
