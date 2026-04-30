@@ -6,6 +6,7 @@
 #include <asdf/gwcs/transform.h>
 #include <asdf/gwcs/transforms/polynomial.h>
 #include <asdf/gwcs/transforms/remap_axes.h>
+#include <asdf/gwcs/transforms/rotate_sequence_3d.h>
 #include <asdf/gwcs/transforms/shift.h>
 
 #include "munit.h"
@@ -456,6 +457,74 @@ MU_TEST(test_asdf_get_gwcs_polynomial_from_fixture) {
 }
 
 
+/* rotate_sequence_3d */
+
+static void check_rotate_sequence_3d_values(
+    const asdf_gwcs_rotate_sequence_3d_t *rot,
+    uint32_t n_angles, const double *expected_angles,
+    const char *expected_axes_order) {
+    assert_not_null(rot);
+    assert_int(((const asdf_gwcs_transform_t *)rot)->type, ==,
+        ASDF_GWCS_TRANSFORM_ROTATE_SEQUENCE_3D);
+    assert_uint32(rot->n_angles, ==, n_angles);
+    assert_not_null(rot->angles);
+    assert_string_equal(rot->axes_order, expected_axes_order);
+    for (uint32_t idx = 0; idx < n_angles; idx++)
+        assert_double_equal(rot->angles[idx], expected_angles[idx], 10);
+}
+
+
+MU_TEST(test_asdf_set_gwcs_rotate_sequence_3d) {
+    const char *path = get_temp_file_path(fixture->tempfile_prefix, ".asdf");
+    asdf_file_t *file = asdf_open(NULL);
+    assert_not_null(file);
+
+    double angles[3] = {10.0, 20.0, 30.0};
+    asdf_gwcs_rotate_sequence_3d_t rot = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_ROTATE_SEQUENCE_3D},
+        .n_angles = 3,
+        .angles = angles,
+        .axes_order = "xyz",
+    };
+
+    assert_int(asdf_set_gwcs_rotate_sequence_3d(file, "transform", &rot), ==, ASDF_VALUE_OK);
+    assert_int(asdf_write_to(file, path), ==, 0);
+    asdf_close(file);
+
+    file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_rotate_sequence_3d_t *rot_out = NULL;
+    assert_int(asdf_get_gwcs_rotate_sequence_3d(file, "transform", &rot_out), ==, ASDF_VALUE_OK);
+    check_rotate_sequence_3d_values(rot_out, 3, angles, "xyz");
+
+    asdf_gwcs_rotate_sequence_3d_destroy(rot_out);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
+MU_TEST(test_asdf_get_gwcs_rotate_sequence_3d_from_fixture) {
+    const char *path = get_fixture_file_path("roman_l2_wcs.asdf");
+    asdf_file_t *file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_rotate_sequence_3d_t *rot = NULL;
+    assert_int(asdf_get_gwcs_rotate_sequence_3d(file,
+        "roman/meta/wcs/steps/2/transform"
+        "/forward/0/forward/0/forward/0/forward/0/forward/0/forward/0/forward/1",
+        &rot), ==, ASDF_VALUE_OK);
+    double expected_angles[3] = {
+        0.3647080959023555, 0.28910704796541764, 59.846679364670365
+    };
+    check_rotate_sequence_3d_values(rot, 3, expected_angles, "zyx");
+
+    asdf_gwcs_rotate_sequence_3d_destroy(rot);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
 MU_TEST_SUITE(
     gwcs,
     MU_RUN_TEST(test_asdf_get_gwcs_fits),
@@ -467,7 +536,9 @@ MU_TEST_SUITE(
     MU_RUN_TEST(test_asdf_set_gwcs_remap_axes),
     MU_RUN_TEST(test_asdf_get_gwcs_remap_axes_from_fixture),
     MU_RUN_TEST(test_asdf_set_gwcs_polynomial),
-    MU_RUN_TEST(test_asdf_get_gwcs_polynomial_from_fixture)
+    MU_RUN_TEST(test_asdf_get_gwcs_polynomial_from_fixture),
+    MU_RUN_TEST(test_asdf_set_gwcs_rotate_sequence_3d),
+    MU_RUN_TEST(test_asdf_get_gwcs_rotate_sequence_3d_from_fixture)
 );
 
 

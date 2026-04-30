@@ -10,6 +10,7 @@ src_files = \
     src/transforms/polynomial.c \
     src/transforms/property/bounding_box.c \
     src/transforms/remap_axes.c \
+    src/transforms/rotate_sequence_3d.c \
     src/transforms/shift.c \
     src/wcs.c
 
@@ -21,6 +22,7 @@ src_headers = \
     src/transform.h \
     src/transforms/polynomial.h \
     src/transforms/remap_axes.h \
+    src/transforms/rotate_sequence_3d.h \
     src/transforms/shift.h \
     src/types/asdf_gwcs_transform_map.h \
     src/util.h

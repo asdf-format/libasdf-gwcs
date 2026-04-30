@@ -10,6 +10,7 @@ set(libasdf_gwcs_sources
     transforms/polynomial.c
     transforms/property/bounding_box.c
     transforms/remap_axes.c
+    transforms/rotate_sequence_3d.c
     transforms/shift.c
     wcs.c
 )
