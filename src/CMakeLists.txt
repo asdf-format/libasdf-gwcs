@@ -8,6 +8,7 @@ set(libasdf_gwcs_sources
     step.c
     transform.c
     transforms/compose.c
+    transforms/concatenate.c
     transforms/polynomial.c
     transforms/property/bounding_box.c
     transforms/remap_axes.c

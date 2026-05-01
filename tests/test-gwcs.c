@@ -5,6 +5,7 @@
 #include <asdf/gwcs/gwcs.h>
 #include <asdf/gwcs/transform.h>
 #include <asdf/gwcs/transforms/compose.h>
+#include <asdf/gwcs/transforms/concatenate.h>
 #include <asdf/gwcs/transforms/polynomial.h>
 #include <asdf/gwcs/transforms/remap_axes.h>
 #include <asdf/gwcs/transforms/rotate_sequence_3d.h>
@@ -602,6 +603,133 @@ MU_TEST(test_asdf_get_gwcs_compose_from_fixture) {
 }
 
 
+/* concatenate */
+
+MU_TEST(test_asdf_set_gwcs_concatenate) {
+    const char *path = get_temp_file_path(fixture->tempfile_prefix, ".asdf");
+    asdf_file_t *file = asdf_open(NULL);
+    assert_not_null(file);
+
+    double offset0 = 10.0, offset1 = 20.0, offset2 = 30.0;
+    asdf_gwcs_shift_t s0 = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_SHIFT},
+        .offset = offset0,
+    };
+    asdf_gwcs_shift_t s1 = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_SHIFT},
+        .offset = offset1,
+    };
+    asdf_gwcs_shift_t s2 = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_SHIFT},
+        .offset = offset2,
+    };
+    asdf_gwcs_transform_t *fwd[3] = {
+        (asdf_gwcs_transform_t *)&s0,
+        (asdf_gwcs_transform_t *)&s1,
+        (asdf_gwcs_transform_t *)&s2,
+    };
+    asdf_gwcs_concatenate_t concat = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_CONCATENATE},
+        .n_forward = 3,
+        .forward = fwd,
+    };
+
+    assert_int(asdf_set_gwcs_concatenate(file, "transform", &concat), ==, ASDF_VALUE_OK);
+    assert_int(asdf_write_to(file, path), ==, 0);
+    asdf_close(file);
+
+    file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_concatenate_t *concat_out = NULL;
+    assert_int(asdf_get_gwcs_concatenate(file, "transform", &concat_out), ==, ASDF_VALUE_OK);
+    assert_not_null(concat_out);
+    assert_int(((const asdf_gwcs_transform_t *)concat_out)->type, ==,
+        ASDF_GWCS_TRANSFORM_CONCATENATE);
+    assert_uint32(concat_out->n_forward, ==, 3);
+    for (uint32_t idx = 0; idx < 3; idx++) {
+        assert_not_null(concat_out->forward[idx]);
+        assert_int(concat_out->forward[idx]->type, ==, ASDF_GWCS_TRANSFORM_SHIFT);
+    }
+    assert_double_equal(((asdf_gwcs_shift_t *)concat_out->forward[0])->offset, offset0, 10);
+    assert_double_equal(((asdf_gwcs_shift_t *)concat_out->forward[1])->offset, offset1, 10);
+    assert_double_equal(((asdf_gwcs_shift_t *)concat_out->forward[2])->offset, offset2, 10);
+
+    asdf_gwcs_concatenate_destroy(concat_out);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
+MU_TEST(test_asdf_get_gwcs_concatenate_from_fixture) {
+    const char *path = get_fixture_file_path("roman_l2_wcs.asdf");
+    asdf_file_t *file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    /* Concatenate of two shifts in step 0 */
+    asdf_gwcs_concatenate_t *concat = NULL;
+    assert_int(asdf_get_gwcs_concatenate(file,
+        "roman/meta/wcs/steps/0/transform/forward/1",
+        &concat), ==, ASDF_VALUE_OK);
+    assert_not_null(concat);
+    assert_int(((const asdf_gwcs_transform_t *)concat)->type, ==,
+        ASDF_GWCS_TRANSFORM_CONCATENATE);
+    assert_uint32(concat->n_forward, ==, 2);
+    assert_not_null(concat->forward[0]);
+    assert_int(concat->forward[0]->type, ==, ASDF_GWCS_TRANSFORM_SHIFT);
+    assert_double_equal(((asdf_gwcs_shift_t *)concat->forward[0])->offset,
+        1312.9491452484797, 10);
+    assert_not_null(concat->forward[1]);
+    assert_int(concat->forward[1]->type, ==, ASDF_GWCS_TRANSFORM_SHIFT);
+    assert_double_equal(((asdf_gwcs_shift_t *)concat->forward[1])->offset,
+        -1040.7853726755036, 10);
+
+    asdf_gwcs_concatenate_destroy(concat);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
+MU_TEST(test_asdf_get_roman_l2_gwcs) {
+    const char *path = get_fixture_file_path("roman_l2_wcs.asdf");
+    asdf_file_t *file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_t *gwcs = NULL;
+    assert_int(asdf_get_gwcs(file, "roman/meta/wcs", &gwcs), ==, ASDF_VALUE_OK);
+    assert_not_null(gwcs);
+    assert_uint32(gwcs->n_steps, ==, 5);
+
+    static const char *expected_names[] = {
+        "detector", "v2v3", "v2v3vacorr", "v2v3corr", "world"
+    };
+    static const asdf_gwcs_frame_type_t expected_frame_types[] = {
+        ASDF_GWCS_FRAME_2D,
+        ASDF_GWCS_FRAME_2D,
+        ASDF_GWCS_FRAME_2D,
+        ASDF_GWCS_FRAME_2D,
+        ASDF_GWCS_FRAME_CELESTIAL,
+    };
+
+    for (uint32_t idx = 0; idx < gwcs->n_steps; idx++) {
+        const asdf_gwcs_step_t *step = &gwcs->steps[idx];
+        assert_not_null(step->frame);
+        assert_int(step->frame->type, ==, expected_frame_types[idx]);
+        assert_string_equal(step->frame->name, expected_names[idx]);
+    }
+
+    for (uint32_t idx = 0; idx < gwcs->n_steps - 1; idx++) {
+        assert_not_null(gwcs->steps[idx].transform);
+        assert_int(gwcs->steps[idx].transform->type, ==, ASDF_GWCS_TRANSFORM_COMPOSE);
+    }
+    assert_null(gwcs->steps[gwcs->n_steps - 1].transform);
+
+    asdf_gwcs_destroy(gwcs);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
 MU_TEST_SUITE(
     gwcs,
     MU_RUN_TEST(test_asdf_get_gwcs_fits),
@@ -617,7 +745,10 @@ MU_TEST_SUITE(
     MU_RUN_TEST(test_asdf_set_gwcs_rotate_sequence_3d),
     MU_RUN_TEST(test_asdf_get_gwcs_rotate_sequence_3d_from_fixture),
     MU_RUN_TEST(test_asdf_set_gwcs_compose),
-    MU_RUN_TEST(test_asdf_get_gwcs_compose_from_fixture)
+    MU_RUN_TEST(test_asdf_get_gwcs_compose_from_fixture),
+    MU_RUN_TEST(test_asdf_set_gwcs_concatenate),
+    MU_RUN_TEST(test_asdf_get_gwcs_concatenate_from_fixture),
+    MU_RUN_TEST(test_asdf_get_roman_l2_gwcs)
 );
 
 
