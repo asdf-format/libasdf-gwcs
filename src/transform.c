@@ -5,14 +5,9 @@
 #include <asdf/extension_util.h>
 #include <asdf/extension.h>
 #include <asdf/log.h>
+#include <asdf/value.h>
 
 #include "gwcs.h"
-#include "transforms/compose.h"
-#include "transforms/concatenate.h"
-#include "transforms/polynomial.h"
-#include "transforms/rotate_sequence_3d.h"
-#include "transforms/remap_axes.h"
-#include "transforms/shift.h"
 #include "types/asdf_gwcs_transform_map.h"
 #include "util.h"
 
@@ -63,6 +58,7 @@ asdf_value_err_t asdf_gwcs_transform_parse(asdf_value_t *value, asdf_gwcs_transf
         type = ASDF_GWCS_TRANSFORM_GENERIC;
 
     transform->type = type;
+    transform->ext = asdf_extension_get(asdf_value_file(value), tag);
 
     err = asdf_get_optional_property(
         transform_map, "name", ASDF_VALUE_STRING, NULL, (void *)&transform->name);
@@ -202,30 +198,9 @@ void asdf_gwcs_transform_destroy(asdf_gwcs_transform_t *transform) {
     if (!transform)
         return;
 
-    switch (transform->type) {
-    case ASDF_GWCS_TRANSFORM_FITSWCS_IMAGING:
-        asdf_gwcs_fits_destroy((asdf_gwcs_fits_t *)transform);
+    if (transform->ext && transform->ext->dealloc) {
+        transform->ext->dealloc(transform);
         return;
-    case ASDF_GWCS_TRANSFORM_SHIFT:
-        asdf_gwcs_shift_destroy((asdf_gwcs_shift_t *)transform);
-        return;
-    case ASDF_GWCS_TRANSFORM_REMAP_AXES:
-        asdf_gwcs_remap_axes_destroy((asdf_gwcs_remap_axes_t *)transform);
-        return;
-    case ASDF_GWCS_TRANSFORM_POLYNOMIAL:
-        asdf_gwcs_polynomial_destroy((asdf_gwcs_polynomial_t *)transform);
-        return;
-    case ASDF_GWCS_TRANSFORM_ROTATE_SEQUENCE_3D:
-        asdf_gwcs_rotate_sequence_3d_destroy((asdf_gwcs_rotate_sequence_3d_t *)transform);
-        return;
-    case ASDF_GWCS_TRANSFORM_COMPOSE:
-        asdf_gwcs_compose_destroy((asdf_gwcs_compose_t *)transform);
-        return;
-    case ASDF_GWCS_TRANSFORM_CONCATENATE:
-        asdf_gwcs_concatenate_destroy((asdf_gwcs_concatenate_t *)transform);
-        return;
-    default:
-        break;
     }
 
     asdf_gwcs_transform_clean(transform);
@@ -234,39 +209,15 @@ void asdf_gwcs_transform_destroy(asdf_gwcs_transform_t *transform) {
 
 
 asdf_value_err_t asdf_value_as_gwcs_transform(asdf_value_t *value, asdf_gwcs_transform_t **out) {
-    // TODO: This has the same problem as asdf_value_as_gwcs_frame; currently
-    // we only support fitswcs_imaging transform so there is no problem, but
-    // it will not scale so this needs to be totally rewritten later
     const char *tag_str = asdf_value_tag(value);
-    asdf_tag_t *tag = asdf_tag_parse(tag_str);
 
-    if (UNLIKELY(!tag))
-        // No tag or invalid tag
+    if (UNLIKELY(!tag_str))
         return ASDF_VALUE_ERR_TYPE_MISMATCH;
 
-    asdf_gwcs_transform_type_t type = asdf_gwcs_transform_type_get(tag->name);
-    asdf_tag_destroy(tag);
+    const asdf_extension_t *ext = asdf_extension_get(asdf_value_file(value), tag_str);
 
-    switch (type) {
-    case ASDF_GWCS_TRANSFORM_FITSWCS_IMAGING:
-        return asdf_value_as_gwcs_fits(value, (asdf_gwcs_fits_t **)out);
-    case ASDF_GWCS_TRANSFORM_SHIFT:
-        return asdf_value_as_gwcs_shift(value, (asdf_gwcs_shift_t **)out);
-    case ASDF_GWCS_TRANSFORM_REMAP_AXES:
-        return asdf_value_as_gwcs_remap_axes(value, (asdf_gwcs_remap_axes_t **)out);
-    case ASDF_GWCS_TRANSFORM_POLYNOMIAL:
-        return asdf_value_as_gwcs_polynomial(value, (asdf_gwcs_polynomial_t **)out);
-    case ASDF_GWCS_TRANSFORM_ROTATE_SEQUENCE_3D:
-        return asdf_value_as_gwcs_rotate_sequence_3d(
-            value, (asdf_gwcs_rotate_sequence_3d_t **)out);
-    case ASDF_GWCS_TRANSFORM_COMPOSE:
-        return asdf_value_as_gwcs_compose(value, (asdf_gwcs_compose_t **)out);
-    case ASDF_GWCS_TRANSFORM_CONCATENATE:
-        return asdf_value_as_gwcs_concatenate(value, (asdf_gwcs_concatenate_t **)out);
-    case ASDF_GWCS_TRANSFORM_INVALID:
-    default:
-        break;
-    }
+    if (ext)
+        return asdf_value_as_extension_type(value, ext, (void **)out);
 
     // Generic / unknown transform: parse only the base fields
     asdf_gwcs_transform_t *transform = calloc(1, sizeof(asdf_gwcs_transform_t));
@@ -348,6 +299,24 @@ const char *asdf_gwcs_transform_type_to_tag(asdf_gwcs_transform_type_t type) {
 }
 
 
+/** Versioned tags for concrete (registered) transforms, for extension lookup
+ *
+ * This is a temporary solution for the lack of wildcard extension type lookup
+ * in libasdf; for now we just hard-code the supported versions, but longer-
+ * term this should be more easily maintainable...
+ */
+static const char *const transform_type_to_versioned_tag_map[ASDF_GWCS_TRANSFORM_LAST] = {
+    [ASDF_GWCS_TRANSFORM_FITSWCS_IMAGING] = ASDF_GWCS_TAG_PREFIX "fitswcs_imaging-1.0.0",
+    [ASDF_GWCS_TRANSFORM_SHIFT] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "shift-1.3.0",
+    [ASDF_GWCS_TRANSFORM_REMAP_AXES] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes-1.4.0",
+    [ASDF_GWCS_TRANSFORM_POLYNOMIAL] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "polynomial-1.2.0",
+    [ASDF_GWCS_TRANSFORM_ROTATE_SEQUENCE_3D] = ASDF_GWCS_TRANSFORM_TAG_PREFIX
+    "rotate_sequence_3d-1.1.0",
+    [ASDF_GWCS_TRANSFORM_COMPOSE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "compose-1.3.0",
+    [ASDF_GWCS_TRANSFORM_CONCATENATE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate-1.3.0",
+};
+
+
 asdf_value_err_t asdf_gwcs_transform_serialize_base(
     asdf_file_t *file, const asdf_gwcs_transform_t *transform, asdf_mapping_t *map) {
     asdf_value_err_t err = ASDF_VALUE_OK;
@@ -399,29 +368,25 @@ static asdf_value_t *asdf_gwcs_generic_transform_serialize(
 }
 
 
-asdf_value_t *asdf_gwcs_transform_value_of(
+asdf_value_t *asdf_value_of_gwcs_transform(
     asdf_file_t *file, const asdf_gwcs_transform_t *transform) {
     if (!transform)
         return NULL;
 
-    switch (transform->type) {
-    case ASDF_GWCS_TRANSFORM_FITSWCS_IMAGING:
-        return asdf_value_of_gwcs_fits(file, (const asdf_gwcs_fits_t *)transform);
-    case ASDF_GWCS_TRANSFORM_SHIFT:
-        return asdf_value_of_gwcs_shift(file, (const asdf_gwcs_shift_t *)transform);
-    case ASDF_GWCS_TRANSFORM_REMAP_AXES:
-        return asdf_value_of_gwcs_remap_axes(file, (const asdf_gwcs_remap_axes_t *)transform);
-    case ASDF_GWCS_TRANSFORM_POLYNOMIAL:
-        return asdf_value_of_gwcs_polynomial(file, (const asdf_gwcs_polynomial_t *)transform);
-    case ASDF_GWCS_TRANSFORM_ROTATE_SEQUENCE_3D:
-        return asdf_value_of_gwcs_rotate_sequence_3d(
-            file, (const asdf_gwcs_rotate_sequence_3d_t *)transform);
-    case ASDF_GWCS_TRANSFORM_COMPOSE:
-        return asdf_value_of_gwcs_compose(file, (const asdf_gwcs_compose_t *)transform);
-    case ASDF_GWCS_TRANSFORM_CONCATENATE:
-        return asdf_value_of_gwcs_concatenate(file, (const asdf_gwcs_concatenate_t *)transform);
-    default:
-        break;
+    if (transform->ext)
+        return asdf_value_of_extension_type(file, transform, transform->ext);
+
+    /* For programmatically-constructed transforms (ext == NULL), look up
+     * the extension by versioned tag so the concrete serializer is used. */
+    if ((unsigned int)transform->type < ASDF_GWCS_TRANSFORM_LAST) {
+        const char *vtag = transform_type_to_versioned_tag_map[transform->type];
+
+        if (vtag) {
+            const asdf_extension_t *ext = asdf_extension_get(file, vtag);
+
+            if (ext)
+                return asdf_value_of_extension_type(file, transform, ext);
+        }
     }
 
     const char *tag = asdf_gwcs_transform_type_to_tag(transform->type);

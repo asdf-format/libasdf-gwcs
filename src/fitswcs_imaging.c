@@ -314,7 +314,7 @@ static asdf_value_t *asdf_gwcs_fits_serialize(
     }
 
     // projection -- generic transform tagged with its projection type
-    val = asdf_gwcs_transform_value_of(file, &fits->projection);
+    val = asdf_value_of_gwcs_transform(file, &fits->projection);
 
     if (!val) {
         err = ASDF_VALUE_ERR_EMIT_FAILURE;

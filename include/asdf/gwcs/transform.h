@@ -83,6 +83,12 @@ typedef struct _asdf_gwcs_transform {
     asdf_gwcs_transform_type_t type;
 
     /**
+     * Extension descriptor for this transform, set during deserialization.
+     * NULL for generic/unknown transforms.
+     */
+    const asdf_extension_t *ext;
+
+    /**
      * A human-readable name for the transform (may be `NULL`)
      *
      * This an other fields up through `input_units_equivalencies` are from

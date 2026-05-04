@@ -119,7 +119,7 @@ static asdf_value_t *asdf_gwcs_compose_serialize(
         goto cleanup;
 
     for (uint32_t idx = 0; idx < compose->n_forward; idx++) {
-        asdf_value_t *t_val = asdf_gwcs_transform_value_of(file, compose->forward[idx]);
+        asdf_value_t *t_val = asdf_value_of_gwcs_transform(file, compose->forward[idx]);
 
         if (!t_val) {
             asdf_sequence_destroy(seq);

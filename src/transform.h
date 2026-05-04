@@ -40,10 +40,10 @@ ASDF_LOCAL asdf_value_err_t asdf_gwcs_transform_serialize_base(
     asdf_file_t *file, const asdf_gwcs_transform_t *transform, asdf_mapping_t *map);
 
 /**
- * Polymorphic value constructor: dispatches to asdf_value_of_gwcs_fits for
- * fitswcs_imaging transforms, or uses a temporary extension for generic ones.
+ * Polymorphic value constructor: dispatches to asdf_value_of_<transform> for
+ * known transforms, or uses a temporary extension for generic ones.
  */
-ASDF_LOCAL asdf_value_t *asdf_gwcs_transform_value_of(
+ASDF_LOCAL asdf_value_t *asdf_value_of_gwcs_transform(
     asdf_file_t *file, const asdf_gwcs_transform_t *transform);
 
 /**
