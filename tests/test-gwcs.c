@@ -287,6 +287,8 @@ static void check_shift_values(const asdf_gwcs_shift_t *shift, double expected_o
     assert_not_null(shift);
     assert_int(((const asdf_gwcs_transform_t *)shift)->type, ==, ASDF_GWCS_TRANSFORM_SHIFT);
     assert_double_equal(shift->offset, expected_offset, 10);
+    assert_uint32(shift->base.n_inputs, ==, 1);
+    assert_uint32(shift->base.n_outputs, ==, 1);
 }
 
 
@@ -340,10 +342,15 @@ static void check_remap_axes_values(
     const asdf_gwcs_remap_axes_t *remap, uint32_t n, const uint32_t *expected) {
     assert_not_null(remap);
     assert_int(((const asdf_gwcs_transform_t *)remap)->type, ==, ASDF_GWCS_TRANSFORM_REMAP_AXES);
-    assert_uint32(remap->n_mapping, ==, n);
+    assert_uint32(remap->base.n_outputs, ==, n);
     assert_not_null(remap->mapping);
-    for (uint32_t idx = 0; idx < n; idx++)
+    uint32_t max_val = 0;
+    for (uint32_t idx = 0; idx < n; idx++) {
         assert_uint32(remap->mapping[idx], ==, expected[idx]);
+        if (expected[idx] > max_val)
+            max_val = expected[idx];
+    }
+    assert_uint32(remap->base.n_inputs, ==, max_val + 1);
 }
 
 
@@ -354,8 +361,7 @@ MU_TEST(test_asdf_set_gwcs_remap_axes) {
 
     uint32_t mapping[] = {1, 0, 2};
     asdf_gwcs_remap_axes_t remap = {
-        .base = {.type = ASDF_GWCS_TRANSFORM_REMAP_AXES},
-        .n_mapping = 3,
+        .base = {.type = ASDF_GWCS_TRANSFORM_REMAP_AXES, .n_outputs = 3},
         .mapping = mapping,
     };
 
@@ -405,6 +411,8 @@ static void check_polynomial_shape(
     assert_uint32(poly->degree, ==, degree);
     assert_uint32(poly->n_coeffs, ==, n_coeffs);
     assert_not_null(poly->coefficients);
+    assert_uint32(poly->base.n_inputs, ==, ndim);
+    assert_uint32(poly->base.n_outputs, ==, 1);
 }
 
 
@@ -473,6 +481,8 @@ static void check_rotate_sequence_3d_values(
     assert_string_equal(rot->axes_order, expected_axes_order);
     for (uint32_t idx = 0; idx < n_angles; idx++)
         assert_double_equal(rot->angles[idx], expected_angles[idx], 10);
+    assert_uint32(rot->base.n_inputs, ==, 3);
+    assert_uint32(rot->base.n_outputs, ==, 3);
 }
 
 
@@ -572,6 +582,8 @@ MU_TEST(test_asdf_set_gwcs_compose) {
     assert_not_null(compose_out->forward[1]);
     assert_int(compose_out->forward[1]->type, ==, ASDF_GWCS_TRANSFORM_SHIFT);
     assert_double_equal(((asdf_gwcs_shift_t *)compose_out->forward[1])->offset, offset1, 10);
+    assert_uint32(compose_out->base.n_inputs, ==, 1);
+    assert_uint32(compose_out->base.n_outputs, ==, 1);
 
     asdf_gwcs_compose_destroy(compose_out);
     asdf_close(file);
@@ -654,6 +666,8 @@ MU_TEST(test_asdf_set_gwcs_concatenate) {
     assert_double_equal(((asdf_gwcs_shift_t *)concat_out->forward[0])->offset, offset0, 10);
     assert_double_equal(((asdf_gwcs_shift_t *)concat_out->forward[1])->offset, offset1, 10);
     assert_double_equal(((asdf_gwcs_shift_t *)concat_out->forward[2])->offset, offset2, 10);
+    assert_uint32(concat_out->base.n_inputs, ==, 3);
+    assert_uint32(concat_out->base.n_outputs, ==, 3);
 
     asdf_gwcs_concatenate_destroy(concat_out);
     asdf_close(file);
@@ -683,6 +697,8 @@ MU_TEST(test_asdf_get_gwcs_concatenate_from_fixture) {
     assert_int(concat->forward[1]->type, ==, ASDF_GWCS_TRANSFORM_SHIFT);
     assert_double_equal(((asdf_gwcs_shift_t *)concat->forward[1])->offset,
         -1040.7853726755036, 10);
+    assert_uint32(concat->base.n_inputs, ==, 2);
+    assert_uint32(concat->base.n_outputs, ==, 2);
 
     asdf_gwcs_concatenate_destroy(concat);
     asdf_close(file);

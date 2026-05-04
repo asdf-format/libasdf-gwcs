@@ -71,6 +71,13 @@ static asdf_value_err_t asdf_gwcs_compose_deserialize(
     compose->forward = forward;
     forward = NULL;
 
+    /* n_inputs from last sub-transform, n_outputs from first */
+    asdf_gwcs_transform_arity_set(
+        &compose->base,
+        asdf_value_file(value),
+        compose->forward[n - 1]->n_inputs,
+        compose->forward[0]->n_outputs);
+
     *out = compose;
     err = ASDF_VALUE_OK;
 cleanup:

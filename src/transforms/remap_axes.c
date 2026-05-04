@@ -70,9 +70,17 @@ static asdf_value_err_t asdf_gwcs_remap_axes_deserialize(
         mapping[iter->index] = v;
     }
 
-    remap->n_mapping = (uint32_t)n;
     remap->mapping = mapping;
     mapping = NULL;
+
+    /* Compute implicit n_inputs = max(mapping) + 1, n_outputs = n */
+    uint32_t max_input = 0;
+    for (int idx = 0; idx < n; idx++) {
+        if (remap->mapping[idx] > max_input)
+            max_input = remap->mapping[idx];
+    }
+    asdf_gwcs_transform_arity_set(
+        &remap->base, asdf_value_file(value), max_input + 1, (uint32_t)n);
 
     *out = remap;
     err = ASDF_VALUE_OK;
@@ -110,8 +118,8 @@ static asdf_value_t *asdf_gwcs_remap_axes_serialize(
 
     asdf_sequence_set_style(seq, ASDF_YAML_NODE_STYLE_FLOW);
 
-    for (uint32_t i = 0; i < remap->n_mapping; i++) {
-        err = asdf_sequence_append_uint32(seq, remap->mapping[i]);
+    for (uint32_t idx = 0; idx < remap->base.n_outputs; idx++) {
+        err = asdf_sequence_append_uint32(seq, remap->mapping[idx]);
 
         if (ASDF_IS_ERR(err)) {
             asdf_sequence_destroy(seq);

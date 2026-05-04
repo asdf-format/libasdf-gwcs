@@ -129,6 +129,8 @@ static asdf_value_err_t asdf_gwcs_fits_deserialize(
     if (ASDF_IS_ERR(err))
         goto cleanup;
 
+    asdf_gwcs_transform_arity_set(&fits->base, asdf_value_file(value), 2, 2);
+
     err = get_coordinates_prop(transform_map, "crpix", (double *)fits->crpix);
 
     if (ASDF_IS_ERR(err))

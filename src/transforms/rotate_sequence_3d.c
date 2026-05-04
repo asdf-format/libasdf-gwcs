@@ -92,6 +92,8 @@ static asdf_value_err_t asdf_gwcs_rotate_sequence_3d_deserialize(
     angles = NULL;
     axes_order_copy = NULL;
 
+    asdf_gwcs_transform_arity_set(&rot->base, asdf_value_file(value), 3, 3);
+
     *out = rot;
     err = ASDF_VALUE_OK;
 cleanup:

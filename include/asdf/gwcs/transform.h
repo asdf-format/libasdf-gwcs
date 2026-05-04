@@ -99,10 +99,16 @@ typedef struct _asdf_gwcs_transform {
      * */
     const asdf_gwcs_transform_t *inverse;
 
-    /** NULL-terminated array of names of input variables */
+    /** Number of input variables. */
+    uint32_t n_inputs;
+
+    /** Number of output variables. */
+    uint32_t n_outputs;
+
+    /** Array of ``n_inputs`` input variable name strings (heap-allocated). */
     const char **inputs;
 
-    /** NULL-terminated array of names of output variables */
+    /** Array of ``n_outputs`` output variable name strings (heap-allocated). */
     const char **outputs;
 
     /** Bounding box of the model as `asdf_gwcs_bounding_box_t` */

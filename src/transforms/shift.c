@@ -39,6 +39,8 @@ static asdf_value_err_t asdf_gwcs_shift_deserialize(
     if (ASDF_IS_ERR(err))
         goto cleanup;
 
+    asdf_gwcs_transform_arity_set(&shift->base, asdf_value_file(value), 1, 1);
+
     *out = shift;
     err = ASDF_VALUE_OK;
 cleanup:

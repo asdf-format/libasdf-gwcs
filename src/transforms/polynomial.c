@@ -73,6 +73,8 @@ static asdf_value_err_t asdf_gwcs_polynomial_deserialize(
     poly->coefficients = coefficients;
     coefficients = NULL;
 
+    asdf_gwcs_transform_arity_set(&poly->base, asdf_value_file(value), ndim, 1);
+
     *out = poly;
     err = ASDF_VALUE_OK;
 cleanup:

@@ -1,7 +1,10 @@
 #include <stdatomic.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <asdf/extension_util.h>
 #include <asdf/extension.h>
+#include <asdf/log.h>
 
 #include "gwcs.h"
 #include "transforms/compose.h"
@@ -77,7 +80,62 @@ asdf_value_err_t asdf_gwcs_transform_parse(asdf_value_t *value, asdf_gwcs_transf
     if (!ASDF_IS_OPTIONAL_OK(err))
         goto failure;
 
-    // TODO: Mostly not implemented yet.
+    /* Parse optional inputs/outputs name sequences */
+    const char *io_keys[2] = {"inputs", "outputs"};
+    uint32_t *io_counts[2] = {&transform->n_inputs, &transform->n_outputs};
+    const char ***io_arrays[2] = {&transform->inputs, &transform->outputs};
+
+    for (int k = 0; k < 2; k++) {
+        asdf_sequence_t *seq = NULL;
+        err = asdf_get_optional_property(
+            transform_map, io_keys[k], ASDF_VALUE_SEQUENCE, NULL, (void *)&seq);
+
+        if (!ASDF_IS_OPTIONAL_OK(err))
+            goto failure;
+
+        if (!seq)
+            continue;
+
+        int n = asdf_sequence_size(seq);
+
+        if (n > 0) {
+            char **arr = calloc((size_t)n, sizeof(char *));
+
+            if (!arr) {
+                asdf_sequence_destroy(seq);
+                err = ASDF_VALUE_ERR_OOM;
+                goto failure;
+            }
+
+            *io_counts[k] = (uint32_t)n;
+            *io_arrays[k] = (const char **)arr;
+
+            asdf_sequence_iter_t *iter = asdf_sequence_iter_init(seq);
+
+            while (asdf_sequence_iter_next(&iter)) {
+                const char *s = NULL;
+                err = asdf_value_as_string0(iter->value, &s);
+
+                if (!ASDF_IS_OK(err)) {
+                    asdf_sequence_iter_destroy(iter);
+                    asdf_sequence_destroy(seq);
+                    goto failure;
+                }
+
+                arr[iter->index] = strdup(s);
+
+                if (!arr[iter->index]) {
+                    err = ASDF_VALUE_ERR_OOM;
+                    asdf_sequence_iter_destroy(iter);
+                    asdf_sequence_destroy(seq);
+                    goto failure;
+                }
+            }
+        }
+
+        asdf_sequence_destroy(seq);
+    }
+
     err = ASDF_VALUE_OK;
 
 failure:
@@ -90,8 +148,53 @@ void asdf_gwcs_transform_clean(asdf_gwcs_transform_t *transform) {
     if (!transform)
         return;
 
+    if (transform->inputs) {
+        for (uint32_t idx = 0; idx < transform->n_inputs; idx++)
+            free((char *)transform->inputs[idx]);
+        free((void *)transform->inputs);
+    }
+
+    if (transform->outputs) {
+        for (uint32_t idx = 0; idx < transform->n_outputs; idx++)
+            free((char *)transform->outputs[idx]);
+        free((void *)transform->outputs);
+    }
+
     asdf_gwcs_bounding_box_destroy((asdf_gwcs_bounding_box_t *)transform->bounding_box);
     ZERO_MEMORY(transform, sizeof(asdf_gwcs_transform_t));
+}
+
+
+void asdf_gwcs_transform_arity_set(
+    asdf_gwcs_transform_t *transform,
+    UNUSED(const asdf_file_t *file),
+    uint32_t implicit_n_inputs,
+    uint32_t implicit_n_outputs) {
+    if (implicit_n_inputs > 0) {
+        if (transform->n_inputs == 0) {
+            transform->n_inputs = implicit_n_inputs;
+        } else if (transform->n_inputs != implicit_n_inputs) {
+            ASDF_LOG(
+                file,
+                ASDF_LOG_WARN,
+                "transform n_inputs %u does not match implicit count %u",
+                transform->n_inputs,
+                implicit_n_inputs);
+        }
+    }
+
+    if (implicit_n_outputs > 0) {
+        if (transform->n_outputs == 0) {
+            transform->n_outputs = implicit_n_outputs;
+        } else if (transform->n_outputs != implicit_n_outputs) {
+            ASDF_LOG(
+                file,
+                ASDF_LOG_WARN,
+                "transform n_outputs %u does not match implicit count %u",
+                transform->n_outputs,
+                implicit_n_outputs);
+        }
+    }
 }
 
 

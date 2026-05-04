@@ -71,6 +71,14 @@ static asdf_value_err_t asdf_gwcs_concatenate_deserialize(
     concat->forward = forward;
     forward = NULL;
 
+    uint32_t sum_inputs = 0, sum_outputs = 0;
+    for (int idx = 0; idx < n; idx++) {
+        sum_inputs += concat->forward[idx]->n_inputs;
+        sum_outputs += concat->forward[idx]->n_outputs;
+    }
+    asdf_gwcs_transform_arity_set(
+        &concat->base, asdf_value_file(value), sum_inputs, sum_outputs);
+
     *out = concat;
     err = ASDF_VALUE_OK;
 cleanup:
