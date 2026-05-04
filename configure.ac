@@ -43,10 +43,24 @@ AC_ARG_ENABLE([debug],
 AS_IF([test "x$enable_debug" = "xyes"], [
   ASDF_GWCS_CFLAGS="$ASDF_GWCS_CFLAGS -g -O0"
   AC_DEFINE([DEBUG], [1], [Define if debugging is enabled])
-  ASDF_GWCS_BUILD_MODE="${ASDF_BUILD_MODE}debug "
+  ASDF_GWCS_BUILD_MODE="${ASDF_GWCS_BUILD_MODE}debug "
 ])
 
 AM_CONDITIONAL([DEBUG], [test "x$enable_debug" = "xyes"])
+
+# --with-asan
+AC_ARG_WITH([asan],
+  [AS_HELP_STRING([--with-asan], [Build with AddressSanitizer support])],
+  [with_asan=yes],
+  [with_asan=no])
+
+AS_IF([test "x$with_asan" = "xyes"], [
+  ASDF_GWCS_CFLAGS="$ASDF_GWCS_CFLAGS -O1 -g -fsanitize=address -fno-omit-frame-pointer"
+  ASDF_GWCS_LDFLAGS="$ASDF_GWCS_LDFLAGS -fsanitize=address"
+  AC_DEFINE([WITH_ASAN], [1], [Defined if building with AddressSanitizer])
+  ASDF_GWCS_BUILD_MODE="${ASDF_GWCS_BUILD_MODE}asan "
+])
+
 
 # Logging flags
 AC_ARG_ENABLE([logging],

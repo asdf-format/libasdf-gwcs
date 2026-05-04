@@ -94,7 +94,7 @@ jobs:
         run: |
           CONFIGURE_FLAGS=""
           if [ "${{ matrix.asan }}" = "yes" ]; then
-            CONFIGURE_FLAGS="--enable-asan"
+            CONFIGURE_FLAGS="--with-asan"
           fi
           PKG_CONFIG_PATH=/tmp/libasdf-inst/lib/pkgconfig \
             ./configure CC=${{ matrix.cc }} $CONFIGURE_FLAGS
