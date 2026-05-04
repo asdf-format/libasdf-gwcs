@@ -29,6 +29,12 @@ unit_test_cppflags = \
 
 unit_test_cflags = $(munit_cflags) $(LIBASDF_CFLAGS) $(ASDF_GWCS_CFLAGS)
 unit_test_ldflags = $(LDFLAGS)
+
+if DEBUG
+unit_test_cflags += -DMUNIT_NO_FORK
+unit_test_ldflags += -rdynamic
+endif
+
 unit_test_ldadd = libmunit.a $(top_builddir)/libasdf-gwcs.la $(LIBASDF_LIBS)
 
 check_LIBRARIES = libmunit.a

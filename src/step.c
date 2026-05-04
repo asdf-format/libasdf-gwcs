@@ -125,7 +125,7 @@ static asdf_value_t *asdf_gwcs_step_serialize(
 
     // transform is optional; null means no transform (last step in wcs)
     if (step->transform) {
-        asdf_value_t *transform_val = asdf_gwcs_transform_value_of(file, step->transform);
+        asdf_value_t *transform_val = asdf_value_of_gwcs_transform(file, step->transform);
 
         if (!transform_val)
             goto cleanup;

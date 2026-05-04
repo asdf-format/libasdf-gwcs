@@ -9,6 +9,13 @@
 #include <asdf/gwcs/frame2d.h>
 #include <asdf/gwcs/frame_celestial.h>
 #include <asdf/gwcs/step.h>
+#include <asdf/gwcs/transform.h>
+#include <asdf/gwcs/transforms/compose.h>
+#include <asdf/gwcs/transforms/concatenate.h>
+#include <asdf/gwcs/transforms/polynomial.h>
+#include <asdf/gwcs/transforms/remap_axes.h>
+#include <asdf/gwcs/transforms/rotate_sequence_3d.h>
+#include <asdf/gwcs/transforms/shift.h>
 #include <asdf/gwcs/wcs.h>
 
 #endif /* ASDF_GWCS_GWCS_H */

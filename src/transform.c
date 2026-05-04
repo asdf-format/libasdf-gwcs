@@ -1,7 +1,11 @@
 #include <stdatomic.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <asdf/extension_util.h>
 #include <asdf/extension.h>
+#include <asdf/log.h>
+#include <asdf/value.h>
 
 #include "gwcs.h"
 #include "types/asdf_gwcs_transform_map.h"
@@ -49,12 +53,12 @@ asdf_value_err_t asdf_gwcs_transform_parse(asdf_value_t *value, asdf_gwcs_transf
 
     asdf_gwcs_transform_type_t type = asdf_gwcs_transform_type_get(parsed_tag->name);
 
-    if (ASDF_GWCS_TRANSFORM_INVALID == type) {
-        err = ASDF_VALUE_ERR_TYPE_MISMATCH;
-        goto failure;
-    }
+    /* Unknown tags are treated as generic rather than an error */
+    if (ASDF_GWCS_TRANSFORM_INVALID == type)
+        type = ASDF_GWCS_TRANSFORM_GENERIC;
 
     transform->type = type;
+    transform->ext = asdf_extension_get(asdf_value_file(value), tag);
 
     err = asdf_get_optional_property(
         transform_map, "name", ASDF_VALUE_STRING, NULL, (void *)&transform->name);
@@ -72,7 +76,62 @@ asdf_value_err_t asdf_gwcs_transform_parse(asdf_value_t *value, asdf_gwcs_transf
     if (!ASDF_IS_OPTIONAL_OK(err))
         goto failure;
 
-    // TODO: Mostly not implemented yet.
+    /* Parse optional inputs/outputs name sequences */
+    const char *io_keys[2] = {"inputs", "outputs"};
+    uint32_t *io_counts[2] = {&transform->n_inputs, &transform->n_outputs};
+    const char ***io_arrays[2] = {&transform->inputs, &transform->outputs};
+
+    for (int k = 0; k < 2; k++) {
+        asdf_sequence_t *seq = NULL;
+        err = asdf_get_optional_property(
+            transform_map, io_keys[k], ASDF_VALUE_SEQUENCE, NULL, (void *)&seq);
+
+        if (!ASDF_IS_OPTIONAL_OK(err))
+            goto failure;
+
+        if (!seq)
+            continue;
+
+        int n = asdf_sequence_size(seq);
+
+        if (n > 0) {
+            char **arr = calloc((size_t)n, sizeof(char *));
+
+            if (!arr) {
+                asdf_sequence_destroy(seq);
+                err = ASDF_VALUE_ERR_OOM;
+                goto failure;
+            }
+
+            *io_counts[k] = (uint32_t)n;
+            *io_arrays[k] = (const char **)arr;
+
+            asdf_sequence_iter_t *iter = asdf_sequence_iter_init(seq);
+
+            while (asdf_sequence_iter_next(&iter)) {
+                const char *s = NULL;
+                err = asdf_value_as_string0(iter->value, &s);
+
+                if (!ASDF_IS_OK(err)) {
+                    asdf_sequence_iter_destroy(iter);
+                    asdf_sequence_destroy(seq);
+                    goto failure;
+                }
+
+                arr[iter->index] = strdup(s);
+
+                if (!arr[iter->index]) {
+                    err = ASDF_VALUE_ERR_OOM;
+                    asdf_sequence_iter_destroy(iter);
+                    asdf_sequence_destroy(seq);
+                    goto failure;
+                }
+            }
+        }
+
+        asdf_sequence_destroy(seq);
+    }
+
     err = ASDF_VALUE_OK;
 
 failure:
@@ -85,8 +144,53 @@ void asdf_gwcs_transform_clean(asdf_gwcs_transform_t *transform) {
     if (!transform)
         return;
 
+    if (transform->inputs) {
+        for (uint32_t idx = 0; idx < transform->n_inputs; idx++)
+            free((char *)transform->inputs[idx]);
+        free((void *)transform->inputs);
+    }
+
+    if (transform->outputs) {
+        for (uint32_t idx = 0; idx < transform->n_outputs; idx++)
+            free((char *)transform->outputs[idx]);
+        free((void *)transform->outputs);
+    }
+
     asdf_gwcs_bounding_box_destroy((asdf_gwcs_bounding_box_t *)transform->bounding_box);
     ZERO_MEMORY(transform, sizeof(asdf_gwcs_transform_t));
+}
+
+
+void asdf_gwcs_transform_arity_set(
+    asdf_gwcs_transform_t *transform,
+    UNUSED(const asdf_file_t *file),
+    uint32_t implicit_n_inputs,
+    uint32_t implicit_n_outputs) {
+    if (implicit_n_inputs > 0) {
+        if (transform->n_inputs == 0) {
+            transform->n_inputs = implicit_n_inputs;
+        } else if (transform->n_inputs != implicit_n_inputs) {
+            ASDF_LOG(
+                file,
+                ASDF_LOG_WARN,
+                "transform n_inputs %u does not match implicit count %u",
+                transform->n_inputs,
+                implicit_n_inputs);
+        }
+    }
+
+    if (implicit_n_outputs > 0) {
+        if (transform->n_outputs == 0) {
+            transform->n_outputs = implicit_n_outputs;
+        } else if (transform->n_outputs != implicit_n_outputs) {
+            ASDF_LOG(
+                file,
+                ASDF_LOG_WARN,
+                "transform n_outputs %u does not match implicit count %u",
+                transform->n_outputs,
+                implicit_n_outputs);
+        }
+    }
 }
 
 
@@ -94,12 +198,9 @@ void asdf_gwcs_transform_destroy(asdf_gwcs_transform_t *transform) {
     if (!transform)
         return;
 
-    switch (transform->type) {
-    case ASDF_GWCS_TRANSFORM_FITSWCS_IMAGING:
-        asdf_gwcs_fits_destroy((asdf_gwcs_fits_t *)transform);
+    if (transform->ext && transform->ext->dealloc) {
+        transform->ext->dealloc(transform);
         return;
-    default:
-        break;
     }
 
     asdf_gwcs_transform_clean(transform);
@@ -108,24 +209,17 @@ void asdf_gwcs_transform_destroy(asdf_gwcs_transform_t *transform) {
 
 
 asdf_value_err_t asdf_value_as_gwcs_transform(asdf_value_t *value, asdf_gwcs_transform_t **out) {
-    // TODO: This has the same problem as asdf_value_as_gwcs_frame; currently
-    // we only support fitswcs_imaging transform so there is no problem, but
-    // it will not scale so this needs to be totally rewritten later
     const char *tag_str = asdf_value_tag(value);
-    asdf_tag_t *tag = asdf_tag_parse(tag_str);
-    asdf_gwcs_transform_type_t type = asdf_gwcs_transform_type_get(tag->name);
-    asdf_tag_destroy(tag);
 
-    switch (type) {
-    case ASDF_GWCS_TRANSFORM_INVALID:
+    if (UNLIKELY(!tag_str))
         return ASDF_VALUE_ERR_TYPE_MISMATCH;
-    case ASDF_GWCS_TRANSFORM_FITSWCS_IMAGING:
-        return asdf_value_as_gwcs_fits(value, (asdf_gwcs_fits_t **)out);
-    default:
-        break;
-    }
 
-    // Generic case
+    const asdf_extension_t *ext = asdf_extension_get(asdf_value_file(value), tag_str);
+
+    if (ext)
+        return asdf_value_as_extension_type(value, ext, (void **)out);
+
+    // Generic / unknown transform: parse only the base fields
     asdf_gwcs_transform_t *transform = calloc(1, sizeof(asdf_gwcs_transform_t));
 
     if (!transform)
@@ -186,6 +280,14 @@ static const char *const transform_type_to_tag_map[ASDF_GWCS_TRANSFORM_LAST] = {
     "zenithal_equidistant",
     [ASDF_GWCS_TRANSFORM_ZENITHAL_PERSPECTIVE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX
     "zenithal_perspective",
+    [ASDF_GWCS_TRANSFORM_SHIFT] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "shift",
+    [ASDF_GWCS_TRANSFORM_SCALE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "scale",
+    [ASDF_GWCS_TRANSFORM_REMAP_AXES] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes",
+    [ASDF_GWCS_TRANSFORM_POLYNOMIAL] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "polynomial",
+    [ASDF_GWCS_TRANSFORM_ROTATE_SEQUENCE_3D] = ASDF_GWCS_TRANSFORM_TAG_PREFIX
+    "rotate_sequence_3d",
+    [ASDF_GWCS_TRANSFORM_COMPOSE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "compose",
+    [ASDF_GWCS_TRANSFORM_CONCATENATE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate",
 };
 
 
@@ -195,6 +297,24 @@ const char *asdf_gwcs_transform_type_to_tag(asdf_gwcs_transform_type_t type) {
 
     return transform_type_to_tag_map[type];
 }
+
+
+/** Versioned tags for concrete (registered) transforms, for extension lookup
+ *
+ * This is a temporary solution for the lack of wildcard extension type lookup
+ * in libasdf; for now we just hard-code the supported versions, but longer-
+ * term this should be more easily maintainable...
+ */
+static const char *const transform_type_to_versioned_tag_map[ASDF_GWCS_TRANSFORM_LAST] = {
+    [ASDF_GWCS_TRANSFORM_FITSWCS_IMAGING] = ASDF_GWCS_TAG_PREFIX "fitswcs_imaging-1.0.0",
+    [ASDF_GWCS_TRANSFORM_SHIFT] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "shift-1.3.0",
+    [ASDF_GWCS_TRANSFORM_REMAP_AXES] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes-1.4.0",
+    [ASDF_GWCS_TRANSFORM_POLYNOMIAL] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "polynomial-1.2.0",
+    [ASDF_GWCS_TRANSFORM_ROTATE_SEQUENCE_3D] = ASDF_GWCS_TRANSFORM_TAG_PREFIX
+    "rotate_sequence_3d-1.1.0",
+    [ASDF_GWCS_TRANSFORM_COMPOSE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "compose-1.3.0",
+    [ASDF_GWCS_TRANSFORM_CONCATENATE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate-1.3.0",
+};
 
 
 asdf_value_err_t asdf_gwcs_transform_serialize_base(
@@ -248,13 +368,26 @@ static asdf_value_t *asdf_gwcs_generic_transform_serialize(
 }
 
 
-asdf_value_t *asdf_gwcs_transform_value_of(
+asdf_value_t *asdf_value_of_gwcs_transform(
     asdf_file_t *file, const asdf_gwcs_transform_t *transform) {
     if (!transform)
         return NULL;
 
-    if (transform->type == ASDF_GWCS_TRANSFORM_FITSWCS_IMAGING)
-        return asdf_value_of_gwcs_fits(file, (const asdf_gwcs_fits_t *)transform);
+    if (transform->ext)
+        return asdf_value_of_extension_type(file, transform, transform->ext);
+
+    /* For programmatically-constructed transforms (ext == NULL), look up
+     * the extension by versioned tag so the concrete serializer is used. */
+    if ((unsigned int)transform->type < ASDF_GWCS_TRANSFORM_LAST) {
+        const char *vtag = transform_type_to_versioned_tag_map[transform->type];
+
+        if (vtag) {
+            const asdf_extension_t *ext = asdf_extension_get(file, vtag);
+
+            if (ext)
+                return asdf_value_of_extension_type(file, transform, ext);
+        }
+    }
 
     const char *tag = asdf_gwcs_transform_type_to_tag(transform->type);
 
@@ -326,7 +459,16 @@ ASDF_CONSTRUCTOR static void asdf_gwcs_transform_map_create() {
          {ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_equidistant",
           ASDF_GWCS_TRANSFORM_ZENITHAL_EQUIDISTANT},
          {ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_perspective",
-          ASDF_GWCS_TRANSFORM_ZENITHAL_PERSPECTIVE}});
+          ASDF_GWCS_TRANSFORM_ZENITHAL_PERSPECTIVE},
+         /* Atomic transforms */
+         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "shift", ASDF_GWCS_TRANSFORM_SHIFT},
+         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "scale", ASDF_GWCS_TRANSFORM_SCALE},
+         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes", ASDF_GWCS_TRANSFORM_REMAP_AXES},
+         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "polynomial", ASDF_GWCS_TRANSFORM_POLYNOMIAL},
+         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "rotate_sequence_3d",
+          ASDF_GWCS_TRANSFORM_ROTATE_SEQUENCE_3D},
+         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "compose", ASDF_GWCS_TRANSFORM_COMPOSE},
+         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate", ASDF_GWCS_TRANSFORM_CONCATENATE}});
 
     atomic_store_explicit(&global_transform_map_initialized, true, memory_order_release);
 }

@@ -64,6 +64,14 @@ typedef enum {
     ASDF_GWCS_TRANSFORM_ZENITHAL_EQUAL_AREA,
     ASDF_GWCS_TRANSFORM_ZENITHAL_EQUIDISTANT,
     ASDF_GWCS_TRANSFORM_ZENITHAL_PERSPECTIVE,
+    /* Atomic transforms */
+    ASDF_GWCS_TRANSFORM_SHIFT,
+    ASDF_GWCS_TRANSFORM_SCALE,
+    ASDF_GWCS_TRANSFORM_REMAP_AXES,
+    ASDF_GWCS_TRANSFORM_POLYNOMIAL,
+    ASDF_GWCS_TRANSFORM_ROTATE_SEQUENCE_3D,
+    ASDF_GWCS_TRANSFORM_COMPOSE,
+    ASDF_GWCS_TRANSFORM_CONCATENATE,
     ASDF_GWCS_TRANSFORM_LAST
 } asdf_gwcs_transform_type_t;
 
@@ -73,6 +81,12 @@ typedef struct _asdf_gwcs_transform {
      * Enum value specifying the type of transform
      */
     asdf_gwcs_transform_type_t type;
+
+    /**
+     * Extension descriptor for this transform, set during deserialization.
+     * NULL for generic/unknown transforms.
+     */
+    const asdf_extension_t *ext;
 
     /**
      * A human-readable name for the transform (may be `NULL`)
@@ -91,10 +105,16 @@ typedef struct _asdf_gwcs_transform {
      * */
     const asdf_gwcs_transform_t *inverse;
 
-    /** NULL-terminated array of names of input variables */
+    /** Number of input variables. */
+    uint32_t n_inputs;
+
+    /** Number of output variables. */
+    uint32_t n_outputs;
+
+    /** Array of ``n_inputs`` input variable name strings (heap-allocated). */
     const char **inputs;
 
-    /** NULL-terminated array of names of output variables */
+    /** Array of ``n_outputs`` output variable name strings (heap-allocated). */
     const char **outputs;
 
     /** Bounding box of the model as `asdf_gwcs_bounding_box_t` */
