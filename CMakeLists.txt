@@ -56,6 +56,34 @@ configure_file(${CMAKE_SOURCE_DIR}/config.h.cmake
     ${CMAKE_BINARY_DIR}/include/config.h @ONLY)
 include_directories(${CMAKE_BINARY_DIR}/include)
 
+if(ASDF_GWCS_ENABLE_AST)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(YAML REQUIRED yaml-0.1)
+
+    if(EXISTS "${CMAKE_SOURCE_DIR}/third_party/ast/.git")
+        include(ExternalProject)
+        set(AST_INSTALL_DIR ${CMAKE_BINARY_DIR}/ast-install)
+        ExternalProject_Add(ast_vendored
+            SOURCE_DIR ${CMAKE_SOURCE_DIR}/third_party/ast
+            CONFIGURE_COMMAND
+                sh -c "cd <SOURCE_DIR> && [ -f configure ] || ./bootstrap.local"
+                COMMAND <SOURCE_DIR>/configure
+                    --prefix=<INSTALL_DIR>
+                    --disable-shared
+                    --enable-static
+                    "CFLAGS=-fPIC"
+            BUILD_COMMAND make -j${CMAKE_BUILD_PARALLEL_LEVEL}
+            INSTALL_DIR ${AST_INSTALL_DIR}
+            BUILD_IN_SOURCE TRUE
+        )
+        set(AST_INCLUDE_DIR ${AST_INSTALL_DIR}/include)
+        set(AST_LIBRARY ${AST_INSTALL_DIR}/lib/libast.a)
+    else()
+        find_library(AST_LIBRARY NAMES ast REQUIRED)
+        find_path(AST_INCLUDE_DIR NAMES ast.h REQUIRED)
+    endif()
+endif()
+
 add_subdirectory(third_party)
 add_subdirectory(src)
 add_subdirectory(include)

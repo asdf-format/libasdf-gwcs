@@ -4,6 +4,9 @@
 /* Enable logging */
 #define ASDF_LOG_ENABLED 1
 
+/* Define if AST evaluation backend is available */
+#cmakedefine HAVE_AST
+
 /* Name of package */
 #define PACKAGE "@PACKAGE_NAME@"
 
