@@ -1,6 +1,7 @@
 SUBDIRS = include tests third_party
 
 src_files = \
+    src/backend.c \
     src/fitswcs_imaging.c \
     src/frame.c \
     src/frame2d.c \
@@ -23,6 +24,7 @@ src_files = \
     src/wcs.c
 
 src_headers = \
+    src/backend.h \
     src/fitswcs_imaging.h \
     src/frame.h \
     src/gwcs.h \
@@ -40,6 +42,7 @@ src_headers = \
     src/transforms/scale.h \
     src/transforms/shift.h \
     src/transforms/spherical_cartesian.h \
+    src/types/asdf_gwcs_backend_map.h \
     src/types/asdf_gwcs_transform_map.h \
     src/util.h
 

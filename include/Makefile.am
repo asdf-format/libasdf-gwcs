@@ -1,4 +1,5 @@
 nobase_include_HEADERS = \
+    asdf/gwcs/backend.h \
     asdf/gwcs/core.h \
     asdf/gwcs/fitswcs_imaging.h \
     asdf/gwcs/frame.h \
