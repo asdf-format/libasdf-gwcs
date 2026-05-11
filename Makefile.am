@@ -60,6 +60,12 @@ libasdf_gwcs_la_SOURCES = $(src_files)
 libasdf_gwcs_la_CFLAGS = $(AM_CFLAGS)
 libasdf_gwcs_la_LIBADD = third_party/libstc.la $(LIBASDF_LIBS)
 
+if HAVE_AST
+libasdf_gwcs_la_SOURCES += src/backends/ast_yaml.c
+libasdf_gwcs_la_CFLAGS  += $(AST_CFLAGS)
+libasdf_gwcs_la_LIBADD  += $(AST_LIBS)
+endif
+
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libasdf-gwcs.pc
 CLEANFILES = libasdf-gwcs.pc

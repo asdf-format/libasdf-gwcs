@@ -56,6 +56,16 @@ set_target_properties(libasdf-gwcs PROPERTIES
     OUTPUT_NAME "asdf-gwcs"
 )
 
+if(ASDF_GWCS_ENABLE_AST)
+    target_sources(libasdf_gwcs_objs PRIVATE backends/ast_yaml.c)
+    target_compile_definitions(libasdf_gwcs_objs PRIVATE HAVE_AST)
+    target_include_directories(libasdf_gwcs_objs PRIVATE ${AST_INCLUDE_DIR})
+    target_link_libraries(libasdf-gwcs PUBLIC ${AST_LIBRARY})
+    if(TARGET ast_vendored)
+        add_dependencies(libasdf_gwcs_objs ast_vendored)
+    endif()
+endif()
+
 install(TARGETS libasdf-gwcs
     DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )

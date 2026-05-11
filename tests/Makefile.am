@@ -15,7 +15,7 @@ $(munit_submodule):
 	    echo "Skipping submodule init: not in a Git repository"; \
 	fi
 
-check_PROGRAMS = test-gwcs.unit
+check_PROGRAMS = test-gwcs.unit test-gwcs-eval.unit
 
 TESTS_ENVIRONMENT = top_builddir=$(top_builddir) top_srcdir=$(top_srcdir)
 TESTS = $(check_PROGRAMS)
@@ -48,5 +48,12 @@ test_gwcs_unit_CPPFLAGS = $(unit_test_cppflags)
 test_gwcs_unit_CFLAGS = $(unit_test_cflags)
 test_gwcs_unit_LDFLAGS = $(unit_test_ldflags)
 test_gwcs_unit_LDADD = $(unit_test_ldadd)
+
+# test-gwcs-eval.unit
+test_gwcs_eval_unit_SOURCES = test-gwcs-eval.c
+test_gwcs_eval_unit_CPPFLAGS = $(unit_test_cppflags)
+test_gwcs_eval_unit_CFLAGS = $(unit_test_cflags) $(AST_CFLAGS)
+test_gwcs_eval_unit_LDFLAGS = $(unit_test_ldflags)
+test_gwcs_eval_unit_LDADD = $(unit_test_ldadd) $(AST_LIBS)
 
 check-local: $(munit_submodule)
