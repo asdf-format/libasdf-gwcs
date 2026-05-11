@@ -112,9 +112,24 @@ AS_IF([test "x$enable_ast" = "xyes"], [
        AS_IF([(cd "$srcdir/third_party/ast" && ./bootstrap.local)],
          [],
          [AC_MSG_ERROR([Failed to bootstrap AST submodule])])])
+    dnl Build vendored AST as a PIC static library so it can be embedded in
+    dnl our shared library.  ac_configure_args is used when the subdir loop
+    dnl runs at AC_OUTPUT time, so set it here and leave it — third_party/ast
+    dnl is the only AC_CONFIG_SUBDIRS entry so there is nothing else to pollute.
+    ac_configure_args="$ac_configure_args --disable-shared --enable-static --with-pic"
     AC_CONFIG_SUBDIRS([third_party/ast])
-    AST_CFLAGS="-I\$(top_builddir)/third_party/ast/src"
-    AST_LIBS="\$(top_builddir)/third_party/ast/src/libast.a"
+    dnl ast.h is generated in the top of the AST build directory
+    AST_CFLAGS="-I\$(top_builddir)/third_party/ast"
+    dnl Reference .la files directly so libtool uses the vendored library.
+    dnl libast_pal and libast_cminpack are already in libast.la's dependency_libs.
+    dnl The grf and err stubs are not, so they must be listed explicitly.
+    _ast_dir="\$(top_builddir)/third_party/ast"
+    AST_LIBS="$_ast_dir/libast.la"
+    AST_LIBS="$AST_LIBS $_ast_dir/libast_grf_2.0.la"
+    AST_LIBS="$AST_LIBS $_ast_dir/libast_grf_3.2.la"
+    AST_LIBS="$AST_LIBS $_ast_dir/libast_grf_5.6.la"
+    AST_LIBS="$AST_LIBS $_ast_dir/libast_grf3d.la"
+    AST_LIBS="$AST_LIBS $_ast_dir/libast_err.la"
     HAVE_AST=yes
   ], [
     dnl Vendored not available; try system libast

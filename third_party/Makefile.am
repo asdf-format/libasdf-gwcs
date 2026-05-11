@@ -1,3 +1,10 @@
+if HAVE_AST
+SUBDIRS = ast
+endif
+
+# AST is a build-only dependency; don't recurse into its test suite
+check-recursive: ;
+
 # third_party headers to include
 stc_dir = STC
 
