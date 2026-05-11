@@ -5,6 +5,7 @@
 #include "asdf/gwcs/transform.h" // IWYU pragma: export
 #undef ASDF_GWCS_INTERNAL
 
+#include <asdf/util.h>
 #include <asdf/value.h>
 
 #include "util.h"

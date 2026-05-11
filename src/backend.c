@@ -21,8 +21,7 @@ const asdf_gwcs_backend_t *asdf_gwcs_backend_get(const char *name) {
     if (!atomic_load_explicit(&g_backends_initialized, memory_order_acquire))
         return NULL;
 
-    const asdf_gwcs_backend_map_value *item =
-        asdf_gwcs_backend_map_get(&g_backends, name);
+    const asdf_gwcs_backend_map_value *item = asdf_gwcs_backend_map_get(&g_backends, name);
 
     if (!item)
         return NULL;
@@ -35,8 +34,7 @@ const asdf_gwcs_backend_t *asdf_gwcs_backend_get_default(void) {
     if (!atomic_load_explicit(&g_backends_initialized, memory_order_acquire))
         return NULL;
 
-    c_foreach(it, asdf_gwcs_backend_map, g_backends)
-        return it.ref->second;
+    c_foreach(it, asdf_gwcs_backend_map, g_backends) return it.ref->second;
 
     return NULL;
 }

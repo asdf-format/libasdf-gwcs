@@ -1,6 +1,6 @@
+#include "asdf/gwcs/eval.h"
 #include "asdf/gwcs/backend.h"
 #include "asdf/gwcs/core.h"
-#include "asdf/gwcs/eval.h"
 #include "asdf/gwcs/wcs.h"
 
 #include "backend.h"
@@ -8,8 +8,10 @@
 
 
 asdf_gwcs_eval_t *asdf_gwcs_eval_create(
-        asdf_file_t *file, const asdf_gwcs_t *wcs,
-        const asdf_gwcs_backend_t *backend, asdf_gwcs_err_t *err_out) {
+    asdf_file_t *file,
+    const asdf_gwcs_t *wcs,
+    const asdf_gwcs_backend_t *backend,
+    asdf_gwcs_err_t *err_out) {
 
     asdf_gwcs_err_t err = ASDF_GWCS_OK;
     asdf_gwcs_eval_t *eval = NULL;
@@ -41,9 +43,12 @@ done:
 
 
 asdf_gwcs_err_t asdf_gwcs_eval_2d(
-        asdf_gwcs_eval_t *eval,
-        const double *xin, const double *yin,
-        double *xout, double *yout, size_t n) {
+    asdf_gwcs_eval_t *eval,
+    const double *xin,
+    const double *yin,
+    double *xout,
+    double *yout,
+    size_t n) {
     return eval->eval_2d(eval, xin, yin, xout, yout, n);
 }
 
