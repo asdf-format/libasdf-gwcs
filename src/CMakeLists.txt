@@ -2,6 +2,7 @@ project(libasdf-gwcs)
 
 set(libasdf_gwcs_sources
     backend.c
+    eval.c
     fitswcs_imaging.c
     frame.c
     frame2d.c

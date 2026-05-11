@@ -6,6 +6,7 @@
 
 #include <asdf/gwcs/backend.h>
 #include <asdf/gwcs/core.h>
+#include <asdf/gwcs/eval.h>
 #include <asdf/gwcs/fitswcs_imaging.h>
 #include <asdf/gwcs/frame2d.h>
 #include <asdf/gwcs/frame_celestial.h>

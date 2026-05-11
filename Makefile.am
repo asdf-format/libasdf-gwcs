@@ -2,6 +2,7 @@ SUBDIRS = include tests third_party
 
 src_files = \
     src/backend.c \
+    src/eval.c \
     src/fitswcs_imaging.c \
     src/frame.c \
     src/frame2d.c \
@@ -25,6 +26,7 @@ src_files = \
 
 src_headers = \
     src/backend.h \
+    src/eval.h \
     src/fitswcs_imaging.h \
     src/frame.h \
     src/gwcs.h \
