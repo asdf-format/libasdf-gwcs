@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <asdf/extension_util.h>
 #include <asdf/extension.h>
+#include <asdf/extension_util.h>
 #include <asdf/log.h>
 #include <asdf/value.h>
 
@@ -280,15 +280,18 @@ static const char *const transform_type_to_tag_map[ASDF_GWCS_TRANSFORM_LAST] = {
     "zenithal_equidistant",
     [ASDF_GWCS_TRANSFORM_ZENITHAL_PERSPECTIVE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX
     "zenithal_perspective",
-    [ASDF_GWCS_TRANSFORM_SHIFT] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "shift",
-    [ASDF_GWCS_TRANSFORM_SCALE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "scale",
-    [ASDF_GWCS_TRANSFORM_REMAP_AXES] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes",
-    [ASDF_GWCS_TRANSFORM_POLYNOMIAL] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "polynomial",
-    [ASDF_GWCS_TRANSFORM_ROTATE_SEQUENCE_3D] = ASDF_GWCS_TRANSFORM_TAG_PREFIX
-    "rotate_sequence_3d",
+    [ASDF_GWCS_TRANSFORM_AFFINE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "affine",
     [ASDF_GWCS_TRANSFORM_COMPOSE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "compose",
     [ASDF_GWCS_TRANSFORM_CONCATENATE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate",
-};
+    [ASDF_GWCS_TRANSFORM_CONSTANT] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "constant",
+    [ASDF_GWCS_TRANSFORM_DIVIDE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "divide",
+    [ASDF_GWCS_TRANSFORM_IDENTITY] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "identity",
+    [ASDF_GWCS_TRANSFORM_POLYNOMIAL] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "polynomial",
+    [ASDF_GWCS_TRANSFORM_REMAP_AXES] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes",
+    [ASDF_GWCS_TRANSFORM_ROTATE_SEQUENCE_3D] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "rotate_sequence_3d",
+    [ASDF_GWCS_TRANSFORM_SCALE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "scale",
+    [ASDF_GWCS_TRANSFORM_SHIFT] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "shift",
+    [ASDF_GWCS_TRANSFORM_SPHERICAL_CARTESIAN] = ASDF_GWCS_TAG_PREFIX "spherical_cartesian"};
 
 
 const char *asdf_gwcs_transform_type_to_tag(asdf_gwcs_transform_type_t type) {
@@ -306,15 +309,49 @@ const char *asdf_gwcs_transform_type_to_tag(asdf_gwcs_transform_type_t type) {
  * term this should be more easily maintainable...
  */
 static const char *const transform_type_to_versioned_tag_map[ASDF_GWCS_TRANSFORM_LAST] = {
-    [ASDF_GWCS_TRANSFORM_FITSWCS_IMAGING] = ASDF_GWCS_TAG_PREFIX "fitswcs_imaging-1.0.0",
-    [ASDF_GWCS_TRANSFORM_SHIFT] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "shift-1.3.0",
-    [ASDF_GWCS_TRANSFORM_REMAP_AXES] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes-1.4.0",
-    [ASDF_GWCS_TRANSFORM_POLYNOMIAL] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "polynomial-1.2.0",
-    [ASDF_GWCS_TRANSFORM_ROTATE_SEQUENCE_3D] = ASDF_GWCS_TRANSFORM_TAG_PREFIX
-    "rotate_sequence_3d-1.1.0",
+    [ASDF_GWCS_TRANSFORM_AFFINE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "affine-1.4.0",
     [ASDF_GWCS_TRANSFORM_COMPOSE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "compose-1.3.0",
     [ASDF_GWCS_TRANSFORM_CONCATENATE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate-1.3.0",
+    [ASDF_GWCS_TRANSFORM_CONSTANT] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "constant-1.5.0",
+    [ASDF_GWCS_TRANSFORM_DIVIDE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "divide-1.3.0",
+    [ASDF_GWCS_TRANSFORM_FITSWCS_IMAGING] = ASDF_GWCS_TAG_PREFIX "fitswcs_imaging-1.0.0",
+    [ASDF_GWCS_TRANSFORM_IDENTITY] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "identity-1.3.0",
+    [ASDF_GWCS_TRANSFORM_POLYNOMIAL] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "polynomial-1.2.0",
+    [ASDF_GWCS_TRANSFORM_REMAP_AXES] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes-1.4.0",
+    [ASDF_GWCS_TRANSFORM_ROTATE_SEQUENCE_3D] = ASDF_GWCS_TRANSFORM_TAG_PREFIX
+    "rotate_sequence_3d-1.1.0",
+    [ASDF_GWCS_TRANSFORM_SCALE] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "scale-1.3.0",
+    [ASDF_GWCS_TRANSFORM_SHIFT] = ASDF_GWCS_TRANSFORM_TAG_PREFIX "shift-1.3.0",
+    [ASDF_GWCS_TRANSFORM_SPHERICAL_CARTESIAN] = ASDF_GWCS_TAG_PREFIX "spherical_cartesian-1.3.0",
 };
+
+
+static asdf_value_err_t serialize_string_sequence(
+    asdf_file_t *file, asdf_mapping_t *map, const char *key,
+    const char **strings, uint32_t n) {
+    asdf_sequence_t *seq = asdf_sequence_create(file);
+
+    if (!seq)
+        return ASDF_VALUE_ERR_EMIT_FAILURE;
+
+    asdf_sequence_set_style(seq, ASDF_YAML_NODE_STYLE_FLOW);
+
+    for (uint32_t idx = 0; idx < n; idx++) {
+        asdf_value_err_t err = asdf_sequence_append_string0(seq, strings[idx]);
+
+        if (ASDF_IS_ERR(err)) {
+            asdf_sequence_destroy(seq);
+            return err;
+        }
+    }
+
+    asdf_value_err_t err = asdf_mapping_set_sequence(map, key, seq);
+
+    if (ASDF_IS_ERR(err))
+        asdf_sequence_destroy(seq);
+
+    return err;
+}
 
 
 asdf_value_err_t asdf_gwcs_transform_serialize_base(
@@ -323,6 +360,22 @@ asdf_value_err_t asdf_gwcs_transform_serialize_base(
 
     if (transform->name) {
         err = asdf_mapping_set_string0(map, "name", transform->name);
+
+        if (ASDF_IS_ERR(err))
+            return err;
+    }
+
+    if (transform->inputs && transform->n_inputs > 0) {
+        err = serialize_string_sequence(
+            file, map, "inputs", transform->inputs, transform->n_inputs);
+
+        if (ASDF_IS_ERR(err))
+            return err;
+    }
+
+    if (transform->outputs && transform->n_outputs > 0) {
+        err = serialize_string_sequence(
+            file, map, "outputs", transform->outputs, transform->n_outputs);
 
         if (ASDF_IS_ERR(err))
             return err;
@@ -461,14 +514,19 @@ ASDF_CONSTRUCTOR static void asdf_gwcs_transform_map_create() {
          {ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_perspective",
           ASDF_GWCS_TRANSFORM_ZENITHAL_PERSPECTIVE},
          /* Atomic transforms */
-         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "shift", ASDF_GWCS_TRANSFORM_SHIFT},
-         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "scale", ASDF_GWCS_TRANSFORM_SCALE},
-         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes", ASDF_GWCS_TRANSFORM_REMAP_AXES},
+         {ASDF_GWCS_TAG_PREFIX "spherical_cartesian", ASDF_GWCS_TRANSFORM_SPHERICAL_CARTESIAN},
+         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "affine", ASDF_GWCS_TRANSFORM_AFFINE},
+         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "compose", ASDF_GWCS_TRANSFORM_COMPOSE},
+         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate", ASDF_GWCS_TRANSFORM_CONCATENATE},
+         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "constant", ASDF_GWCS_TRANSFORM_CONSTANT},
+         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "divide", ASDF_GWCS_TRANSFORM_DIVIDE},
+         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "identity", ASDF_GWCS_TRANSFORM_IDENTITY},
          {ASDF_GWCS_TRANSFORM_TAG_PREFIX "polynomial", ASDF_GWCS_TRANSFORM_POLYNOMIAL},
+         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes", ASDF_GWCS_TRANSFORM_REMAP_AXES},
          {ASDF_GWCS_TRANSFORM_TAG_PREFIX "rotate_sequence_3d",
           ASDF_GWCS_TRANSFORM_ROTATE_SEQUENCE_3D},
-         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "compose", ASDF_GWCS_TRANSFORM_COMPOSE},
-         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate", ASDF_GWCS_TRANSFORM_CONCATENATE}});
+         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "scale", ASDF_GWCS_TRANSFORM_SCALE},
+         {ASDF_GWCS_TRANSFORM_TAG_PREFIX "shift", ASDF_GWCS_TRANSFORM_SHIFT}});
 
     atomic_store_explicit(&global_transform_map_initialized, true, memory_order_release);
 }

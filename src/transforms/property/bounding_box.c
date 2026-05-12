@@ -8,9 +8,9 @@
 #include <asdf/log.h>
 #include <asdf/value.h>
 
-#include "asdf/gwcs/transforms/property/bounding_box.h"
 #include "../../gwcs.h"
 #include "../../util.h"
+#include "asdf/gwcs/transforms/property/bounding_box.h"
 
 
 /** Helper to parse bounding box intervals from mapping items */

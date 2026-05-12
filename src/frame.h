@@ -2,10 +2,10 @@
 
 #include <stdint.h>
 
+#include <asdf/value.h>
+
 #include "gwcs.h"
 
-#include <asdf/value.h>
-#include "util.h"
 
 
 /**

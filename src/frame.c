@@ -75,8 +75,7 @@ static asdf_value_err_t get_frame_axes_string_param(
     asdf_value_t *mapping_val = asdf_value_of_mapping(value);
 
     if (size < min_axes || size > max_axes) {
-        warn_invalid_frame_axes_param(
-            mapping_val, propname, ASDF_VALUE_STRING, min_axes, max_axes);
+        warn_invalid_frame_axes_param(mapping_val, propname, ASDF_VALUE_STRING, min_axes, max_axes);
         goto cleanup;
     }
 
@@ -218,6 +217,7 @@ asdf_value_err_t asdf_gwcs_frame_serialize_common(
         if (!seq)
             return ASDF_VALUE_ERR_OOM;
 
+        asdf_sequence_set_style(seq, ASDF_YAML_NODE_STYLE_FLOW);
         err = asdf_mapping_set_sequence(map, "axes_names", seq);
 
         if (ASDF_IS_ERR(err)) {
@@ -232,6 +232,7 @@ asdf_value_err_t asdf_gwcs_frame_serialize_common(
         if (!seq)
             return ASDF_VALUE_ERR_OOM;
 
+        asdf_sequence_set_style(seq, ASDF_YAML_NODE_STYLE_FLOW);
         err = asdf_mapping_set_sequence(map, "axes_order", seq);
 
         if (ASDF_IS_ERR(err)) {
@@ -246,6 +247,7 @@ asdf_value_err_t asdf_gwcs_frame_serialize_common(
         if (!seq)
             return ASDF_VALUE_ERR_OOM;
 
+        asdf_sequence_set_style(seq, ASDF_YAML_NODE_STYLE_FLOW);
         err = asdf_mapping_set_sequence(map, "unit", seq);
 
         if (ASDF_IS_ERR(err)) {
@@ -260,6 +262,7 @@ asdf_value_err_t asdf_gwcs_frame_serialize_common(
         if (!seq)
             return ASDF_VALUE_ERR_OOM;
 
+        asdf_sequence_set_style(seq, ASDF_YAML_NODE_STYLE_FLOW);
         err = asdf_mapping_set_sequence(map, "axis_physical_types", seq);
 
         if (ASDF_IS_ERR(err)) {

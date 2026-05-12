@@ -14,7 +14,8 @@
 #include "util.h"
 
 
-static asdf_gwcs_err_t asdf_gwcs_finalize_fitswcs_imaging(const asdf_file_t *file, asdf_gwcs_t *gwcs) {
+static asdf_gwcs_err_t asdf_gwcs_finalize_fitswcs_imaging(
+    const asdf_file_t *file, asdf_gwcs_t *gwcs) {
     assert(gwcs->n_steps == 2);
     const asdf_gwcs_step_t *step0 = &gwcs->steps[0];
     assert(step0->transform && step0->transform->type == ASDF_GWCS_TRANSFORM_FITSWCS_IMAGING);

@@ -123,6 +123,7 @@ static asdf_value_t *asdf_gwcs_polynomial_serialize(
         .byteorder = ASDF_BYTEORDER_LITTLE,
     };
 
+    asdf_ndarray_storage_set(&ndarray, ASDF_ARRAY_STORAGE_INLINE);
     void *data = asdf_ndarray_data_alloc_temp(file, &ndarray);
 
     if (!data) {
