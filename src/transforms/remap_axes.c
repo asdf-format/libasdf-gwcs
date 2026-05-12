@@ -79,8 +79,7 @@ static asdf_value_err_t asdf_gwcs_remap_axes_deserialize(
         if (remap->mapping[idx] > max_input)
             max_input = remap->mapping[idx];
     }
-    asdf_gwcs_transform_arity_set(
-        &remap->base, asdf_value_file(value), max_input + 1, (uint32_t)n);
+    asdf_gwcs_transform_arity_set(&remap->base, asdf_value_file(value), max_input + 1, (uint32_t)n);
 
     *out = remap;
     err = ASDF_VALUE_OK;

@@ -75,8 +75,7 @@ static asdf_value_err_t get_frame_axes_string_param(
     asdf_value_t *mapping_val = asdf_value_of_mapping(value);
 
     if (size < min_axes || size > max_axes) {
-        warn_invalid_frame_axes_param(
-            mapping_val, propname, ASDF_VALUE_STRING, min_axes, max_axes);
+        warn_invalid_frame_axes_param(mapping_val, propname, ASDF_VALUE_STRING, min_axes, max_axes);
         goto cleanup;
     }
 

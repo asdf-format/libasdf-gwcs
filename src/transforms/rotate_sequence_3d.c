@@ -39,8 +39,7 @@ static asdf_value_err_t asdf_gwcs_rotate_sequence_3d_deserialize(
     if (ASDF_IS_ERR(err))
         goto cleanup;
 
-    err = asdf_get_required_property(
-        map, "angles", ASDF_VALUE_SEQUENCE, NULL, (void *)&angles_seq);
+    err = asdf_get_required_property(map, "angles", ASDF_VALUE_SEQUENCE, NULL, (void *)&angles_seq);
 
     if (ASDF_IS_ERR(err))
         goto cleanup;

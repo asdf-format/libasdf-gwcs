@@ -1,15 +1,19 @@
-#include <stdlib.h>
-
 #include <asdf.h>
 #include <asdf/gwcs/fitswcs_imaging.h>
 #include <asdf/gwcs/gwcs.h>
 #include <asdf/gwcs/transform.h>
+#include <asdf/gwcs/transforms/affine.h>
 #include <asdf/gwcs/transforms/compose.h>
 #include <asdf/gwcs/transforms/concatenate.h>
+#include <asdf/gwcs/transforms/constant.h>
+#include <asdf/gwcs/transforms/divide.h>
+#include <asdf/gwcs/transforms/identity.h>
 #include <asdf/gwcs/transforms/polynomial.h>
 #include <asdf/gwcs/transforms/remap_axes.h>
 #include <asdf/gwcs/transforms/rotate_sequence_3d.h>
+#include <asdf/gwcs/transforms/scale.h>
 #include <asdf/gwcs/transforms/shift.h>
+#include <asdf/gwcs/transforms/spherical_cartesian.h>
 
 #include "munit.h"
 #include "util.h"
@@ -746,6 +750,251 @@ MU_TEST(test_asdf_get_roman_l2_gwcs) {
 }
 
 
+/* scale */
+
+MU_TEST(test_asdf_set_gwcs_scale) {
+    const char *path = get_temp_file_path(fixture->tempfile_prefix, ".asdf");
+    asdf_file_t *file = asdf_open(NULL);
+    assert_not_null(file);
+
+    asdf_gwcs_scale_t scale = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_SCALE},
+        .factor = 3.14,
+    };
+
+    assert_int(asdf_set_gwcs_scale(file, "transform", &scale), ==, ASDF_VALUE_OK);
+    assert_int(asdf_write_to(file, path), ==, 0);
+    asdf_close(file);
+
+    file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_scale_t *scale_out = NULL;
+    assert_int(asdf_get_gwcs_scale(file, "transform", &scale_out), ==, ASDF_VALUE_OK);
+    assert_not_null(scale_out);
+    assert_int(((const asdf_gwcs_transform_t *)scale_out)->type, ==, ASDF_GWCS_TRANSFORM_SCALE);
+    assert_double_equal(scale_out->factor, 3.14, 10);
+    assert_uint32(scale_out->base.n_inputs, ==, 1);
+    assert_uint32(scale_out->base.n_outputs, ==, 1);
+
+    asdf_gwcs_scale_destroy(scale_out);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
+MU_TEST(test_asdf_get_gwcs_scale_from_fixture) {
+    const char *path = get_fixture_file_path("roman_l2_wcs.asdf");
+    asdf_file_t *file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    /* First scale in step 1 (dva_scale_v2, factor ~1.0) */
+    asdf_gwcs_scale_t *scale = NULL;
+    assert_int(asdf_get_gwcs_scale(file,
+        "roman/meta/wcs/steps/1/transform/forward/0/forward/0",
+        &scale), ==, ASDF_VALUE_OK);
+    assert_not_null(scale);
+    assert_int(((const asdf_gwcs_transform_t *)scale)->type, ==, ASDF_GWCS_TRANSFORM_SCALE);
+    assert_double_equal(scale->factor, 1.0000003455620605, 5);
+    assert_uint32(scale->base.n_inputs, ==, 1);
+    assert_uint32(scale->base.n_outputs, ==, 1);
+
+    asdf_gwcs_scale_destroy(scale);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
+/* identity */
+
+MU_TEST(test_asdf_set_gwcs_identity) {
+    const char *path = get_temp_file_path(fixture->tempfile_prefix, ".asdf");
+    asdf_file_t *file = asdf_open(NULL);
+    assert_not_null(file);
+
+    asdf_gwcs_identity_t identity = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_IDENTITY, .n_inputs = 3, .n_outputs = 3},
+    };
+
+    assert_int(asdf_set_gwcs_identity(file, "transform", &identity), ==, ASDF_VALUE_OK);
+    assert_int(asdf_write_to(file, path), ==, 0);
+    asdf_close(file);
+
+    file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_identity_t *identity_out = NULL;
+    assert_int(asdf_get_gwcs_identity(file, "transform", &identity_out), ==, ASDF_VALUE_OK);
+    assert_not_null(identity_out);
+    assert_int(((const asdf_gwcs_transform_t *)identity_out)->type, ==,
+        ASDF_GWCS_TRANSFORM_IDENTITY);
+    assert_uint32(identity_out->base.n_inputs, ==, 3);
+    assert_uint32(identity_out->base.n_outputs, ==, 3);
+
+    asdf_gwcs_identity_destroy(identity_out);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
+/* constant */
+
+MU_TEST(test_asdf_set_gwcs_constant) {
+    const char *path = get_temp_file_path(fixture->tempfile_prefix, ".asdf");
+    asdf_file_t *file = asdf_open(NULL);
+    assert_not_null(file);
+
+    asdf_gwcs_constant_t constant = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_CONSTANT},
+        .value = 42.0,
+        .dimensions = 2,
+    };
+
+    assert_int(asdf_set_gwcs_constant(file, "transform", &constant), ==, ASDF_VALUE_OK);
+    assert_int(asdf_write_to(file, path), ==, 0);
+    asdf_close(file);
+
+    file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_constant_t *constant_out = NULL;
+    assert_int(asdf_get_gwcs_constant(file, "transform", &constant_out), ==, ASDF_VALUE_OK);
+    assert_not_null(constant_out);
+    assert_int(((const asdf_gwcs_transform_t *)constant_out)->type, ==,
+        ASDF_GWCS_TRANSFORM_CONSTANT);
+    assert_double_equal(constant_out->value, 42.0, 10);
+    assert_uint32(constant_out->dimensions, ==, 2);
+
+    asdf_gwcs_constant_destroy(constant_out);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
+/* divide */
+
+MU_TEST(test_asdf_set_gwcs_divide) {
+    const char *path = get_temp_file_path(fixture->tempfile_prefix, ".asdf");
+    asdf_file_t *file = asdf_open(NULL);
+    assert_not_null(file);
+
+    asdf_gwcs_shift_t num = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_SHIFT},
+        .offset = 10.0,
+    };
+    asdf_gwcs_shift_t den = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_SHIFT},
+        .offset = 2.0,
+    };
+    asdf_gwcs_divide_t divide = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_DIVIDE},
+        .numerator = (asdf_gwcs_transform_t *)&num,
+        .denominator = (asdf_gwcs_transform_t *)&den,
+    };
+
+    assert_int(asdf_set_gwcs_divide(file, "transform", &divide), ==, ASDF_VALUE_OK);
+    assert_int(asdf_write_to(file, path), ==, 0);
+    asdf_close(file);
+
+    file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_divide_t *divide_out = NULL;
+    assert_int(asdf_get_gwcs_divide(file, "transform", &divide_out), ==, ASDF_VALUE_OK);
+    assert_not_null(divide_out);
+    assert_int(((const asdf_gwcs_transform_t *)divide_out)->type, ==,
+        ASDF_GWCS_TRANSFORM_DIVIDE);
+    assert_not_null(divide_out->numerator);
+    assert_not_null(divide_out->denominator);
+    assert_int(divide_out->numerator->type, ==, ASDF_GWCS_TRANSFORM_SHIFT);
+    assert_int(divide_out->denominator->type, ==, ASDF_GWCS_TRANSFORM_SHIFT);
+    assert_double_equal(((asdf_gwcs_shift_t *)divide_out->numerator)->offset, 10.0, 10);
+    assert_double_equal(((asdf_gwcs_shift_t *)divide_out->denominator)->offset, 2.0, 10);
+
+    asdf_gwcs_divide_destroy(divide_out);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
+/* affine */
+
+MU_TEST(test_asdf_set_gwcs_affine) {
+    const char *path = get_temp_file_path(fixture->tempfile_prefix, ".asdf");
+    asdf_file_t *file = asdf_open(NULL);
+    assert_not_null(file);
+
+    double matrix[4] = {1.0, 0.5, -0.5, 1.0};
+    double translation[2] = {10.0, -20.0};
+    asdf_gwcs_affine_t affine = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_AFFINE, .n_inputs = 2, .n_outputs = 2},
+        .matrix = matrix,
+        .translation = translation,
+    };
+
+    assert_int(asdf_set_gwcs_affine(file, "transform", &affine), ==, ASDF_VALUE_OK);
+    assert_int(asdf_write_to(file, path), ==, 0);
+    asdf_close(file);
+
+    file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_affine_t *affine_out = NULL;
+    assert_int(asdf_get_gwcs_affine(file, "transform", &affine_out), ==, ASDF_VALUE_OK);
+    assert_not_null(affine_out);
+    assert_int(((const asdf_gwcs_transform_t *)affine_out)->type, ==,
+        ASDF_GWCS_TRANSFORM_AFFINE);
+    assert_not_null(affine_out->matrix);
+    assert_not_null(affine_out->translation);
+    assert_uint32(affine_out->base.n_inputs, ==, 2);
+    assert_uint32(affine_out->base.n_outputs, ==, 2);
+    for (int idx = 0; idx < 4; idx++)
+        assert_double_equal(affine_out->matrix[idx], matrix[idx], 10);
+    for (int idx = 0; idx < 2; idx++)
+        assert_double_equal(affine_out->translation[idx], translation[idx], 10);
+
+    asdf_gwcs_affine_destroy(affine_out);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
+/* spherical_cartesian */
+
+MU_TEST(test_asdf_set_gwcs_spherical_cartesian) {
+    const char *path = get_temp_file_path(fixture->tempfile_prefix, ".asdf");
+    asdf_file_t *file = asdf_open(NULL);
+    assert_not_null(file);
+
+    asdf_gwcs_spherical_cartesian_t sc = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_SPHERICAL_CARTESIAN},
+        .direction = ASDF_GWCS_SPHERICAL_TO_CARTESIAN,
+        .wrap_lon_at = 180.0,
+    };
+
+    assert_int(asdf_set_gwcs_spherical_cartesian(file, "transform", &sc), ==, ASDF_VALUE_OK);
+    assert_int(asdf_write_to(file, path), ==, 0);
+    asdf_close(file);
+
+    file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_spherical_cartesian_t *sc_out = NULL;
+    assert_int(asdf_get_gwcs_spherical_cartesian(file, "transform", &sc_out), ==, ASDF_VALUE_OK);
+    assert_not_null(sc_out);
+    assert_int(((const asdf_gwcs_transform_t *)sc_out)->type, ==,
+        ASDF_GWCS_TRANSFORM_SPHERICAL_CARTESIAN);
+    assert_int(sc_out->direction, ==, ASDF_GWCS_SPHERICAL_TO_CARTESIAN);
+    assert_double_equal(sc_out->wrap_lon_at, 180.0, 10);
+    assert_uint32(sc_out->base.n_inputs, ==, 2);
+    assert_uint32(sc_out->base.n_outputs, ==, 3);
+
+    asdf_gwcs_spherical_cartesian_destroy(sc_out);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
 MU_TEST_SUITE(
     gwcs,
     MU_RUN_TEST(test_asdf_get_gwcs_fits),
@@ -764,6 +1013,13 @@ MU_TEST_SUITE(
     MU_RUN_TEST(test_asdf_get_gwcs_compose_from_fixture),
     MU_RUN_TEST(test_asdf_set_gwcs_concatenate),
     MU_RUN_TEST(test_asdf_get_gwcs_concatenate_from_fixture),
+    MU_RUN_TEST(test_asdf_set_gwcs_scale),
+    MU_RUN_TEST(test_asdf_get_gwcs_scale_from_fixture),
+    MU_RUN_TEST(test_asdf_set_gwcs_identity),
+    MU_RUN_TEST(test_asdf_set_gwcs_constant),
+    MU_RUN_TEST(test_asdf_set_gwcs_divide),
+    MU_RUN_TEST(test_asdf_set_gwcs_affine),
+    MU_RUN_TEST(test_asdf_set_gwcs_spherical_cartesian),
     MU_RUN_TEST(test_asdf_get_roman_l2_gwcs)
 );
 
