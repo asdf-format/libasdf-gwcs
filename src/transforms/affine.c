@@ -121,6 +121,7 @@ static asdf_value_t *asdf_gwcs_affine_serialize(
         .byteorder = ASDF_BYTEORDER_LITTLE,
     };
 
+    asdf_ndarray_storage_set(&mat_arr, ASDF_ARRAY_STORAGE_INLINE);
     void *mat_data = asdf_ndarray_data_alloc_temp(file, &mat_arr);
 
     if (!mat_data)
@@ -148,6 +149,7 @@ static asdf_value_t *asdf_gwcs_affine_serialize(
         .byteorder = ASDF_BYTEORDER_LITTLE,
     };
 
+    asdf_ndarray_storage_set(&tr_arr, ASDF_ARRAY_STORAGE_INLINE);
     void *tr_data = asdf_ndarray_data_alloc_temp(file, &tr_arr);
 
     if (!tr_data)

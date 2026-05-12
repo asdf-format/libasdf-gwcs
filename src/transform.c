@@ -326,12 +326,56 @@ static const char *const transform_type_to_versioned_tag_map[ASDF_GWCS_TRANSFORM
 };
 
 
+static asdf_value_err_t serialize_string_sequence(
+    asdf_file_t *file, asdf_mapping_t *map, const char *key,
+    const char **strings, uint32_t n) {
+    asdf_sequence_t *seq = asdf_sequence_create(file);
+
+    if (!seq)
+        return ASDF_VALUE_ERR_EMIT_FAILURE;
+
+    asdf_sequence_set_style(seq, ASDF_YAML_NODE_STYLE_FLOW);
+
+    for (uint32_t idx = 0; idx < n; idx++) {
+        asdf_value_err_t err = asdf_sequence_append_string0(seq, strings[idx]);
+
+        if (ASDF_IS_ERR(err)) {
+            asdf_sequence_destroy(seq);
+            return err;
+        }
+    }
+
+    asdf_value_err_t err = asdf_mapping_set_sequence(map, key, seq);
+
+    if (ASDF_IS_ERR(err))
+        asdf_sequence_destroy(seq);
+
+    return err;
+}
+
+
 asdf_value_err_t asdf_gwcs_transform_serialize_base(
     asdf_file_t *file, const asdf_gwcs_transform_t *transform, asdf_mapping_t *map) {
     asdf_value_err_t err = ASDF_VALUE_OK;
 
     if (transform->name) {
         err = asdf_mapping_set_string0(map, "name", transform->name);
+
+        if (ASDF_IS_ERR(err))
+            return err;
+    }
+
+    if (transform->inputs && transform->n_inputs > 0) {
+        err = serialize_string_sequence(
+            file, map, "inputs", transform->inputs, transform->n_inputs);
+
+        if (ASDF_IS_ERR(err))
+            return err;
+    }
+
+    if (transform->outputs && transform->n_outputs > 0) {
+        err = serialize_string_sequence(
+            file, map, "outputs", transform->outputs, transform->n_outputs);
 
         if (ASDF_IS_ERR(err))
             return err;
