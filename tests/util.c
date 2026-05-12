@@ -125,7 +125,7 @@ static void clean_stale_pgid_files(void) {
 
 
 #define TEST_SERIAL_LEN 6
-#define TEST_SERIAL_FMT "%6d"
+#define TEST_SERIAL_FMT "%06d"
 #define TEST_SERIAL_MAX 1000000
 
 
