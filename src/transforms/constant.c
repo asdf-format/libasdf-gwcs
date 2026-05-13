@@ -19,6 +19,7 @@ static asdf_value_err_t asdf_gwcs_constant_deserialize(
     asdf_gwcs_constant_t *constant = NULL;
     asdf_value_err_t err = ASDF_VALUE_ERR_PARSE_FAILURE;
     asdf_mapping_t *map = NULL;
+    uint64_t dimensions = 1;
 
     if (asdf_value_as_mapping(value, &map) != ASDF_VALUE_OK)
         goto cleanup;
@@ -40,16 +41,21 @@ static asdf_value_err_t asdf_gwcs_constant_deserialize(
     if (ASDF_IS_ERR(err))
         goto cleanup;
 
-    uint64_t dimensions = 1;
+    /* NOTE: In constant "dimensions" is a required property and is said to be "one or two" in
+     * the description, though the schema seems to allow for any value (nor practically speaking
+     * is there any reason for it to be limited to that -- seems like a bit of shoehorning
+     * of Astropy's Const1D and Const2D...*/
     err = asdf_get_optional_property(map, "dimensions", ASDF_VALUE_UINT64, NULL, &dimensions);
 
     if (ASDF_IS_OPTIONAL_OK(err))
-        constant->dimensions = (uint32_t)dimensions;
+        // Maybe should warn if missing since at least in the current version
+        // of the schema dimensions is required
+        err = ASDF_VALUE_OK;
     else
-        constant->dimensions = 1;
+        goto cleanup;
 
+    asdf_gwcs_transform_arity_set(&constant->base, asdf_value_file(value), dimensions, 1);
     *out = constant;
-    err = ASDF_VALUE_OK;
 cleanup:
     if (ASDF_IS_ERR(err))
         asdf_gwcs_constant_destroy(constant);
@@ -79,12 +85,10 @@ static asdf_value_t *asdf_gwcs_constant_serialize(
     if (ASDF_IS_ERR(err))
         goto cleanup;
 
-    if (constant->dimensions != 1) {
-        err = asdf_mapping_set_uint64(map, "dimensions", constant->dimensions);
+    err = asdf_mapping_set_uint64(map, "dimensions", constant->base.n_inputs);
 
-        if (ASDF_IS_ERR(err))
-            goto cleanup;
-    }
+    if (ASDF_IS_ERR(err))
+        goto cleanup;
 
     return asdf_value_of_mapping(map);
 cleanup:

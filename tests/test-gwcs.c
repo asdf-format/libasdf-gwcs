@@ -845,9 +845,8 @@ MU_TEST(test_asdf_set_gwcs_constant) {
     assert_not_null(file);
 
     asdf_gwcs_constant_t constant = {
-        .base = {.type = ASDF_GWCS_TRANSFORM_CONSTANT},
+        .base = {.type = ASDF_GWCS_TRANSFORM_CONSTANT, .n_inputs = 2},
         .value = 42.0,
-        .dimensions = 2,
     };
 
     assert_int(asdf_set_gwcs_constant(file, "transform", &constant), ==, ASDF_VALUE_OK);
@@ -861,9 +860,9 @@ MU_TEST(test_asdf_set_gwcs_constant) {
     assert_int(asdf_get_gwcs_constant(file, "transform", &constant_out), ==, ASDF_VALUE_OK);
     assert_not_null(constant_out);
     assert_int(((const asdf_gwcs_transform_t *)constant_out)->type, ==,
-        ASDF_GWCS_TRANSFORM_CONSTANT);
+               ASDF_GWCS_TRANSFORM_CONSTANT);
     assert_double_equal(constant_out->value, 42.0, 10);
-    assert_uint32(constant_out->dimensions, ==, 2);
+    assert_uint32(constant_out->base.n_inputs, ==, 2);
 
     asdf_gwcs_constant_destroy(constant_out);
     asdf_close(file);
