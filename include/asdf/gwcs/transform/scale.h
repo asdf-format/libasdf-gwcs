@@ -1,7 +1,7 @@
 #ifndef ASDF_GWCS_TRANSFORM_SCALE_H
 #define ASDF_GWCS_TRANSFORM_SCALE_H
 
-#include <asdf/gwcs/transform.h>
+#include <asdf/gwcs/transform/transform.h>
 
 ASDF_BEGIN_DECLS
 

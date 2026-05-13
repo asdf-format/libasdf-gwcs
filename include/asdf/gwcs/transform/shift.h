@@ -1,7 +1,7 @@
 #ifndef ASDF_GWCS_TRANSFORM_SHIFT_H
 #define ASDF_GWCS_TRANSFORM_SHIFT_H
 
-#include <asdf/gwcs/transform.h>
+#include <asdf/gwcs/transform/transform.h>
 
 ASDF_BEGIN_DECLS
 

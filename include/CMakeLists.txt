@@ -29,6 +29,7 @@ install(
         asdf/gwcs/transform/scale.h
         asdf/gwcs/transform/shift.h
         asdf/gwcs/transform/spherical_cartesian.h
+        asdf/gwcs/transform/transform.h
 
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/asdf/gwcs/transform"
 )

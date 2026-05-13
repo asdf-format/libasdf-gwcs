@@ -8,10 +8,9 @@
 #include <asdf/extension_util.h>
 #include <asdf/log.h>
 
-#include "../gwcs.h"
-#include "../transform.h"
 #include "../util.h"
 #include "rotate_sequence_3d.h"
+#include "transform.h"
 
 
 static asdf_value_err_t asdf_gwcs_rotate_sequence_3d_deserialize(

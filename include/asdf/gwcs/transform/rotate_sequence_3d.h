@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include <asdf/gwcs/transform.h>
+#include <asdf/gwcs/transform/transform.h>
 
 ASDF_BEGIN_DECLS
 

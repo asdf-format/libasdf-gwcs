@@ -8,7 +8,6 @@ set(libasdf_gwcs_sources
     frame2d.c
     frame_celestial.c
     step.c
-    transform.c
     transform/affine.c
     transform/compose.c
     transform/concatenate.c
@@ -22,6 +21,7 @@ set(libasdf_gwcs_sources
     transform/scale.c
     transform/shift.c
     transform/spherical_cartesian.c
+    transform/transform.c
     wcs.c
 )
 

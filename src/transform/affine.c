@@ -10,9 +10,9 @@
 #include <asdf/log.h>
 
 #include "../gwcs.h"
-#include "../transform.h"
 #include "../util.h"
 #include "affine.h"
+#include "transform.h"
 
 
 static asdf_value_err_t asdf_gwcs_affine_deserialize(

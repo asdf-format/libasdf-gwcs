@@ -12,7 +12,7 @@
 #ifndef ASDF_GWCS_FITSWCS_IMAGING_H
 #define ASDF_GWCS_FITSWCS_IMAGING_H
 
-#include <asdf/gwcs/transform.h>
+#include <asdf/gwcs/transform/transform.h>
 #include <asdf/gwcs/wcs.h>
 
 ASDF_BEGIN_DECLS

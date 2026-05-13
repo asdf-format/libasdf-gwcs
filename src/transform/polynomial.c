@@ -9,10 +9,9 @@
 #include <asdf/extension_util.h>
 #include <asdf/log.h>
 
-#include "../gwcs.h"
-#include "../transform.h"
 #include "../util.h"
 #include "polynomial.h"
+#include "transform.h"
 
 
 static asdf_value_err_t asdf_gwcs_polynomial_deserialize(

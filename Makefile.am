@@ -8,7 +8,6 @@ src_files = \
     src/frame2d.c \
     src/frame_celestial.c \
     src/step.c \
-    src/transform.c \
     src/transform/affine.c \
     src/transform/compose.c \
     src/transform/constant.c \
@@ -22,6 +21,7 @@ src_files = \
     src/transform/rotate_sequence_3d.c \
     src/transform/scale.c \
     src/transform/shift.c \
+    src/transform/transform.c \
     src/wcs.c
 
 src_headers = \
@@ -31,7 +31,6 @@ src_headers = \
     src/frame.h \
     src/gwcs.h \
     src/step.h \
-    src/transform.h \
     src/transform/affine.h \
     src/transform/compose.h \
     src/transform/concatenate.h \
@@ -44,6 +43,7 @@ src_headers = \
     src/transform/scale.h \
     src/transform/shift.h \
     src/transform/spherical_cartesian.h \
+    src/transform/transform.h \
     src/types/asdf_gwcs_backend_map.h \
     src/types/asdf_gwcs_transform_map.h \
     src/util.h

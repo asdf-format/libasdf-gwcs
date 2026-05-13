@@ -10,7 +10,7 @@
 
 #include <asdf/extension.h>
 #include <asdf/gwcs/frame.h>
-#include <asdf/gwcs/transform.h>
+#include <asdf/gwcs/transform/transform.h>
 #include <asdf/util.h>
 
 ASDF_BEGIN_DECLS

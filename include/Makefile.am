@@ -21,5 +21,6 @@ nobase_include_HEADERS = \
     asdf/gwcs/transform/scale.h \
     asdf/gwcs/transform/shift.h \
     asdf/gwcs/transform/spherical_cartesian.h \
+    asdf/gwcs/transform/transform.h \
     asdf/gwcs/transform/property/bounding_box.h \
     asdf/gwcs/wcs.h

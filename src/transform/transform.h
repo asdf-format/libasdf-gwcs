@@ -2,7 +2,7 @@
 #pragma once
 
 #define ASDF_GWCS_INTERNAL
-#include "asdf/gwcs/transform.h" // IWYU pragma: export
+#include "asdf/gwcs/transform/transform.h" // IWYU pragma: export
 #undef ASDF_GWCS_INTERNAL
 
 #include <asdf/util.h>
