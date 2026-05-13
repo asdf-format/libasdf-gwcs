@@ -23,6 +23,8 @@ static asdf_value_err_t asdf_gwcs_rotate_sequence_3d_deserialize(
     double *angles = NULL;
     const char *axes_order = NULL;
     char *axes_order_copy = NULL;
+    const char *rotation_type_str = NULL;
+    asdf_gwcs_rotation_type_t rotation_type = ASDF_GWCS_ROTATION_TYPE_CARTESIAN;
 
     if (asdf_value_as_mapping(value, &map) != ASDF_VALUE_OK)
         goto cleanup;
@@ -85,9 +87,23 @@ static asdf_value_err_t asdf_gwcs_rotate_sequence_3d_deserialize(
         goto cleanup;
     }
 
+    err = asdf_get_optional_property(
+        map, "rotation_type", ASDF_VALUE_STRING, NULL, (void *)&rotation_type_str);
+
+
+    if (ASDF_IS_OPTIONAL_OK(err) && rotation_type_str != NULL) {
+        if (strcmp(rotation_type_str, "spherical") == 0) {
+            rotation_type = ASDF_GWCS_ROTATION_TYPE_SPHERICAL;
+        } else if (strcmp(rotation_type_str, "cartesian") != 0) {
+            err = ASDF_VALUE_ERR_PARSE_FAILURE;
+            goto cleanup;
+        }
+    }
+
     rot->n_angles = (uint32_t)n;
     rot->angles = angles;
     rot->axes_order = axes_order_copy;
+    rot->rotation_type = rotation_type;
     angles = NULL;
     axes_order_copy = NULL;
 
@@ -137,6 +153,13 @@ static asdf_value_t *asdf_gwcs_rotate_sequence_3d_serialize(
     }
 
     err = asdf_mapping_set_string0(map, "axes_order", rot->axes_order);
+
+    if (ASDF_IS_ERR(err))
+        goto cleanup;
+
+    const char *rotation_type_str =
+        rot->rotation_type == ASDF_GWCS_ROTATION_TYPE_SPHERICAL ? "spherical" : "cartesian";
+    err = asdf_mapping_set_string0(map, "rotation_type", rotation_type_str);
 
     if (ASDF_IS_ERR(err))
         goto cleanup;

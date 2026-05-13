@@ -476,13 +476,15 @@ MU_TEST(test_asdf_get_gwcs_polynomial_from_fixture) {
 static void check_rotate_sequence_3d_values(
     const asdf_gwcs_rotate_sequence_3d_t *rot,
     uint32_t n_angles, const double *expected_angles,
-    const char *expected_axes_order) {
+    const char *expected_axes_order,
+    asdf_gwcs_rotation_type_t expected_rotation_type) {
     assert_not_null(rot);
     assert_int(((const asdf_gwcs_transform_t *)rot)->type, ==,
         ASDF_GWCS_TRANSFORM_ROTATE_SEQUENCE_3D);
     assert_uint32(rot->n_angles, ==, n_angles);
     assert_not_null(rot->angles);
     assert_string_equal(rot->axes_order, expected_axes_order);
+    assert_int(rot->rotation_type, ==, expected_rotation_type);
     for (uint32_t idx = 0; idx < n_angles; idx++)
         assert_double_equal(rot->angles[idx], expected_angles[idx], 10);
     assert_uint32(rot->base.n_inputs, ==, 3);
@@ -512,7 +514,8 @@ MU_TEST(test_asdf_set_gwcs_rotate_sequence_3d) {
 
     asdf_gwcs_rotate_sequence_3d_t *rot_out = NULL;
     assert_int(asdf_get_gwcs_rotate_sequence_3d(file, "transform", &rot_out), ==, ASDF_VALUE_OK);
-    check_rotate_sequence_3d_values(rot_out, 3, angles, "xyz");
+    check_rotate_sequence_3d_values(rot_out, 3, angles, "xyz",
+        ASDF_GWCS_ROTATION_TYPE_CARTESIAN);
 
     asdf_gwcs_rotate_sequence_3d_destroy(rot_out);
     asdf_close(file);
@@ -533,7 +536,8 @@ MU_TEST(test_asdf_get_gwcs_rotate_sequence_3d_from_fixture) {
     double expected_angles[3] = {
         0.3647080959023555, 0.28910704796541764, 59.846679364670365
     };
-    check_rotate_sequence_3d_values(rot, 3, expected_angles, "zyx");
+    check_rotate_sequence_3d_values(rot, 3, expected_angles, "zyx",
+        ASDF_GWCS_ROTATION_TYPE_CARTESIAN);
 
     asdf_gwcs_rotate_sequence_3d_destroy(rot);
     asdf_close(file);

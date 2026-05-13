@@ -14,6 +14,11 @@ ASDF_BEGIN_DECLS
  * by an angle in degrees; the axes are given by a string like ``"zyx"`` or
  * ``"xyz"``.
  */
+typedef enum {
+    ASDF_GWCS_ROTATION_TYPE_CARTESIAN,
+    ASDF_GWCS_ROTATION_TYPE_SPHERICAL,
+} asdf_gwcs_rotation_type_t;
+
 typedef struct {
     asdf_gwcs_transform_t base;
     /** Number of rotation angles. */
@@ -22,6 +27,8 @@ typedef struct {
     const double *angles;
     /** Heap-allocated string naming the rotation axes (e.g. ``"zyx"``). */
     const char *axes_order;
+    /** Rotation type: cartesian (default) or spherical. */
+    asdf_gwcs_rotation_type_t rotation_type;
 } asdf_gwcs_rotate_sequence_3d_t;
 
 ASDF_DECLARE_EXTENSION(gwcs_rotate_sequence_3d, asdf_gwcs_rotate_sequence_3d_t);
