@@ -113,11 +113,11 @@ AS_IF([test "x$enable_ast" = "xyes"], [
          [],
          [AC_MSG_ERROR([Failed to bootstrap AST submodule])])])
     dnl Build vendored AST as a PIC static library so it can be embedded in
-    dnl our shared library.  ac_configure_args is used when the subdir loop
-    dnl runs at AC_OUTPUT time, so set it here and leave it — third_party/ast
-    dnl is the only AC_CONFIG_SUBDIRS entry so there is nothing else to pollute.
-    ac_configure_args="$ac_configure_args --disable-shared --enable-static --with-pic"
-    AC_CONFIG_SUBDIRS([third_party/ast])
+    dnl our shared library.
+    AX_SUBDIRS_CONFIGURE(
+      [[third_party/ast]],
+      [[--disable-shared], [--enable-static], [--with-pic]],
+      [], [], [])
     dnl ast.h is generated in the top of the AST build directory
     AST_CFLAGS="-I\$(top_builddir)/third_party/ast"
     dnl Reference .la files directly so libtool uses the vendored library.
