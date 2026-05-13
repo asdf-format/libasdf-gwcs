@@ -1,8 +1,8 @@
 /**
  * Partial implementation of the transforms/property/bounding_box-1.2.0 schema
  */
-#ifndef ASDF_GWCS_TRANSFORMS_PROPERTY_BOUNDING_BOX_H
-#define ASDF_GWCS_TRANSFORMS_PROPERTY_BOUNDING_BOX_H
+#ifndef ASDF_GWCS_TRANSFORM_PROPERTY_BOUNDING_BOX_H
+#define ASDF_GWCS_TRANSFORM_PROPERTY_BOUNDING_BOX_H
 
 #include <stdint.h>
 
@@ -53,4 +53,4 @@ ASDF_DECLARE_EXTENSION(gwcs_bounding_box, asdf_gwcs_bounding_box_t);
 
 
 ASDF_END_DECLS
-#endif /* ASDF_GWCS_TRANSFORMS_PROPERTY_BOUNDING_BOX_H */
+#endif /* ASDF_GWCS_TRANSFORM_PROPERTY_BOUNDING_BOX_H */

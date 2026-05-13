@@ -14,7 +14,7 @@
 #define ASDF_GWCS_TRANSFORM_H
 
 #include <asdf/core/asdf.h>
-#include <asdf/gwcs/transforms/property/bounding_box.h>
+#include <asdf/gwcs/transform/property/bounding_box.h>
 
 ASDF_BEGIN_DECLS
 

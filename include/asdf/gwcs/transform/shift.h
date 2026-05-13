@@ -1,5 +1,5 @@
-#ifndef ASDF_GWCS_TRANSFORMS_SHIFT_H
-#define ASDF_GWCS_TRANSFORMS_SHIFT_H
+#ifndef ASDF_GWCS_TRANSFORM_SHIFT_H
+#define ASDF_GWCS_TRANSFORM_SHIFT_H
 
 #include <asdf/gwcs/transform.h>
 
@@ -19,4 +19,4 @@ ASDF_DECLARE_EXTENSION(gwcs_shift, asdf_gwcs_shift_t);
 
 ASDF_END_DECLS
 
-#endif /* ASDF_GWCS_TRANSFORMS_SHIFT_H */
+#endif /* ASDF_GWCS_TRANSFORM_SHIFT_H */

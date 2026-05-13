@@ -1,5 +1,5 @@
-#ifndef ASDF_GWCS_TRANSFORMS_SCALE_H
-#define ASDF_GWCS_TRANSFORMS_SCALE_H
+#ifndef ASDF_GWCS_TRANSFORM_SCALE_H
+#define ASDF_GWCS_TRANSFORM_SCALE_H
 
 #include <asdf/gwcs/transform.h>
 
@@ -14,4 +14,4 @@ ASDF_DECLARE_EXTENSION(gwcs_scale, asdf_gwcs_scale_t);
 
 ASDF_END_DECLS
 
-#endif /* ASDF_GWCS_TRANSFORMS_SCALE_H */
+#endif /* ASDF_GWCS_TRANSFORM_SCALE_H */

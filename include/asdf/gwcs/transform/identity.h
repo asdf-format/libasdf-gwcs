@@ -1,5 +1,5 @@
-#ifndef ASDF_GWCS_TRANSFORMS_IDENTITY_H
-#define ASDF_GWCS_TRANSFORMS_IDENTITY_H
+#ifndef ASDF_GWCS_TRANSFORM_IDENTITY_H
+#define ASDF_GWCS_TRANSFORM_IDENTITY_H
 
 #include <asdf/gwcs/transform.h>
 
@@ -13,4 +13,4 @@ ASDF_DECLARE_EXTENSION(gwcs_identity, asdf_gwcs_identity_t);
 
 ASDF_END_DECLS
 
-#endif /* ASDF_GWCS_TRANSFORMS_IDENTITY_H */
+#endif /* ASDF_GWCS_TRANSFORM_IDENTITY_H */

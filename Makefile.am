@@ -9,19 +9,19 @@ src_files = \
     src/frame_celestial.c \
     src/step.c \
     src/transform.c \
-    src/transforms/affine.c \
-    src/transforms/compose.c \
-    src/transforms/constant.c \
-    src/transforms/concatenate.c \
-    src/transforms/divide.c \
-    src/transforms/identity.c \
-    src/transforms/polynomial.c \
-    src/transforms/spherical_cartesian.c \
-    src/transforms/property/bounding_box.c \
-    src/transforms/remap_axes.c \
-    src/transforms/rotate_sequence_3d.c \
-    src/transforms/scale.c \
-    src/transforms/shift.c \
+    src/transform/affine.c \
+    src/transform/compose.c \
+    src/transform/constant.c \
+    src/transform/concatenate.c \
+    src/transform/divide.c \
+    src/transform/identity.c \
+    src/transform/polynomial.c \
+    src/transform/spherical_cartesian.c \
+    src/transform/property/bounding_box.c \
+    src/transform/remap_axes.c \
+    src/transform/rotate_sequence_3d.c \
+    src/transform/scale.c \
+    src/transform/shift.c \
     src/wcs.c
 
 src_headers = \
@@ -32,18 +32,18 @@ src_headers = \
     src/gwcs.h \
     src/step.h \
     src/transform.h \
-    src/transforms/affine.h \
-    src/transforms/compose.h \
-    src/transforms/concatenate.h \
-    src/transforms/constant.h \
-    src/transforms/divide.h \
-    src/transforms/identity.h \
-    src/transforms/polynomial.h \
-    src/transforms/remap_axes.h \
-    src/transforms/rotate_sequence_3d.h \
-    src/transforms/scale.h \
-    src/transforms/shift.h \
-    src/transforms/spherical_cartesian.h \
+    src/transform/affine.h \
+    src/transform/compose.h \
+    src/transform/concatenate.h \
+    src/transform/constant.h \
+    src/transform/divide.h \
+    src/transform/identity.h \
+    src/transform/polynomial.h \
+    src/transform/remap_axes.h \
+    src/transform/rotate_sequence_3d.h \
+    src/transform/scale.h \
+    src/transform/shift.h \
+    src/transform/spherical_cartesian.h \
     src/types/asdf_gwcs_backend_map.h \
     src/types/asdf_gwcs_transform_map.h \
     src/util.h

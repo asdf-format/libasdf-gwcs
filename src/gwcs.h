@@ -5,4 +5,4 @@
 #include "asdf/gwcs/frame.h"                            // IWYU pragma: export
 #include "asdf/gwcs/frame2d.h"                          // IWYU pragma: export
 #include "asdf/gwcs/frame_celestial.h"                  // IWYU pragma: export
-#include "asdf/gwcs/transforms/property/bounding_box.h" // IWYU pragma: export
+#include "asdf/gwcs/transform/property/bounding_box.h"  // IWYU pragma: export

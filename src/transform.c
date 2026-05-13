@@ -1,3 +1,5 @@
+/** Generic handling for all transforms, base transform handling, and registration */
+
 #include <stdatomic.h>
 #include <stdlib.h>
 #include <string.h>

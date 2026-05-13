@@ -9,19 +9,19 @@ set(libasdf_gwcs_sources
     frame_celestial.c
     step.c
     transform.c
-    transforms/affine.c
-    transforms/compose.c
-    transforms/concatenate.c
-    transforms/constant.c
-    transforms/divide.c
-    transforms/identity.c
-    transforms/polynomial.c
-    transforms/property/bounding_box.c
-    transforms/remap_axes.c
-    transforms/rotate_sequence_3d.c
-    transforms/scale.c
-    transforms/shift.c
-    transforms/spherical_cartesian.c
+    transform/affine.c
+    transform/compose.c
+    transform/concatenate.c
+    transform/constant.c
+    transform/divide.c
+    transform/identity.c
+    transform/polynomial.c
+    transform/property/bounding_box.c
+    transform/remap_axes.c
+    transform/rotate_sequence_3d.c
+    transform/scale.c
+    transform/shift.c
+    transform/spherical_cartesian.c
     wcs.c
 )
 
