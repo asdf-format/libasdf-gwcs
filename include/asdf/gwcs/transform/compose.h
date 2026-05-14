@@ -23,7 +23,7 @@ typedef struct {
     asdf_gwcs_transform_t **forward;
 } asdf_gwcs_compose_t;
 
-ASDF_DECLARE_EXTENSION(gwcs_compose, asdf_gwcs_compose_t);
+ASDF_GWCS_DECLARE_TRANSFORM(compose, COMPOSE, asdf_gwcs_compose_t);
 
 ASDF_END_DECLS
 

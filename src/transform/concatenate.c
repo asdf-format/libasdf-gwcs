@@ -167,11 +167,12 @@ static void asdf_gwcs_concatenate_dealloc(void *value) {
 }
 
 
-ASDF_REGISTER_EXTENSION(
-    gwcs_concatenate,
+ASDF_GWCS_REGISTER_TRANSFORM(
+    concatenate,
+    CONCATENATE,
     ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate-1.3.0",
     asdf_gwcs_concatenate_t,
-    &libasdf_software,
+    &libasdf_gwcs_software,
     asdf_gwcs_concatenate_serialize,
     asdf_gwcs_concatenate_deserialize,
     NULL,

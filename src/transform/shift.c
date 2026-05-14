@@ -7,6 +7,7 @@
 #include <asdf/extension_util.h>
 #include <asdf/log.h>
 
+#include "../gwcs.h"
 #include "../util.h"
 #include "shift.h"
 #include "transform.h"
@@ -88,11 +89,12 @@ static void asdf_gwcs_shift_dealloc(void *value) {
 }
 
 
-ASDF_REGISTER_EXTENSION(
-    gwcs_shift,
+ASDF_GWCS_REGISTER_TRANSFORM(
+    shift,
+    SHIFT,
     ASDF_GWCS_TRANSFORM_TAG_PREFIX "shift-1.3.0",
     asdf_gwcs_shift_t,
-    &libasdf_software,
+    &libasdf_gwcs_software,
     asdf_gwcs_shift_serialize,
     asdf_gwcs_shift_deserialize,
     NULL,

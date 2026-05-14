@@ -12,7 +12,7 @@ typedef struct {
     double value;
 } asdf_gwcs_constant_t;
 
-ASDF_DECLARE_EXTENSION(gwcs_constant, asdf_gwcs_constant_t);
+ASDF_GWCS_DECLARE_TRANSFORM(constant, CONSTANT, asdf_gwcs_constant_t);
 
 ASDF_END_DECLS
 

@@ -167,11 +167,12 @@ static void asdf_gwcs_compose_dealloc(void *value) {
 }
 
 
-ASDF_REGISTER_EXTENSION(
-    gwcs_compose,
+ASDF_GWCS_REGISTER_TRANSFORM(
+    compose,
+    COMPOSE,
     ASDF_GWCS_TRANSFORM_TAG_PREFIX "compose-1.3.0",
     asdf_gwcs_compose_t,
-    &libasdf_software,
+    &libasdf_gwcs_software,
     asdf_gwcs_compose_serialize,
     asdf_gwcs_compose_deserialize,
     NULL,

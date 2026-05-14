@@ -9,6 +9,7 @@
 #include <asdf/extension_util.h>
 #include <asdf/log.h>
 
+#include "../gwcs.h"
 #include "../util.h"
 #include "polynomial.h"
 #include "transform.h"
@@ -164,11 +165,12 @@ static void asdf_gwcs_polynomial_dealloc(void *value) {
 }
 
 
-ASDF_REGISTER_EXTENSION(
-    gwcs_polynomial,
+ASDF_GWCS_REGISTER_TRANSFORM(
+    polynomial,
+    POLYNOMIAL,
     ASDF_GWCS_TRANSFORM_TAG_PREFIX "polynomial-1.2.0",
     asdf_gwcs_polynomial_t,
-    &libasdf_software,
+    &libasdf_gwcs_software,
     asdf_gwcs_polynomial_serialize,
     asdf_gwcs_polynomial_deserialize,
     NULL,

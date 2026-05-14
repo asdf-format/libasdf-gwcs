@@ -15,7 +15,7 @@ typedef struct {
     double offset;
 } asdf_gwcs_shift_t;
 
-ASDF_DECLARE_EXTENSION(gwcs_shift, asdf_gwcs_shift_t);
+ASDF_GWCS_DECLARE_TRANSFORM(shift, SHIFT, asdf_gwcs_shift_t);
 
 ASDF_END_DECLS
 

@@ -10,7 +10,7 @@ typedef struct {
     double factor;
 } asdf_gwcs_scale_t;
 
-ASDF_DECLARE_EXTENSION(gwcs_scale, asdf_gwcs_scale_t);
+ASDF_GWCS_DECLARE_TRANSFORM(scale, SCALE, asdf_gwcs_scale_t);
 
 ASDF_END_DECLS
 

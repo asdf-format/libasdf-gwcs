@@ -350,8 +350,9 @@ static void asdf_gwcs_fits_dealloc(void *value) {
 }
 
 
-ASDF_REGISTER_EXTENSION(
-    gwcs_fits,
+ASDF_GWCS_REGISTER_TRANSFORM(
+    fits,
+    FITSWCS_IMAGING,
     ASDF_GWCS_TAG_PREFIX "fitswcs_imaging-1.0.0",
     asdf_gwcs_fits_t,
     &libasdf_software,
@@ -409,34 +410,14 @@ static const char *ucd1_to_ctype(const char *ucd1) {
 }
 
 
-static const char *transform_type_ctype_map[] = {
-    [ASDF_GWCS_TRANSFORM_GENERIC] = "",
-    [ASDF_GWCS_TRANSFORM_AIRY] = "AIR",
-    [ASDF_GWCS_TRANSFORM_BONNE_EQUAL_AREA] = "BON",
-    [ASDF_GWCS_TRANSFORM_COBE_QUAD_SPHERICAL_CUBE] = "CSC",
-    [ASDF_GWCS_TRANSFORM_CONIC_EQUAL_AREA] = "COE",
-    [ASDF_GWCS_TRANSFORM_CONIC_EQUIDISTANT] = "COD",
-    [ASDF_GWCS_TRANSFORM_CONIC_ORTHOMORPHIC] = "COO",
-    [ASDF_GWCS_TRANSFORM_CONIC_PERSPECTIVE] = "COP",
-    [ASDF_GWCS_TRANSFORM_CYLINDRICAL_EQUAL_AREA] = "CEA",
-    [ASDF_GWCS_TRANSFORM_CYLINDRICAL_PERSPECTIVE] = "CYP",
-    [ASDF_GWCS_TRANSFORM_FITSWCS_IMAGING] = "",
-    [ASDF_GWCS_TRANSFORM_GNOMONIC] = "TAN",
-    [ASDF_GWCS_TRANSFORM_HAMMER_AITOFF] = "AIT",
-    [ASDF_GWCS_TRANSFORM_HEALPIX_POLAR] = "XPH",
-    [ASDF_GWCS_TRANSFORM_MOLLEWEIDE] = "MOL",
-    [ASDF_GWCS_TRANSFORM_PARABOLIC] = "PAR",
-    [ASDF_GWCS_TRANSFORM_PLATE_CARREE] = "CAR",
-    [ASDF_GWCS_TRANSFORM_POLYCONIC] = "PCO",
-    [ASDF_GWCS_TRANSFORM_SANSON_FLAMSTEED] = "SFL",
-    [ASDF_GWCS_TRANSFORM_SLANT_ORTHOGRAPHIC] = "SIN",
-    [ASDF_GWCS_TRANSFORM_STEREOGRAPHIC] = "STG",
-    [ASDF_GWCS_TRANSFORM_QUAD_SPHERICAL_CUBE] = "QSC",
-    [ASDF_GWCS_TRANSFORM_SLANT_ZENITHAL_PERSPECTIVE] = "SZP",
-    [ASDF_GWCS_TRANSFORM_TANGENTIAL_SPHERICAL_CUBE] = "TSC",
-    [ASDF_GWCS_TRANSFORM_ZENITHAL_EQUAL_AREA] = "ZEA",
-    [ASDF_GWCS_TRANSFORM_ZENITHAL_EQUIDISTANT] = "ARC",
-    [ASDF_GWCS_TRANSFORM_ZENITHAL_PERSPECTIVE] = "AZP"};
+static const char *transform_type_to_ctype(asdf_gwcs_transform_type_t type) {
+    if (!type)
+        return "";
+
+    const asdf_extension_t *ext = (const asdf_extension_t *)type;
+    const asdf_gwcs_transform_data_t *data = ext->userdata;
+    return (data && data->ctype) ? data->ctype : "";
+}
 
 
 bool asdf_gwcs_is_fits(const asdf_file_t *file, asdf_gwcs_t *gwcs) {
@@ -548,11 +529,7 @@ asdf_gwcs_err_t asdf_gwcs_fits_get_ctype(
         memcpy(ctype, axis_type, axis_type_len);
 
         asdf_gwcs_transform_type_t projection_type = fits->projection.type;
-        assert(projection_type >= 0);
-        assert(
-            (unsigned int)projection_type <
-            (sizeof(transform_type_ctype_map) / sizeof(const char *)));
-        const char *proj_str = transform_type_ctype_map[projection_type];
+        const char *proj_str = transform_type_to_ctype(projection_type);
 
         if (!proj_str)
             goto failure;

@@ -4,6 +4,7 @@
 #ifndef ASDF_GWCS_CORE_H
 #define ASDF_GWCS_CORE_H
 
+#include <asdf/extension.h>
 #include <asdf/util.h>
 
 ASDF_BEGIN_DECLS
@@ -11,6 +12,9 @@ ASDF_BEGIN_DECLS
 
 /** Prefix for all GWCS schema tags */
 #define ASDF_GWCS_TAG_PREFIX "tag:stsci.edu:gwcs/"
+
+
+ASDF_EXPORT extern asdf_software_t libasdf_gwcs_software;
 
 
 /**

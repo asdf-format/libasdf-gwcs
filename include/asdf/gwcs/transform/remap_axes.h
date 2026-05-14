@@ -19,7 +19,7 @@ typedef struct {
     const uint32_t *mapping;
 } asdf_gwcs_remap_axes_t;
 
-ASDF_DECLARE_EXTENSION(gwcs_remap_axes, asdf_gwcs_remap_axes_t);
+ASDF_GWCS_DECLARE_TRANSFORM(remap_axes, REMAP_AXES, asdf_gwcs_remap_axes_t);
 
 ASDF_END_DECLS
 

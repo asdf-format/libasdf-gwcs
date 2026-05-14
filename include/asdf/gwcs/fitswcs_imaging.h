@@ -81,7 +81,12 @@ typedef struct {
 ASDF_EXPORT bool asdf_gwcs_is_fits(const asdf_file_t *file, asdf_gwcs_t *gwcs);
 
 
-ASDF_DECLARE_EXTENSION(gwcs_fits, asdf_gwcs_fits_t);
+/**
+ * This declares the ASDF_GWCS_TRANSFORM_FITWCS_IMAGING constant as well
+ * as the libasdf extension declarations.
+ */
+ASDF_GWCS_DECLARE_TRANSFORM(fits, FITSWCS_IMAGING, asdf_gwcs_fits_t);
+
 
 ASDF_END_DECLS
 #endif /* ASDF_GWCS_FITSWCS_IMAGING_H */

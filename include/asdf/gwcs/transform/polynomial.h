@@ -28,7 +28,7 @@ typedef struct {
     const double *coefficients;
 } asdf_gwcs_polynomial_t;
 
-ASDF_DECLARE_EXTENSION(gwcs_polynomial, asdf_gwcs_polynomial_t);
+ASDF_GWCS_DECLARE_TRANSFORM(polynomial, POLYNOMIAL, asdf_gwcs_polynomial_t);
 
 ASDF_END_DECLS
 

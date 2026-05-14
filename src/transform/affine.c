@@ -188,11 +188,12 @@ static void asdf_gwcs_affine_dealloc(void *value) {
 }
 
 
-ASDF_REGISTER_EXTENSION(
-    gwcs_affine,
+ASDF_GWCS_REGISTER_TRANSFORM(
+    affine,
+    AFFINE,
     ASDF_GWCS_TRANSFORM_TAG_PREFIX "affine-1.4.0",
     asdf_gwcs_affine_t,
-    &libasdf_software,
+    &libasdf_gwcs_software,
     asdf_gwcs_affine_serialize,
     asdf_gwcs_affine_deserialize,
     NULL,

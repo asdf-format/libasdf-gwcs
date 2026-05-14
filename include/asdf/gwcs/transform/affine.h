@@ -15,7 +15,7 @@ typedef struct {
     double *translation;
 } asdf_gwcs_affine_t;
 
-ASDF_DECLARE_EXTENSION(gwcs_affine, asdf_gwcs_affine_t);
+ASDF_GWCS_DECLARE_TRANSFORM(affine, AFFINE, asdf_gwcs_affine_t);
 
 ASDF_END_DECLS
 

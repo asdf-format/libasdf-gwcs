@@ -18,7 +18,8 @@ typedef struct {
     double wrap_lon_at;
 } asdf_gwcs_spherical_cartesian_t;
 
-ASDF_DECLARE_EXTENSION(gwcs_spherical_cartesian, asdf_gwcs_spherical_cartesian_t);
+ASDF_GWCS_DECLARE_TRANSFORM(
+    spherical_cartesian, SPHERICAL_CARTESIAN, asdf_gwcs_spherical_cartesian_t);
 
 ASDF_END_DECLS
 

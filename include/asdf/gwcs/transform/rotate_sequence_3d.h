@@ -31,7 +31,7 @@ typedef struct {
     asdf_gwcs_rotation_type_t rotation_type;
 } asdf_gwcs_rotate_sequence_3d_t;
 
-ASDF_DECLARE_EXTENSION(gwcs_rotate_sequence_3d, asdf_gwcs_rotate_sequence_3d_t);
+ASDF_GWCS_DECLARE_TRANSFORM(rotate_sequence_3d, ROTATE_SEQUENCE_3D, asdf_gwcs_rotate_sequence_3d_t);
 
 ASDF_END_DECLS
 

@@ -21,7 +21,7 @@ typedef struct {
     asdf_gwcs_transform_t **forward;
 } asdf_gwcs_concatenate_t;
 
-ASDF_DECLARE_EXTENSION(gwcs_concatenate, asdf_gwcs_concatenate_t);
+ASDF_GWCS_DECLARE_TRANSFORM(concatenate, CONCATENATE, asdf_gwcs_concatenate_t);
 
 ASDF_END_DECLS
 

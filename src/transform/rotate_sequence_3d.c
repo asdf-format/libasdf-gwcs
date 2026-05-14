@@ -8,6 +8,7 @@
 #include <asdf/extension_util.h>
 #include <asdf/log.h>
 
+#include "../gwcs.h"
 #include "../util.h"
 #include "rotate_sequence_3d.h"
 #include "transform.h"
@@ -182,11 +183,12 @@ static void asdf_gwcs_rotate_sequence_3d_dealloc(void *value) {
 }
 
 
-ASDF_REGISTER_EXTENSION(
-    gwcs_rotate_sequence_3d,
+ASDF_GWCS_REGISTER_TRANSFORM(
+    rotate_sequence_3d,
+    ROTATE_SEQUENCE_3D,
     ASDF_GWCS_TRANSFORM_TAG_PREFIX "rotate_sequence_3d-1.1.0",
     asdf_gwcs_rotate_sequence_3d_t,
-    &libasdf_software,
+    &libasdf_gwcs_software,
     asdf_gwcs_rotate_sequence_3d_serialize,
     asdf_gwcs_rotate_sequence_3d_deserialize,
     NULL,

@@ -7,6 +7,7 @@
 #include <asdf/extension_util.h>
 #include <asdf/log.h>
 
+#include "../gwcs.h"
 #include "../util.h"
 #include "remap_axes.h"
 #include "transform.h"
@@ -150,11 +151,12 @@ static void asdf_gwcs_remap_axes_dealloc(void *value) {
 }
 
 
-ASDF_REGISTER_EXTENSION(
-    gwcs_remap_axes,
+ASDF_GWCS_REGISTER_TRANSFORM(
+    remap_axes,
+    REMAP_AXES,
     ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes-1.4.0",
     asdf_gwcs_remap_axes_t,
-    &libasdf_software,
+    &libasdf_gwcs_software,
     asdf_gwcs_remap_axes_serialize,
     asdf_gwcs_remap_axes_deserialize,
     NULL,

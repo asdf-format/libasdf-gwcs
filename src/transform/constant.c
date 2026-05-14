@@ -107,11 +107,12 @@ static void asdf_gwcs_constant_dealloc(void *value) {
 }
 
 
-ASDF_REGISTER_EXTENSION(
-    gwcs_constant,
+ASDF_GWCS_REGISTER_TRANSFORM(
+    constant,
+    CONSTANT,
     ASDF_GWCS_TRANSFORM_TAG_PREFIX "constant-1.5.0",
     asdf_gwcs_constant_t,
-    &libasdf_software,
+    &libasdf_gwcs_software,
     asdf_gwcs_constant_serialize,
     asdf_gwcs_constant_deserialize,
     NULL,

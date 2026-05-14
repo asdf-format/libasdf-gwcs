@@ -137,11 +137,12 @@ static void asdf_gwcs_divide_dealloc(void *value) {
 }
 
 
-ASDF_REGISTER_EXTENSION(
-    gwcs_divide,
+ASDF_GWCS_REGISTER_TRANSFORM(
+    divide,
+    DIVIDE,
     ASDF_GWCS_TRANSFORM_TAG_PREFIX "divide-1.3.0",
     asdf_gwcs_divide_t,
-    &libasdf_software,
+    &libasdf_gwcs_software,
     asdf_gwcs_divide_serialize,
     asdf_gwcs_divide_deserialize,
     NULL,

@@ -11,7 +11,7 @@ typedef struct {
     asdf_gwcs_transform_t *denominator;
 } asdf_gwcs_divide_t;
 
-ASDF_DECLARE_EXTENSION(gwcs_divide, asdf_gwcs_divide_t);
+ASDF_GWCS_DECLARE_TRANSFORM(divide, DIVIDE, asdf_gwcs_divide_t);
 
 ASDF_END_DECLS
 

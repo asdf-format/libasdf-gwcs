@@ -118,11 +118,12 @@ static void asdf_gwcs_spherical_cartesian_dealloc(void *value) {
 }
 
 
-ASDF_REGISTER_EXTENSION(
-    gwcs_spherical_cartesian,
+ASDF_GWCS_REGISTER_TRANSFORM(
+    spherical_cartesian,
+    SPHERICAL_CARTESIAN,
     ASDF_GWCS_TAG_PREFIX "spherical_cartesian-1.3.0",
     asdf_gwcs_spherical_cartesian_t,
-    &libasdf_software,
+    &libasdf_gwcs_software,
     asdf_gwcs_spherical_cartesian_serialize,
     asdf_gwcs_spherical_cartesian_deserialize,
     NULL,
