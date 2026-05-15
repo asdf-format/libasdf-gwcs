@@ -1,6 +1,8 @@
 install(
     FILES
+        asdf/gwcs/backend.h
         asdf/gwcs/core.h
+        asdf/gwcs/eval.h
         asdf/gwcs/fitswcs_imaging.h
         asdf/gwcs/frame.h
         asdf/gwcs/frame2d.h
@@ -15,25 +17,26 @@ install(
 
 install(
     FILES
-        asdf/gwcs/transforms/affine.h
-        asdf/gwcs/transforms/compose.h
-        asdf/gwcs/transforms/concatenate.h
-        asdf/gwcs/transforms/constant.h
-        asdf/gwcs/transforms/divide.h
-        asdf/gwcs/transforms/identity.h
-        asdf/gwcs/transforms/polynomial.h
-        asdf/gwcs/transforms/remap_axes.h
-        asdf/gwcs/transforms/rotate_sequence_3d.h
-        asdf/gwcs/transforms/scale.h
-        asdf/gwcs/transforms/shift.h
-        asdf/gwcs/transforms/spherical_cartesian.h
+        asdf/gwcs/transform/affine.h
+        asdf/gwcs/transform/compose.h
+        asdf/gwcs/transform/concatenate.h
+        asdf/gwcs/transform/constant.h
+        asdf/gwcs/transform/divide.h
+        asdf/gwcs/transform/identity.h
+        asdf/gwcs/transform/polynomial.h
+        asdf/gwcs/transform/remap_axes.h
+        asdf/gwcs/transform/rotate_sequence_3d.h
+        asdf/gwcs/transform/scale.h
+        asdf/gwcs/transform/shift.h
+        asdf/gwcs/transform/spherical_cartesian.h
+        asdf/gwcs/transform/transform.h
 
-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/asdf/gwcs/transforms"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/asdf/gwcs/transform"
 )
 
 install(
     FILES
-        asdf/gwcs/transforms/property/bounding_box.h
+        asdf/gwcs/transform/property/bounding_box.h
 
-    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/asdf/gwcs/transforms/property"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/asdf/gwcs/transform/property"
 )
