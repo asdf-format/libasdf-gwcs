@@ -14,7 +14,7 @@ ASDF_BEGIN_DECLS
  * input axis to use for output axis ``idx``.
  */
 typedef struct {
-    asdf_gwcs_transform_t base;
+    ASDF_GWCS_TRANSFORM_BASE;
     /** Heap-allocated array of length ``base.n_outputs``. */
     const uint32_t *mapping;
 } asdf_gwcs_remap_axes_t;

@@ -6,7 +6,7 @@
 ASDF_BEGIN_DECLS
 
 typedef struct {
-    asdf_gwcs_transform_t base;
+    ASDF_GWCS_TRANSFORM_BASE;
     asdf_gwcs_transform_t *numerator;
     asdf_gwcs_transform_t *denominator;
 } asdf_gwcs_divide_t;

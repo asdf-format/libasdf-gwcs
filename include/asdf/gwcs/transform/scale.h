@@ -6,7 +6,7 @@
 ASDF_BEGIN_DECLS
 
 typedef struct {
-    asdf_gwcs_transform_t base;
+    ASDF_GWCS_TRANSFORM_BASE;
     double factor;
 } asdf_gwcs_scale_t;
 

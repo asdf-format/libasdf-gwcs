@@ -17,7 +17,7 @@ ASDF_BEGIN_DECLS
  * ndarray in the ASDF file, and ``degree`` from ``shape[0] - 1``.
  */
 typedef struct {
-    asdf_gwcs_transform_t base;
+    ASDF_GWCS_TRANSFORM_BASE;
     /** number of input dimensions (typically 2) */
     uint32_t ndim;
     /** polynomial degree (shape[0] - 1) */

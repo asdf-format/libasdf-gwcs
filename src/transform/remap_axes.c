@@ -117,7 +117,7 @@ static asdf_value_t *asdf_gwcs_remap_axes_serialize(
 
     asdf_sequence_set_style(seq, ASDF_YAML_NODE_STYLE_FLOW);
 
-    for (uint32_t idx = 0; idx < remap->base.n_outputs; idx++) {
+    for (uint32_t idx = 0; idx < remap->n_outputs; idx++) {
         err = asdf_sequence_append_uint32(seq, remap->mapping[idx]);
 
         if (ASDF_IS_ERR(err)) {

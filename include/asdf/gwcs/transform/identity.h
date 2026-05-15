@@ -6,7 +6,7 @@
 ASDF_BEGIN_DECLS
 
 typedef struct {
-    asdf_gwcs_transform_t base;
+    ASDF_GWCS_TRANSFORM_BASE;
 } asdf_gwcs_identity_t;
 
 ASDF_GWCS_DECLARE_TRANSFORM(identity, IDENTITY, asdf_gwcs_identity_t);

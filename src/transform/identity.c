@@ -68,8 +68,8 @@ static asdf_value_t *asdf_gwcs_identity_serialize(
     if (ASDF_IS_ERR(err))
         goto cleanup;
 
-    if (identity->base.n_inputs > 0) {
-        err = asdf_mapping_set_uint64(map, "n_dims", identity->base.n_inputs);
+    if (identity->n_inputs > 0) {
+        err = asdf_mapping_set_uint64(map, "n_dims", identity->n_inputs);
 
         if (ASDF_IS_ERR(err))
             goto cleanup;

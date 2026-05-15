@@ -16,7 +16,7 @@ ASDF_BEGIN_DECLS
  * ``forward`` always has exactly two elements.
  */
 typedef struct {
-    asdf_gwcs_transform_t base;
+    ASDF_GWCS_TRANSFORM_BASE;
     /** Always 2. */
     uint32_t n_forward;
     /** Heap array of ``n_forward`` owned pointers. */

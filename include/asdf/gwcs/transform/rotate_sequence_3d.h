@@ -20,7 +20,7 @@ typedef enum {
 } asdf_gwcs_rotation_type_t;
 
 typedef struct {
-    asdf_gwcs_transform_t base;
+    ASDF_GWCS_TRANSFORM_BASE;
     /** Number of rotation angles. */
     uint32_t n_angles;
     /** Heap-allocated array of rotation angles, in degrees. */

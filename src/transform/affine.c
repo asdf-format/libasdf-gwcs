@@ -100,7 +100,7 @@ static asdf_value_t *asdf_gwcs_affine_serialize(
 
     const asdf_gwcs_affine_t *affine = obj;
 
-    if (!affine->matrix || !affine->translation || affine->base.n_inputs == 0)
+    if (!affine->matrix || !affine->translation || affine->n_inputs == 0)
         return NULL;
 
     asdf_mapping_t *map = asdf_mapping_create(file);
@@ -113,7 +113,7 @@ static asdf_value_t *asdf_gwcs_affine_serialize(
     if (ASDF_IS_ERR(err))
         goto cleanup;
 
-    uint64_t mat_shape[2] = {affine->base.n_inputs, affine->base.n_inputs};
+    uint64_t mat_shape[2] = {affine->n_inputs, affine->n_inputs};
     asdf_ndarray_t mat_arr = {
         .ndim = 2,
         .shape = mat_shape,
@@ -127,7 +127,7 @@ static asdf_value_t *asdf_gwcs_affine_serialize(
     if (!mat_data)
         goto cleanup;
 
-    memcpy(mat_data, affine->matrix, (size_t)affine->base.n_inputs * affine->base.n_inputs * sizeof(double));
+    memcpy(mat_data, affine->matrix, (size_t)affine->n_inputs * affine->n_inputs * sizeof(double));
 
     asdf_value_t *mat_val = asdf_value_of_ndarray(file, &mat_arr);
 
@@ -141,7 +141,7 @@ static asdf_value_t *asdf_gwcs_affine_serialize(
         goto cleanup;
     }
 
-    uint64_t tr_shape[1] = {affine->base.n_inputs};
+    uint64_t tr_shape[1] = {affine->n_inputs};
     asdf_ndarray_t tr_arr = {
         .ndim = 1,
         .shape = tr_shape,
@@ -155,7 +155,7 @@ static asdf_value_t *asdf_gwcs_affine_serialize(
     if (!tr_data)
         goto cleanup;
 
-    memcpy(tr_data, affine->translation, (size_t)affine->base.n_inputs * sizeof(double));
+    memcpy(tr_data, affine->translation, (size_t)affine->n_inputs * sizeof(double));
 
     asdf_value_t *tr_val = asdf_value_of_ndarray(file, &tr_arr);
 

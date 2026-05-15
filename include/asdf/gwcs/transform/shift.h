@@ -11,7 +11,7 @@ ASDF_BEGIN_DECLS
  * Applies a scalar offset to a single axis: out = in + offset.
  */
 typedef struct {
-    asdf_gwcs_transform_t base;
+    ASDF_GWCS_TRANSFORM_BASE;
     double offset;
 } asdf_gwcs_shift_t;
 

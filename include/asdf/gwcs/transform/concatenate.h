@@ -14,7 +14,7 @@ ASDF_BEGIN_DECLS
  * ``(out0, out1, ...) = (forward[0](in0), forward[1](in1), ...)``.
  */
 typedef struct {
-    asdf_gwcs_transform_t base;
+    ASDF_GWCS_TRANSFORM_BASE;
     /** Number of sub-transforms. */
     uint32_t n_forward;
     /** Heap array of ``n_forward`` owned pointers. */

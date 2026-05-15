@@ -13,7 +13,7 @@ typedef enum {
 } asdf_gwcs_spherical_cartesian_direction_t;
 
 typedef struct {
-    asdf_gwcs_transform_t base;
+    ASDF_GWCS_TRANSFORM_BASE;
     asdf_gwcs_spherical_cartesian_direction_t direction;
     double wrap_lon_at;
 } asdf_gwcs_spherical_cartesian_t;

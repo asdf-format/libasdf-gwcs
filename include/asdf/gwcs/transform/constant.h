@@ -8,7 +8,7 @@
 ASDF_BEGIN_DECLS
 
 typedef struct {
-    asdf_gwcs_transform_t base;
+    ASDF_GWCS_TRANSFORM_BASE;
     double value;
 } asdf_gwcs_constant_t;
 

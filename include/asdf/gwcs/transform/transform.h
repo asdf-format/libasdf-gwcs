@@ -99,6 +99,34 @@ typedef struct asdf_gwcs_transform {
 } asdf_gwcs_transform_t;
 
 
+/**
+ * .. note::
+ *
+ *     This duplicates all the fields in the definition of
+ *     `asdf_gwcs_transform_t`.  The duplication is a practical matter of
+ *     documentation (the documentation extractor won't be able to properly
+ *     document `asdf_gwcs_transform_t` otherwise. For that reason this must
+ *     be kept in sync with `asdf_gwcs_transform_t`.
+ */
+#define ASDF_GWCS_TRANSFORM_BASE \
+    union { \
+        asdf_gwcs_transform_t base; \
+        struct { \
+            asdf_gwcs_transform_type_t type; \
+            const char *name; \
+            const asdf_gwcs_transform_t *inverse; \
+            uint32_t n_inputs; \
+            uint32_t n_outputs; \
+            const char **inputs; \
+            const char **outputs; \
+            const asdf_gwcs_bounding_box_t *bounding_box; \
+            const void *fixed; \
+            const void *bounds; \
+            const void *input_units_equivalencies; \
+        }; \
+    }
+
+
 ASDF_EXPORT void asdf_gwcs_transform_register(asdf_gwcs_transform_type_t type);
 ASDF_EXPORT const asdf_extension_t *asdf_gwcs_transform_get(asdf_file_t *file, const char *tag);
 

@@ -85,7 +85,7 @@ static asdf_value_t *asdf_gwcs_constant_serialize(
     if (ASDF_IS_ERR(err))
         goto cleanup;
 
-    err = asdf_mapping_set_uint64(map, "dimensions", constant->base.n_inputs);
+    err = asdf_mapping_set_uint64(map, "dimensions", constant->n_inputs);
 
     if (ASDF_IS_ERR(err))
         goto cleanup;

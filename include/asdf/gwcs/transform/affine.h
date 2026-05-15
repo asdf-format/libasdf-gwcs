@@ -8,7 +8,7 @@
 ASDF_BEGIN_DECLS
 
 typedef struct {
-    asdf_gwcs_transform_t base;
+    ASDF_GWCS_TRANSFORM_BASE;
     /** row-major, base.n_inputs * base.n_inputs elements */
     double *matrix;
     /** base.n_inputs elements */
