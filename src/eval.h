@@ -2,8 +2,8 @@
 
 #include <stddef.h>
 
-#include <asdf/gwcs/core.h>
-#include <asdf/gwcs/eval.h>
+#include "asdf/gwcs/core.h"
+#include "asdf/gwcs/eval.h"  // IWYU pragma: export
 
 /* Internal base struct -- concrete backends embed this as first member */
 struct asdf_gwcs_eval {

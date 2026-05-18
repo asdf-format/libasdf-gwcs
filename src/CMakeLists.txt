@@ -2,6 +2,9 @@ project(libasdf-gwcs)
 
 set(libasdf_gwcs_sources
     backend.c
+    coordinates/baseframe.c
+    coordinates/fk4.c
+    coordinates/fk5.c
     eval.c
     fitswcs_imaging.c
     frame.c
@@ -22,6 +25,7 @@ set(libasdf_gwcs_sources
     transform/shift.c
     transform/spherical_cartesian.c
     transform/transform.c
+    util.c
     wcs.c
 )
 

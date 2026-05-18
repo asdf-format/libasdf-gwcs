@@ -265,31 +265,6 @@ asdf_value_err_t asdf_value_as_gwcs_transform(asdf_value_t *value, asdf_gwcs_tra
 }
 
 
-/**
- * Prefix a tag string with tag: if not already prefixed
- *
- * Memory is always allocated for the new string even if unmodified
- *
- * TODO: This is copied out of libasdf; should maybe be added to its API
- */
-static char *tag_canonicalize(const char *tag) {
-    char *full_tag = NULL;
-    if (0 != strncmp(tag, "tag:", 4)) {
-        size_t taglen = strlen(tag);
-        full_tag = malloc(4 + taglen + 1);
-
-        if (!full_tag)
-            return NULL;
-
-        memcpy(full_tag, "tag:", 4);
-        memcpy(full_tag + 4, tag, taglen + 1);
-    } else {
-        full_tag = strdup(tag);
-    }
-
-    return full_tag;
-}
-
 
 const char *asdf_gwcs_transform_type_to_tag(asdf_gwcs_transform_type_t type) {
     const char *full_tag = NULL;

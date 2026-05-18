@@ -8,6 +8,7 @@
 #include <stdint.h>
 
 #include <asdf/extension.h>
+#include <asdf/gwcs/coordinates/baseframe.h>
 #include <asdf/gwcs/frame.h>
 #include <asdf/util.h>
 
@@ -19,6 +20,13 @@ typedef struct {
     uint32_t axes_order[3];
     const char *unit[3];
     const char *axis_physical_types[3];
+    /**
+     * Astropy coordinate reference frame, or NULL if absent/unrecognized.
+     *
+     * Ownership: the celestial frame owns this pointer; it is freed by
+     * `asdf_gwcs_frame_celestial_destroy`.
+     */
+    asdf_gwcs_baseframe_t *reference_frame;
 } asdf_gwcs_frame_celestial_t;
 
 ASDF_DECLARE_EXTENSION(gwcs_frame_celestial, asdf_gwcs_frame_celestial_t);
