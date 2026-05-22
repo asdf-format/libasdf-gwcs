@@ -3,6 +3,7 @@ install(
         asdf/gwcs/backend.h
         asdf/gwcs/core.h
         asdf/gwcs/eval.h
+        asdf/gwcs/grid.h
         asdf/gwcs/fitswcs_imaging.h
         asdf/gwcs/frame.h
         asdf/gwcs/frame2d.h

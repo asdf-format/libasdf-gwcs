@@ -6,6 +6,7 @@ set(libasdf_gwcs_sources
     coordinates/fk4.c
     coordinates/fk5.c
     eval.c
+    grid.c
     fitswcs_imaging.c
     frame.c
     frame2d.c

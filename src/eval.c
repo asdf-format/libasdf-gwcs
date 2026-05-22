@@ -1,6 +1,9 @@
+#include <stdlib.h>
+
 #include "asdf/gwcs/eval.h"
 #include "asdf/gwcs/backend.h"
 #include "asdf/gwcs/core.h"
+#include "asdf/gwcs/grid.h"
 #include "asdf/gwcs/wcs.h"
 
 #include "backend.h"
@@ -55,4 +58,77 @@ asdf_gwcs_err_t asdf_gwcs_eval_2d(
 
 void asdf_gwcs_eval_destroy(asdf_gwcs_eval_t *eval) {
     eval->destroy(eval);
+}
+
+
+asdf_gwcs_err_t asdf_gwcs_eval_grid2d(
+        asdf_gwcs_eval_t *eval,
+        const asdf_gwcs_grid2d_t *grid,
+        double **xout, double **yout) {
+    size_t npts = (size_t)grid->nx * grid->ny;
+    bool alloc_x = (*xout == NULL);
+    bool alloc_y = (*yout == NULL);
+    double *xrow = NULL;
+    double *yrow = NULL;
+    asdf_gwcs_err_t err = ASDF_GWCS_OK;
+
+    if (alloc_x) {
+        *xout = malloc(npts * sizeof(double));
+
+        if (!*xout) {
+            err = ASDF_GWCS_ERR_OOM;
+            goto cleanup; 
+        }
+    }
+    if (alloc_y) {
+        *yout = malloc(npts * sizeof(double));
+
+        if (!*yout) {
+            err = ASDF_GWCS_ERR_OOM; goto cleanup;
+        }
+    }
+
+    double xstep = grid->nx > 1 ? (grid->x1 - grid->x0) / (grid->nx - 1) : 0.0;
+    double ystep = grid->ny > 1 ? (grid->y1 - grid->y0) / (grid->ny - 1) : 0.0;
+
+    xrow = malloc(grid->nx * sizeof(double));
+    yrow = malloc(grid->nx * sizeof(double));
+
+    if (!xrow || !yrow) {
+        err = ASDF_GWCS_ERR_OOM; goto cleanup;
+    }
+
+    for (uint32_t ix = 0; ix < grid->nx; ix++)
+        xrow[ix] = grid->x0 + xstep * ix;
+
+    for (uint32_t iy = 0; iy < grid->ny && err == ASDF_GWCS_OK; iy++) {
+        double y = grid->y0 + ystep * iy;
+
+        for (uint32_t ix = 0; ix < grid->nx; ix++)
+            yrow[ix] = y;
+
+        err = asdf_gwcs_eval_2d(eval, xrow, yrow,
+                                *xout + iy * grid->nx,
+                                *yout + iy * grid->nx,
+                                grid->nx);
+    }
+
+cleanup:
+    free(xrow);
+    free(yrow);
+
+    if (err != ASDF_GWCS_OK) {
+
+        if (alloc_x) {
+            free(*xout);
+            *xout = NULL;
+        }
+
+        if (alloc_y) {
+            free(*yout);
+            *yout = NULL;
+        }
+    }
+
+    return err;
 }

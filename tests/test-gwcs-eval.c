@@ -9,6 +9,7 @@
 #include <asdf.h>
 #include <asdf/gwcs/backend.h>
 #include <asdf/gwcs/eval.h>
+#include <asdf/gwcs/grid.h>
 #include <asdf/gwcs/gwcs.h>
 
 #include "munit.h"
@@ -135,6 +136,58 @@ static double angular_sep_arcsec(
 #define MAX_SEP_ARCSEC  0.001   /* 1 mas -- EXCELLENT threshold */
 
 
+MU_TEST(test_asdf_gwcs_grid2d) {
+    /* 3×2 sampled grid: x in [1,5], y in [2,4] */
+    asdf_gwcs_grid2d_t g = { .x0=1.0, .y0=2.0, .x1=5.0, .y1=4.0, .nx=3, .ny=2 };
+
+    /* caller-allocated path */
+    double xs[6], ys[6];
+    double *xsp = xs, *ysp = ys;
+    assert_int(asdf_gwcs_grid2d_fill(&g, &xsp, &ysp), ==, ASDF_GWCS_OK);
+    assert_ptr(xsp, ==, xs);
+    /* row 0: y=2, x=1,3,5 */
+    assert_double(xs[0], ==, 1.0);
+    assert_double(ys[0], ==, 2.0);
+    assert_double(xs[1], ==, 3.0);
+    assert_double(ys[1], ==, 2.0);
+    assert_double(xs[2], ==, 5.0);
+    assert_double(ys[2], ==, 2.0);
+    /* row 1: y=4, x=1,3,5 */
+    assert_double(xs[3], ==, 1.0);
+    assert_double(ys[3], ==, 4.0);
+    assert_double(xs[4], ==, 3.0);
+    assert_double(ys[4], ==, 4.0);
+    assert_double(xs[5], ==, 5.0);
+    assert_double(ys[5], ==, 4.0);
+
+    /* allocating path */
+    double *xa = NULL, *ya = NULL;
+    assert_int(asdf_gwcs_grid2d_fill(&g, &xa, &ya), ==, ASDF_GWCS_OK);
+    assert_not_null(xa);
+    assert_not_null(ya);
+    assert_double(xa[0], ==, 1.0);
+    assert_double(ya[0], ==, 2.0);
+    assert_double(xa[5], ==, 5.0);
+    assert_double(ya[5], ==, 4.0);
+    free(xa);
+    free(ya);
+
+    /* dense 4×4 from (0,0): x1=3, y1=3 */
+    asdf_gwcs_grid2d_t d = { .x0=0.0, .y0=0.0, .x1=3.0, .y1=3.0, .nx=4, .ny=4 };
+    double dx[16], dy[16];
+    double *dxp = dx, *dyp = dy;
+    assert_int(asdf_gwcs_grid2d_fill(&d, &dxp, &dyp), ==, ASDF_GWCS_OK);
+    assert_double(dx[0],  ==, 0.0);
+    assert_double(dy[0],  ==, 0.0);
+    assert_double(dx[5],  ==, 1.0);
+    assert_double(dy[5],  ==, 1.0);
+    assert_double(dx[15], ==, 3.0);
+    assert_double(dy[15], ==, 3.0);
+
+    return MUNIT_OK;
+}
+
+
 MU_TEST(test_asdf_gwcs_backend_get_nonexistent) {
     const asdf_gwcs_backend_t *b = asdf_gwcs_backend_get("nonexistent_backend");
     assert_null(b);
@@ -214,14 +267,13 @@ static MunitResult run_build21_comparison(const char *csv_relpath) {
     if (!ref)
         return MUNIT_SKIP;
 
-    /* Build the same 20×20 pixel grid used in roman_wcs_ast.c */
-    double xin[NPTS], yin[NPTS];
-    for (int iy = 0; iy < NGRID; iy++) {
-        for (int ix = 0; ix < NGRID; ix++) {
-            xin[iy * NGRID + ix] = 100.0 + (IMAGE_NX - 200.0) * ix / (NGRID - 1);
-            yin[iy * NGRID + ix] = 100.0 + (IMAGE_NY - 200.0) * iy / (NGRID - 1);
-        }
-    }
+    /* 20×20 pixel grid matching roman_wcs_ast.c */
+    asdf_gwcs_grid2d_t grid = {
+        .x0 = 100.0, .y0 = 100.0,
+        .x1 = 100.0 + (IMAGE_NX - 200.0),
+        .y1 = 100.0 + (IMAGE_NY - 200.0),
+        .nx = NGRID, .ny = NGRID
+    };
 
     char pattern[PATH_MAX];
     snprintf(pattern, sizeof(pattern), "%s/roman/build21/*.asdf", FIXTURES_DIR);
@@ -267,8 +319,8 @@ static MunitResult run_build21_comparison(const char *csv_relpath) {
             break;
         }
 
-        double xout[NPTS], yout[NPTS];
-        if (asdf_gwcs_eval_2d(eval, xin, yin, xout, yout, NPTS) != ASDF_GWCS_OK) {
+        double *xout = NULL, *yout = NULL;
+        if (asdf_gwcs_eval_grid2d(eval, &grid, &xout, &yout) != ASDF_GWCS_OK) {
             asdf_gwcs_eval_destroy(eval);
             asdf_gwcs_destroy(wcs);
             asdf_close(file);
@@ -284,6 +336,8 @@ static MunitResult run_build21_comparison(const char *csv_relpath) {
                 max_sep = sep;
         }
 
+        free(xout);
+        free(yout);
         asdf_gwcs_eval_destroy(eval);
         asdf_gwcs_destroy(wcs);
         asdf_close(file);
@@ -311,6 +365,7 @@ MU_TEST(test_asdf_gwcs_eval_roman_build21_vs_gwcs) {
 
 MU_TEST_SUITE(
     gwcs_eval,
+    MU_RUN_TEST(test_asdf_gwcs_grid2d),
     MU_RUN_TEST(test_asdf_gwcs_backend_get_nonexistent),
     MU_RUN_TEST(test_asdf_gwcs_backend_get_ast_yaml),
     MU_RUN_TEST(test_asdf_gwcs_eval_2d_roman_l2),
