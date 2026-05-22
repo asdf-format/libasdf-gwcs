@@ -1,0 +1,911 @@
+#ASDF 1.0.0
+#ASDF_STANDARD 1.6.0
+%YAML 1.1
+%TAG ! tag:stsci.edu:asdf/
+--- !core/asdf-1.1.0
+asdf_library: !core/software-1.0.0 {author: The ASDF Developers, homepage: 'http://github.com/asdf-format/asdf',
+  name: asdf, version: 5.1.0}
+history:
+  extensions:
+  - !core/extension_metadata-1.0.0
+    extension_class: asdf.extension._manifest.ManifestExtension
+    extension_uri: asdf://astropy.org/astropy/extensions/units-1.3.0
+    software: !core/software-1.0.0 {name: asdf-astropy, version: 0.10.0}
+  - !core/extension_metadata-1.0.0
+    extension_class: asdf.extension._manifest.ManifestExtension
+    extension_uri: asdf://asdf-format.org/astronomy/gwcs/extensions/gwcs-1.4.0
+    manifest_software: !core/software-1.0.0 {name: asdf_wcs_schemas, version: 0.5.0}
+    software: !core/software-1.0.0 {name: gwcs, version: 1.0.3}
+  - !core/extension_metadata-1.0.0
+    extension_class: asdf.extension._manifest.ManifestExtension
+    extension_uri: asdf://stsci.edu/datamodels/roman/extensions/static-1.1.0
+    manifest_software: !core/software-1.0.0 {name: rad, version: 0.30.0}
+    software: !core/software-1.0.0 {name: roman_datamodels, version: 0.30.0}
+  - !core/extension_metadata-1.0.0
+    extension_class: asdf.extension._manifest.ManifestExtension
+    extension_uri: asdf://asdf-format.org/transform/extensions/transform-1.6.0
+    manifest_software: !core/software-1.0.0 {name: asdf_transform_schemas, version: 0.6.0}
+    software: !core/software-1.0.0 {name: asdf-astropy, version: 0.10.0}
+  - !core/extension_metadata-1.0.0
+    extension_class: asdf.extension._manifest.ManifestExtension
+    extension_uri: asdf://asdf-format.org/core/extensions/core-1.6.0
+    manifest_software: !core/software-1.0.0 {name: asdf_standard, version: 1.5.0}
+    software: !core/software-1.0.0 {name: asdf, version: 5.1.0}
+  - !core/extension_metadata-1.0.0
+    extension_class: asdf.extension._manifest.ManifestExtension
+    extension_uri: asdf://asdf-format.org/astronomy/extensions/astronomy-1.2.0
+    manifest_software: !core/software-1.0.0 {name: asdf_standard, version: 1.5.0}
+    software: !core/software-1.0.0 {name: asdf-astropy, version: 0.10.0}
+  - !core/extension_metadata-1.0.0
+    extension_class: asdf.extension._manifest.ManifestExtension
+    extension_uri: asdf://asdf-format.org/astronomy/coordinates/extensions/coordinates-1.0.0
+    manifest_software: !core/software-1.0.0 {name: asdf_coordinates_schemas, version: 0.5.1}
+    software: !core/software-1.0.0 {name: asdf-astropy, version: 0.10.0}
+roman:
+  meta:
+    cal_logs: ['2026-02-17T23:31:26.548Z :: stpipe.step :: INFO :: Step ExposurePipeline
+        running with args (''data/r0000101001001001001_0001_wfi15_f158_uncal.asdf'',).',
+      "2026-02-17T23:31:26.556Z :: stpipe.step :: INFO :: Step ExposurePipeline parameters
+        are:\n  pre_hooks: []\n  post_hooks: []\n  output_file: None\n  output_dir:
+        None\n  output_ext: .asdf\n  output_use_model: False\n  output_use_index:
+        True\n  save_results: True\n  skip: False\n  suffix: cal\n  search_output_file:
+        True\n  input_dir: data\n  update_version: False\n  steps:\n    dq_init:\n
+        \     pre_hooks: []\n      post_hooks: []\n      output_file: None\n      output_dir:
+        None\n      output_ext: .asdf\n      output_use_model: False\n      output_use_index:
+        True\n      save_results: False\n      skip: False\n      suffix: None\n      search_output_file:
+        True\n      input_dir: data\n      update_version: False\n    saturation:\n
+        \     pre_hooks: []\n      post_hooks: []\n      output_file: None\n      output_dir:
+        None\n      output_ext: .asdf\n      output_use_model: False\n      output_use_index:
+        True\n      save_results: False\n      skip: False\n      suffix: None\n      search_output_file:
+        True\n      input_dir: data\n      update_version: False\n    refpix:\n      pre_hooks:
+        []\n      post_hooks: []\n      output_file: None\n      output_dir: None\n
+        \     output_ext: .asdf\n      output_use_model: False\n      output_use_index:
+        True\n      save_results: False\n      skip: False\n      suffix: None\n      search_output_file:
+        True\n      input_dir: data\n      update_version: False\n      remove_offset:
+        True\n      remove_trends: True\n      cosine_interpolate: True\n      fft_interpolate:
+        True\n    dark_decay:\n      pre_hooks: []\n      post_hooks: []\n      output_file:
+        None\n      output_dir: None\n      output_ext: .asdf\n      output_use_model:
+        False\n      output_use_index: True\n      save_results: False\n      skip:
+        False\n      suffix: None\n      search_output_file: True\n      input_dir:
+        data\n      update_version: False\n    wfi18_transient:\n      pre_hooks:
+        []\n      post_hooks: []\n      output_file: None\n      output_dir: None\n
+        \     output_ext: .asdf\n      output_use_model: False\n      output_use_index:
+        True\n      save_results: False\n      skip: False\n      suffix: None\n      search_output_file:
+        True\n      input_dir: data\n      update_version: False\n      mask_rows:
+        False\n    linearity:\n      pre_hooks: []\n      post_hooks: []\n      output_file:
+        None\n      output_dir: None\n      output_ext: .asdf\n      output_use_model:
+        False\n      output_use_index: True\n      save_results: False\n      skip:
+        False\n      suffix: None\n      search_output_file: True\n      input_dir:
+        data\n      update_version: False\n    dark_current:\n      pre_hooks: []\n
+        \     post_hooks: []\n      output_file: None\n      output_dir: None\n      output_ext:
+        .asdf\n      output_use_model: False\n      output_use_index: True\n      save_results:
+        False\n      skip: False\n      suffix: None\n      search_output_file: True\n
+        \     input_dir: data\n      update_version: False\n      dark_output: None\n
+        \   rampfit:\n      pre_hooks: []\n      post_hooks: []\n      output_file:
+        None\n      output_dir: None\n      output_ext: .asdf\n      output_use_model:
+        False\n      output_use_index: True\n      save_results: False\n      skip:
+        False\n      suffix: rampfit\n      search_output_file: True\n      input_dir:
+        data\n      update_version: False\n      algorithm: likely\n      use_ramp_jump_detection:
+        True\n      threshold_intercept: None\n      threshold_constant: None\n      include_var_rnoise:
+        False\n      maximum_cores: '1'\n      expand_large_events: False\n      min_sat_area:
+        1.0\n      min_jump_area: 6.0\n      expand_factor: 1.9\n      sat_required_snowball:
+        True\n      min_sat_radius_extend: 0.5\n      sat_expand: 2\n      edge_size:
+        0\n    assign_wcs:\n      pre_hooks: []\n      post_hooks: []\n      output_file:
+        None\n      output_dir: None\n      output_ext: .asdf\n      output_use_model:
+        False\n      output_use_index: True\n      save_results: False\n      skip:
+        False\n      suffix: None\n      search_output_file: True\n      input_dir:
+        data\n      update_version: False\n    flatfield:\n      pre_hooks: []\n      post_hooks:
+        []\n      output_file: None\n      output_dir: None\n      output_ext: .asdf\n
+        \     output_use_model: False\n      output_use_index: True\n      save_results:
+        False\n      skip: False\n      suffix: None\n      search_output_file: True\n
+        \     input_dir: data\n      update_version: False\n      include_var_flat:
+        False\n    photom:\n      pre_hooks: []\n      post_hooks: []\n      output_file:
+        None\n      output_dir: None\n      output_ext: .asdf\n      output_use_model:
+        False\n      output_use_index: True\n      save_results: False\n      skip:
+        False\n      suffix: None\n      search_output_file: True\n      input_dir:
+        data\n      update_version: False\n    source_catalog:\n      pre_hooks: []\n
+        \     post_hooks: []\n      output_file: None\n      output_dir: None\n      output_ext:
+        .asdf\n      output_use_model: False\n      output_use_index: True\n      save_results:
+        False\n      skip: False\n      suffix: cat\n      search_output_file: True\n
+        \     input_dir: data\n      update_version: False\n      bkg_boxsize: 1000\n
+        \     kernel_fwhm: 2.0\n      snr_threshold: 3.0\n      npixels: 25\n      deblend:
+        False\n      fit_psf: True\n      forced_segmentation: ''\n    tweakreg:\n
+        \     pre_hooks: []\n      post_hooks: []\n      output_file: None\n      output_dir:
+        None\n      output_ext: .asdf\n      output_use_model: True\n      output_use_index:
+        True\n      save_results: False\n      skip: False\n      suffix: None\n      search_output_file:
+        True\n      input_dir: data\n      update_version: False\n      use_custom_catalogs:
+        False\n      catalog_format: ascii.ecsv\n      catfile: ''\n      catalog_path:
+        ''\n      enforce_user_order: False\n      expand_refcat: False\n      minobj:
+        15\n      searchrad: 2.0\n      use2dhist: True\n      separation: 1.0\n      tolerance:
+        0.7\n      fitgeometry: rshift\n      nclip: 3\n      sigma: 3.0\n      abs_refcat:
+        GAIADR3_S3\n      save_abs_catalog: False\n      abs_minobj: 15\n      abs_searchrad:
+        6.0\n      abs_use2dhist: True\n      abs_separation: 1.0\n      abs_tolerance:
+        0.7\n      abs_fitgeometry: rshift\n      abs_nclip: 3\n      abs_sigma: 3.0\n
+        \     update_source_catalog_coordinates: False\n      vo_timeout: 1200.0",
+      '2026-02-17T23:31:26.595Z :: stpipe.pipeline :: INFO :: Prefetching reference
+        files for dataset: ''r0000101001001001001_0001_wfi15_f158_uncal.asdf'' reftypes
+        = [''apcorr'', ''dark'', ''darkdecaysignal'', ''distortion'', ''flat'', ''gain'',
+        ''integralnonlinearity'', ''inverselinearity'', ''linearity'', ''mask'', ''photom'',
+        ''readnoise'', ''refpix'', ''saturation'']', '2026-02-17T23:35:49.676Z ::
+        stpipe.pipeline :: INFO :: Prefetch for APCORR reference file is ''/Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_apcorr_0005.asdf''.',
+      '2026-02-17T23:35:49.676Z :: stpipe.pipeline :: INFO :: Prefetch for DARK reference
+        file is ''/Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_dark_0451.asdf''.',
+      '2026-02-17T23:35:49.676Z :: stpipe.pipeline :: INFO :: Prefetch for DARKDECAYSIGNAL
+        reference file is ''/Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_darkdecaysignal_0001.asdf''.',
+      '2026-02-17T23:35:49.676Z :: stpipe.pipeline :: INFO :: Prefetch for DISTORTION
+        reference file is ''/Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_distortion_0002.asdf''.',
+      '2026-02-17T23:35:49.676Z :: stpipe.pipeline :: INFO :: Prefetch for FLAT reference
+        file is ''/Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_flat_0167.asdf''.',
+      '2026-02-17T23:35:49.677Z :: stpipe.pipeline :: INFO :: Prefetch for GAIN reference
+        file is ''/Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_gain_0027.asdf''.',
+      '2026-02-17T23:35:49.677Z :: stpipe.pipeline :: INFO :: Prefetch for INTEGRALNONLINEARITY
+        reference file is ''/Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_integralnonlinearity_0007.asdf''.',
+      '2026-02-17T23:35:49.677Z :: stpipe.pipeline :: INFO :: Prefetch for INVERSELINEARITY
+        reference file is ''/Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_inverselinearity_0044.asdf''.',
+      '2026-02-17T23:35:49.677Z :: stpipe.pipeline :: INFO :: Prefetch for LINEARITY
+        reference file is ''/Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_linearity_0040.asdf''.',
+      '2026-02-17T23:35:49.677Z :: stpipe.pipeline :: INFO :: Prefetch for MASK reference
+        file is ''/Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_mask_0033.asdf''.',
+      '2026-02-17T23:35:49.677Z :: stpipe.pipeline :: INFO :: Prefetch for PHOTOM
+        reference file is ''/Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_photom_0042.asdf''.',
+      '2026-02-17T23:35:49.677Z :: stpipe.pipeline :: INFO :: Prefetch for READNOISE
+        reference file is ''/Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_readnoise_0026.asdf''.',
+      '2026-02-17T23:35:49.677Z :: stpipe.pipeline :: INFO :: Prefetch for REFPIX
+        reference file is ''/Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_refpix_0016.asdf''.',
+      '2026-02-17T23:35:49.677Z :: stpipe.pipeline :: INFO :: Prefetch for SATURATION
+        reference file is ''/Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_saturation_0029.asdf''.',
+      '2026-02-17T23:35:49.677Z :: romancal.pipeline.exposure_pipeline :: INFO ::
+        Starting Roman exposure calibration pipeline ...', '2026-02-17T23:35:49.743Z
+        :: stpipe.step :: INFO :: Step dq_init running with args (<roman_datamodels.datamodels._datamodels.ScienceRawModel
+        object at 0x120cb3c40>,).', '2026-02-17T23:35:50.025Z :: romancal.dq_init.dq_init_step
+        :: INFO :: Flagging rows from: -999999 to -999983 as affected by guide window
+        read', '2026-02-17T23:35:50.067Z :: stpipe.step :: INFO :: Step dq_init done',
+      '2026-02-17T23:35:50.095Z :: stpipe.step :: INFO :: Step saturation running
+        with args (<roman_datamodels.datamodels._datamodels.RampModel object at 0x1154a20c0>,).',
+      '2026-02-17T23:35:50.096Z :: romancal.saturation.saturation_step :: INFO ::
+        Using SATURATION reference file: /Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_saturation_0029.asdf',
+      '2026-02-17T23:35:51.682Z :: stcal.saturation.saturation :: INFO :: Detected
+        65899 saturated pixels', '2026-02-17T23:35:51.732Z :: stcal.saturation.saturation
+        :: INFO :: Detected 65567 A/D floor pixels', '2026-02-17T23:35:51.750Z ::
+        stpipe.step :: INFO :: Step saturation done', '2026-02-17T23:35:51.818Z ::
+        stpipe.step :: INFO :: Step refpix running with args (<roman_datamodels.datamodels._datamodels.RampModel
+        object at 0x1154a20c0>,).', '2026-02-17T23:35:51.818Z :: romancal.refpix.refpix_step
+        :: DEBUG :: Opening the science data: <roman_datamodels.datamodels._datamodels.RampModel
+        object at 0x1154a20c0>', '2026-02-17T23:35:51.820Z :: romancal.refpix.refpix_step
+        :: DEBUG :: Opening the reference file: /Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_refpix_0016.asdf',
+      '2026-02-17T23:35:51.832Z :: romancal.refpix.refpix_step :: DEBUG :: Running
+        the reference pixel correction', '2026-02-17T23:35:51.832Z :: romancal.refpix.refpix
+        :: DEBUG :: Reading data from datamodel into single array', '2026-02-17T23:35:52.011Z
+        :: romancal.refpix.refpix :: DEBUG :: Removed the general offset from data,
+        to be re-applied later.', '2026-02-17T23:35:52.540Z :: romancal.refpix.refpix
+        :: DEBUG :: Removed boundary trends (in time) from data.', "2026-02-17T23:35:52.553Z
+        :: py.warnings :: WARNING :: /Users/bgraham/.pyenv/versions/3.12.4/envs/b21_moc_files/lib/python3.12/site-packages/romancal/refpix/data.py:398:
+        RuntimeWarning: invalid value encountered in divide\n  kern = (cov / mask_conv).reshape(rows,
+        columns)\n", '2026-02-17T23:35:52.682Z :: romancal.refpix.refpix :: DEBUG
+        :: Cosine interpolated the reference pixels.', '2026-02-17T23:35:52.977Z ::
+        romancal.refpix.refpix :: DEBUG :: FFT interpolated the reference pixel pads.',
+      '2026-02-17T23:35:55.872Z :: romancal.refpix.refpix :: DEBUG :: Applied reference
+        pixel correction', '2026-02-17T23:35:55.919Z :: romancal.refpix.refpix ::
+        DEBUG :: Re-applied the general offset (if removed) to the data.', '2026-02-17T23:35:55.935Z
+        :: romancal.refpix.refpix :: DEBUG :: Updated the datamodel with the corrected
+        data.', '2026-02-17T23:35:55.953Z :: stpipe.step :: INFO :: Step refpix done',
+      '2026-02-17T23:35:55.981Z :: stpipe.step :: INFO :: Step dark_decay running
+        with args (<roman_datamodels.datamodels._datamodels.RampModel object at 0x1154a20c0>,).',
+      '2026-02-17T23:35:55.982Z :: romancal.dark_decay.dark_decay_step :: INFO ::
+        Using DARKDECAYSIGNAL reference file: /Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_darkdecaysignal_0001.asdf',
+      '2026-02-17T23:36:00.733Z :: stpipe.step :: INFO :: Step dark_decay done', '2026-02-17T23:36:00.760Z
+        :: stpipe.step :: INFO :: Step wfi18_transient running with args (<roman_datamodels.datamodels._datamodels.RampModel
+        object at 0x1154a20c0>,).', '2026-02-17T23:36:00.760Z :: stpipe.step :: INFO
+        :: Step wfi18_transient done', '2026-02-17T23:36:00.785Z :: stpipe.step ::
+        INFO :: Step linearity running with args (<roman_datamodels.datamodels._datamodels.RampModel
+        object at 0x1154a20c0>,).', '2026-02-17T23:36:00.788Z :: romancal.linearity.linearity_step
+        :: INFO :: Using LINEARITY reference file: /Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_linearity_0040.asdf',
+      '2026-02-17T23:36:00.788Z :: romancal.linearity.linearity_step :: INFO :: Using
+        INVERSELINEARITY reference file: /Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_inverselinearity_0044.asdf',
+      '2026-02-17T23:36:00.788Z :: romancal.linearity.linearity_step :: INFO :: Using
+        INTEGRALNONLINEARITY reference file: /Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_integralnonlinearity_0007.asdf',
+      "2026-02-17T23:36:07.687Z :: py.warnings :: WARNING :: /Users/bgraham/.pyenv/versions/3.12.4/envs/b21_moc_files/lib/python3.12/site-packages/stcal/linearity/linearity.py:528:
+        RuntimeWarning: overflow encountered in cast\n  data[i] = np.where(resultant_saturated,
+        data[i], corrected_resultant)\n", '2026-02-17T23:37:11.037Z :: romancal.linearity.linearity_step
+        :: WARNING :: Flagged 581 spurious values outside remotely plausible range.',
+      '2026-02-17T23:37:11.055Z :: stpipe.step :: INFO :: Step linearity done', '2026-02-17T23:37:11.083Z
+        :: stpipe.step :: INFO :: Step rampfit running with args (<roman_datamodels.datamodels._datamodels.RampModel
+        object at 0x1154a20c0>,).', '2026-02-17T23:37:11.085Z :: romancal.ramp_fitting.ramp_fit_step
+        :: INFO :: Using READNOISE reference file: /Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_readnoise_0026.asdf',
+      '2026-02-17T23:37:11.098Z :: romancal.ramp_fitting.ramp_fit_step :: INFO ::
+        Using GAIN reference file: /Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_gain_0027.asdf',
+      '2026-02-17T23:37:11.107Z :: romancal.ramp_fitting.ramp_fit_step :: INFO ::
+        Number of resultants: 10 ', "2026-02-17T23:38:38.349Z :: py.warnings :: WARNING
+        :: /Users/bgraham/.pyenv/versions/3.12.4/envs/b21_moc_files/lib/python3.12/site-packages/romancal/ramp_fitting/ramp_fit_step.py:359:
+        RuntimeWarning: overflow encountered in cast\n  im.chisq = image_info[\"chisq\"][4:-4,
+        4:-4].copy().astype(\"float16\")\n", '2026-02-17T23:38:38.351Z :: romancal.ramp_fitting.ramp_fit_step
+        :: INFO :: Number of resultants: 10 ', '2026-02-17T23:38:38.628Z :: stpipe.step
+        :: INFO :: Step rampfit done', '2026-02-17T23:38:38.670Z :: stpipe.step ::
+        INFO :: Step dark_current running with args (<roman_datamodels.datamodels._datamodels.ImageModel
+        object at 0x121e251c0>,).', '2026-02-17T23:38:38.671Z :: romancal.dark_current.dark_current_step
+        :: INFO :: Using DARK reference file: /Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_dark_0451.asdf',
+      '2026-02-17T23:38:38.794Z :: stpipe.step :: INFO :: Step dark_current done',
+      '2026-02-17T23:38:38.822Z :: stpipe.step :: INFO :: Step assign_wcs running
+        with args (<roman_datamodels.datamodels._datamodels.ImageModel object at 0x121e251c0>,).',
+      '2026-02-17T23:38:38.822Z :: romancal.assign_wcs.assign_wcs_step :: INFO ::
+        reftype, distortion', '2026-02-17T23:38:38.823Z :: romancal.assign_wcs.assign_wcs_step
+        :: INFO :: Using reference files: {''distortion'': ''/Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_distortion_0002.asdf''}
+        for assign_wcs', '2026-02-17T23:38:38.860Z :: stcal.alignment.util :: INFO
+        :: Update S_REGION to POLYGON ICRS  270.641691516 65.726483337 270.649715697
+        65.844113976 270.348117508 65.843597344 270.343827910 65.725725733', '2026-02-17T23:38:38.861Z
+        :: romancal.assign_wcs.utils :: INFO :: S_REGION VALUES: POLYGON ICRS  270.641691516
+        65.726483337 270.649715697 65.844113976 270.348117508 65.843597344 270.343827910
+        65.725725733', '2026-02-17T23:38:38.861Z :: romancal.assign_wcs.utils :: INFO
+        :: Update S_REGION to POLYGON ICRS  270.641691516 65.726483337 270.649715697
+        65.844113976 270.348117508 65.843597344 270.343827910 65.725725733', '2026-02-17T23:38:38.861Z
+        :: stpipe.step :: INFO :: Step assign_wcs done', '2026-02-17T23:38:38.888Z
+        :: stpipe.step :: INFO :: Step flatfield running with args (<roman_datamodels.datamodels._datamodels.ImageModel
+        object at 0x121e251c0>,).', '2026-02-17T23:38:39.087Z :: stpipe.step :: INFO
+        :: Step flatfield done', '2026-02-17T23:38:39.115Z :: stpipe.step :: INFO
+        :: Step photom running with args (<roman_datamodels.datamodels._datamodels.ImageModel
+        object at 0x121e251c0>,).', '2026-02-17T23:38:39.127Z :: romancal.photom.photom
+        :: DEBUG :: pixel_area = 2.640600009241359e-13', '2026-02-17T23:38:39.127Z
+        :: romancal.photom.photom :: INFO :: photmjsr value: 0.764344', '2026-02-17T23:38:39.127Z
+        :: romancal.photom.photom :: INFO :: uncertainty value: 0.0297364', '2026-02-17T23:38:39.128Z
+        :: stpipe.step :: INFO :: Step photom done', '2026-02-17T23:38:39.155Z ::
+        stpipe.step :: INFO :: Step source_catalog running with args (<roman_datamodels.datamodels._datamodels.ImageModel
+        object at 0x121e251c0>,).', '2026-02-17T23:39:09.460Z :: romancal.source_catalog.source_catalog_step
+        :: INFO :: Using ePSF reference file: /Users/bgraham/roman_crds_cache/references/roman/wfi/roman_wfi_epsf_0258.asdf',
+      '2026-02-17T23:39:11.306Z :: romancal.source_catalog.psf :: INFO :: Performed
+        jitter convolution.  Image kernel: (8, 8, 0) Reference kernel: (0, 0, 0)',
+      '2026-02-17T23:39:11.431Z :: romancal.source_catalog.source_catalog_step ::
+        INFO :: Calculating and subtracting background', '2026-02-17T23:39:13.861Z
+        :: romancal.source_catalog.source_catalog_step :: INFO :: Creating detection
+        image', '2026-02-17T23:39:14.820Z :: romancal.source_catalog.source_catalog_step
+        :: INFO :: Detecting sources', '2026-02-17T23:39:16.367Z :: romancal.source_catalog.detection
+        :: INFO :: Detected 94 sources', '2026-02-17T23:39:16.368Z :: romancal.source_catalog.source_catalog_step
+        :: INFO :: Creating ee_fractions model', '2026-02-17T23:39:16.386Z :: romancal.source_catalog.source_catalog_step
+        :: INFO :: Creating source catalog', '2026-02-17T23:39:16.415Z :: romancal.source_catalog.source_catalog
+        :: INFO :: Calculating segment properties', '2026-02-17T23:39:16.619Z :: romancal.source_catalog.source_catalog
+        :: INFO :: Calculating aperture photometry', '2026-02-17T23:39:16.664Z ::
+        romancal.source_catalog.source_catalog :: INFO :: Calculating DAOFind properties',
+      '2026-02-17T23:39:16.819Z :: romancal.source_catalog.source_catalog :: INFO
+        :: Calculating nearest neighbor properties', '2026-02-17T23:39:16.819Z ::
+        romancal.source_catalog.source_catalog :: INFO :: Calculating PSF photometry',
+      "2026-02-17T23:39:17.428Z :: py.warnings :: WARNING :: /Users/bgraham/.pyenv/versions/3.12.4/envs/b21_moc_files/lib/python3.12/site-packages/photutils/psf/_components.py:1564:
+        AstropyUserWarning: One or more fit(s) may not have converged. Please check
+        the \"flags\" column in the output table.\n  warnings.warn('One or more fit(s)
+        may not have converged. Please '\n", '2026-02-17T23:39:17.776Z :: stpipe.step
+        :: INFO :: Saved model in r0000101001001001001_0001_wfi15_f158_segm.asdf',
+      '2026-02-17T23:39:18.722Z :: stpipe.step :: INFO :: Saved model in r0000101001001001001_0001_wfi15_f158_cat.parquet',
+      '2026-02-17T23:39:18.784Z :: stpipe.step :: INFO :: Step source_catalog done',
+      '2026-02-17T23:39:18.826Z :: stpipe.step :: INFO :: Step tweakreg running with
+        args (<romancal.datamodels.library.ModelLibrary object at 0x121e94500>,).',
+      '2026-02-17T23:39:18.826Z :: romancal.tweakreg.tweakreg_step :: INFO :: Number
+        of image groups to be aligned: 1.', '2026-02-17T23:39:18.826Z :: romancal.tweakreg.tweakreg_step
+        :: INFO :: Image groups:', '2026-02-17T23:39:18.826Z :: romancal.tweakreg.tweakreg_step
+        :: INFO ::   00001010010010010010001', '2026-02-17T23:39:18.827Z :: romancal.tweakreg.tweakreg_step
+        :: INFO :: All source catalogs will be saved to: /Users/bgraham/projects/260217_b21_moc_files',
+      '2026-02-17T23:39:18.939Z :: romancal.tweakreg.tweakreg_step :: INFO :: Using
+        91 sources from r0000101001001001001_0001_wfi15_f158_uncal.asdf.', '2026-02-17T23:40:00.472Z
+        :: tweakwcs.imalign :: INFO ::  ', '2026-02-17T23:40:00.473Z :: tweakwcs.imalign
+        :: INFO :: ***** tweakwcs.imalign.align_wcs() started on 2026-02-17 18:40:00.472790',
+      '2026-02-17T23:40:00.473Z :: tweakwcs.imalign :: INFO ::       Version 0.8.12',
+      '2026-02-17T23:40:00.473Z :: tweakwcs.imalign :: INFO ::  ', '2026-02-17T23:40:00.505Z
+        :: tweakwcs.imalign :: INFO :: Aligning image catalog ''GROUP ID: 987654''
+        to the reference catalog.', '2026-02-17T23:40:00.532Z :: tweakwcs.matchutils
+        :: INFO :: Matching sources from ''r0000101001001001001_0001_wfi15_f158_uncal''
+        catalog with sources from the reference ''GAIADR3_S3'' catalog.', '2026-02-17T23:40:00.533Z
+        :: tweakwcs.matchutils :: INFO :: Computing initial guess for X and Y shifts...',
+      '2026-02-17T23:40:00.533Z :: tweakwcs.matchutils :: INFO :: Found initial X
+        and Y shifts of 0.04077, 0.04077 (arcsec) with significance of 89 and 89 matches.',
+      '2026-02-17T23:40:00.533Z :: romancal.tweakreg.tweakreg_step :: WARNING :: Number
+        of output coordinates exceeded allocation (91)Multiple sources within specified
+        tolerance matched to a single reference source. Try to adjust ''tolerance''
+        and/or ''separation'' parameters. Alignment to an absolute reference catalog
+        will not be performed.', '2026-02-17T23:40:00.534Z :: stpipe.step :: INFO
+        :: Step tweakreg done', '2026-02-17T23:40:00.534Z :: romancal.pipeline.exposure_pipeline
+        :: INFO :: Roman exposure calibration pipeline ending...', '2026-02-17T23:40:00.606Z
+        :: stpipe.step :: INFO :: Saved model in r0000101001001001001_0001_wfi15_f158_wcs.asdf']
+    cal_step: {assign_wcs: COMPLETE, dark: COMPLETE, dark_decay: COMPLETE, dq_init: COMPLETE,
+      flat_field: COMPLETE, flux: INCOMPLETE, linearity: COMPLETE, outlier_detection: INCOMPLETE,
+      photom: COMPLETE, ramp_fit: COMPLETE, refpix: COMPLETE, saturation: COMPLETE,
+      skymatch: INCOMPLETE, source_catalog: COMPLETE, tweakreg: INCOMPLETE, wfi18_transient: N/A}
+    calibration_software_name: RomanCAL
+    calibration_software_version: 0.22.0
+    coordinates: {reference_frame: ICRS}
+    ephemeris: {ephemeris_reference_frame: '?', spatial_x: -52044463.08234682, spatial_y: -131312741.31107728,
+      spatial_z: -56910542.46910208, time: 61557.0, type: DEFINITIVE, velocity_x: 27.507907094602988,
+      velocity_y: -9.484643417914059, velocity_z: -4.112149494244798}
+    exposure:
+      data_problem: '?'
+      effective_exposure_time: 133.76
+      end_time: !time/time-1.4.0 2027-06-01T00:02:13.760
+      engineering_quality: OK
+      exposure_time: 133.76
+      frame_time: 3.04
+      ma_table_id: SCI0109
+      ma_table_name: '?'
+      ma_table_number: 109
+      mid_time: !time/time-1.4.0 2027-06-01T00:01:06.880
+      nresultants: 10
+      read_pattern:
+      - [1]
+      - [2, 3]
+      - [5, 6, 7]
+      - [10, 11, 12, 13]
+      - [15, 16, 17, 18, 19, 20]
+      - [21, 22, 23, 24, 25, 26]
+      - [27, 28, 29, 30, 31, 32]
+      - [33, 34, 35, 36, 37, 38]
+      - [39, 40, 41, 42, 43]
+      - [44]
+      start_time: !time/time-1.4.0 2027-06-01T00:00:00.000
+      truncated: false
+      type: WFI_IMAGE
+    file_date: !time/time-1.4.0 {base_format: datetime, value: '2026-02-17T23:40:00.607'}
+    filename: r0000101001001001001_0001_wfi15_f158_cal.asdf
+    guide_star: {epoch: '?', guide_mode: WIM-ACQ, guide_star_id: '?', guide_window_id: '?',
+      window_xstart: -999999, window_xstop: -999983, window_ystart: -999999, window_ystop: -999983}
+    instrument: {detector: WFI15, name: WFI, optical_element: F158}
+    model_type: ImageModel
+    observation: {execution_plan: 1, exposure: 1, observation: 1, observation_id: '00001010010010010010001',
+      pass: 1, program: 1, segment: 1, visit: 1, visit_file_activity: '01', visit_file_group: 0,
+      visit_file_sequence: 1, visit_id: '0000101001001001001', wfi_parallel: false}
+    origin: STSCI/SOC
+    photometry: {conversion_megajanskys: 0.7643435648829774, conversion_megajanskys_uncertainty: 0.029736358097914268,
+      pixel_area: 2.640600009241359e-13}
+    pointing: {dec_v1: 66.49600017133261, pa_aperture: 0, pa_v3: 59.999051896586074,
+      pointing_engineering_source: CALCULATED, ra_v1: 269.99997982111586, target_aperture: WFI_CEN,
+      target_dec: 66.0, target_ra: 270.0}
+    prd_version: '?'
+    product_type: l2
+    program: {category: '?', investigator_name: '?', science_category: '?', subcategory: CAL,
+      title: '?'}
+    rcs: {active: false, bank: '1', counts: -999999, electronics: A, led: '1'}
+    ref_file:
+      apcorr: crds://roman_wfi_apcorr_0005.asdf
+      area: '?'
+      crds: {context: roman_0046.pmap, version: 13.1.3}
+      dark: crds://roman_wfi_dark_0451.asdf
+      darkdecaysignal: crds://roman_wfi_darkdecaysignal_0001.asdf
+      distortion: crds://roman_wfi_distortion_0002.asdf
+      epsf: crds://roman_wfi_epsf_0258.asdf
+      flat: crds://roman_wfi_flat_0167.asdf
+      gain: crds://roman_wfi_gain_0027.asdf
+      integralnonlinearity: crds://roman_wfi_integralnonlinearity_0007.asdf
+      inverse_linearity: '?'
+      inverselinearity: crds://roman_wfi_inverselinearity_0044.asdf
+      linearity: crds://roman_wfi_linearity_0040.asdf
+      mask: crds://roman_wfi_mask_0033.asdf
+      photom: crds://roman_wfi_photom_0042.asdf
+      readnoise: crds://roman_wfi_readnoise_0026.asdf
+      refpix: crds://roman_wfi_refpix_0016.asdf
+      saturation: crds://roman_wfi_saturation_0029.asdf
+    sdf_software_version: '?'
+    source_catalog: {tweakreg_catalog_name: r0000101001001001001_0001_wfi15_f158_cat.parquet}
+    telescope: ROMAN
+    tweakreg_catalog: !core/ndarray-1.1.0
+      source: 0
+      datatype:
+      - {byteorder: little, datatype: int32, name: label}
+      - {byteorder: little, datatype: int64, name: flagged_spatial_id}
+      - {byteorder: little, datatype: float32, name: x_centroid}
+      - {byteorder: little, datatype: float32, name: y_centroid}
+      - {byteorder: little, datatype: float32, name: x_centroid_err}
+      - {byteorder: little, datatype: float32, name: y_centroid_err}
+      - {byteorder: little, datatype: float32, name: x_centroid_win}
+      - {byteorder: little, datatype: float32, name: y_centroid_win}
+      - {byteorder: little, datatype: float32, name: x_centroid_win_err}
+      - {byteorder: little, datatype: float32, name: y_centroid_win_err}
+      - {byteorder: little, datatype: float32, name: x}
+      - {byteorder: little, datatype: float32, name: x_psf_err}
+      - {byteorder: little, datatype: float32, name: y}
+      - {byteorder: little, datatype: float32, name: y_psf_err}
+      - {byteorder: little, datatype: float64, name: ra}
+      - {byteorder: little, datatype: float64, name: dec}
+      - {byteorder: little, datatype: float64, name: ra_centroid}
+      - {byteorder: little, datatype: float64, name: dec_centroid}
+      - {byteorder: little, datatype: float32, name: ra_centroid_err}
+      - {byteorder: little, datatype: float32, name: dec_centroid_err}
+      - {byteorder: little, datatype: float64, name: ra_centroid_win}
+      - {byteorder: little, datatype: float64, name: dec_centroid_win}
+      - {byteorder: little, datatype: float32, name: ra_centroid_win_err}
+      - {byteorder: little, datatype: float32, name: dec_centroid_win_err}
+      - {byteorder: little, datatype: float64, name: ra_psf}
+      - {byteorder: little, datatype: float64, name: dec_psf}
+      - {byteorder: little, datatype: float32, name: ra_psf_err}
+      - {byteorder: little, datatype: float32, name: dec_psf_err}
+      - {byteorder: little, datatype: int32, name: bbox_xmin}
+      - {byteorder: little, datatype: int32, name: bbox_xmax}
+      - {byteorder: little, datatype: int32, name: bbox_ymin}
+      - {byteorder: little, datatype: int32, name: bbox_ymax}
+      - {byteorder: little, datatype: float32, name: segment_area}
+      - {byteorder: little, datatype: float32, name: semimajor}
+      - {byteorder: little, datatype: float32, name: semiminor}
+      - {byteorder: little, datatype: float32, name: fwhm}
+      - {byteorder: little, datatype: float32, name: ellipticity}
+      - {byteorder: little, datatype: float32, name: orientation_pix}
+      - {byteorder: little, datatype: float32, name: orientation_sky}
+      - {byteorder: little, datatype: float32, name: cxx}
+      - {byteorder: little, datatype: float32, name: cxy}
+      - {byteorder: little, datatype: float32, name: cyy}
+      - {byteorder: little, datatype: float32, name: kron_radius}
+      - {byteorder: little, datatype: int32, name: nn_label}
+      - {byteorder: little, datatype: float32, name: nn_distance}
+      - {byteorder: little, datatype: float32, name: sharpness}
+      - {byteorder: little, datatype: float32, name: roundness1}
+      - {byteorder: big, datatype: bool8, name: is_extended}
+      - {byteorder: little, datatype: float32, name: fluxfrac_radius_50}
+      - {byteorder: little, datatype: float32, name: aper_bkg_flux}
+      - {byteorder: little, datatype: float32, name: aper_bkg_flux_err}
+      - {byteorder: little, datatype: float32, name: aper01_flux}
+      - {byteorder: little, datatype: float32, name: aper01_flux_err}
+      - {byteorder: little, datatype: float32, name: aper02_flux}
+      - {byteorder: little, datatype: float32, name: aper02_flux_err}
+      - {byteorder: little, datatype: float32, name: aper04_flux}
+      - {byteorder: little, datatype: float32, name: aper04_flux_err}
+      - {byteorder: little, datatype: float32, name: aper08_flux}
+      - {byteorder: little, datatype: float32, name: aper08_flux_err}
+      - {byteorder: little, datatype: float32, name: aper16_flux}
+      - {byteorder: little, datatype: float32, name: aper16_flux_err}
+      - {byteorder: little, datatype: float32, name: psf_flux}
+      - {byteorder: little, datatype: float32, name: psf_flux_err}
+      - {byteorder: little, datatype: float32, name: segment_flux}
+      - {byteorder: little, datatype: float32, name: segment_flux_err}
+      - {byteorder: little, datatype: float32, name: kron_flux}
+      - {byteorder: little, datatype: float32, name: kron_flux_err}
+      - {byteorder: little, datatype: float32, name: kron_abmag}
+      - {byteorder: little, datatype: float32, name: kron_abmag_err}
+      - {byteorder: little, datatype: int32, name: warning_flags}
+      - {byteorder: little, datatype: int32, name: image_flags}
+      - {byteorder: little, datatype: int32, name: psf_flags}
+      - {byteorder: little, datatype: float32, name: psf_gof}
+      byteorder: big
+      shape: [91]
+    velocity_aberration: {dec_reference: 65.7845863312222, ra_reference: 270.4961504483148,
+      scale_factor: 1.0000003455620605}
+    visit:
+      dither:
+        executed_pattern: []
+        primary_name: '?'
+        subpixel_name: '?'
+      internal_target: false
+      nexposures: -999999
+      start_time: !time/time-1.4.0 2020-01-01T00:00:00.000
+      status: SUCCESSFUL
+      type: GENERAL_ENGINEERING
+    wcs: !<tag:stsci.edu:gwcs/wcs-1.4.0>
+      name: ''
+      pixel_shape: null
+      steps:
+      - !<tag:stsci.edu:gwcs/step-1.3.0>
+        frame: !<tag:stsci.edu:gwcs/frame2d-1.2.0>
+          axes_names: [x, y]
+          axes_order: [0, 1]
+          axis_physical_types: ['custom:x', 'custom:y']
+          name: detector
+          unit: [!unit/unit-1.0.0 pixel, !unit/unit-1.0.0 pixel]
+        transform: !transform/compose-1.3.0
+          bounding_box: !transform/property/bounding_box-1.1.0
+            ignore: []
+            intervals:
+              x0: [-0.5, 4087.5]
+              x1: [-0.5, 4087.5]
+            order: F
+          forward:
+          - !transform/compose-1.3.0
+            forward:
+            - !transform/compose-1.3.0
+              forward:
+              - !transform/concatenate-1.3.0
+                forward:
+                - &id001 !transform/shift-1.3.0
+                  inputs: [x]
+                  offset: 1.0
+                  outputs: [y]
+                - *id001
+                inputs: [x0, x1]
+                outputs: [y0, y1]
+              - !transform/concatenate-1.3.0
+                forward:
+                - !transform/shift-1.3.0
+                  inputs: [x]
+                  offset: -2044.5
+                  outputs: [y]
+                - !transform/shift-1.3.0
+                  inputs: [x]
+                  offset: -2044.5
+                  outputs: [y]
+                inputs: [x0, x1]
+                outputs: [y0, y1]
+              inputs: [x0, x1]
+              outputs: [y0, y1]
+            - !transform/compose-1.3.0
+              forward:
+              - !transform/compose-1.3.0
+                forward:
+                - !transform/remap_axes-1.4.0
+                  inputs: [x0, x1]
+                  mapping: [0, 1, 0, 1]
+                  outputs: [x0, x1, x2, x3]
+                - !transform/concatenate-1.3.0
+                  forward:
+                  - !transform/polynomial-1.2.0
+                    coefficients: !core/ndarray-1.1.0
+                      source: 1
+                      datatype: float64
+                      byteorder: little
+                      shape: [6, 6]
+                    domain:
+                    - [-1, 1]
+                    - [-1, 1]
+                    inputs: [x, y]
+                    outputs: [z]
+                    window:
+                    - [-1, 1]
+                    - [-1, 1]
+                  - !transform/polynomial-1.2.0
+                    coefficients: !core/ndarray-1.1.0
+                      source: 2
+                      datatype: float64
+                      byteorder: little
+                      shape: [6, 6]
+                    domain:
+                    - [-1, 1]
+                    - [-1, 1]
+                    inputs: [x, y]
+                    outputs: [z]
+                    window:
+                    - [-1, 1]
+                    - [-1, 1]
+                  inputs: [x0, y0, x1, y1]
+                  outputs: [z0, z1]
+                inputs: [x0, x1]
+                inverse: !transform/compose-1.3.0
+                  forward:
+                  - !transform/remap_axes-1.4.0
+                    inputs: [x0, x1]
+                    mapping: [0, 1, 0, 1]
+                    outputs: [x0, x1, x2, x3]
+                  - !transform/concatenate-1.3.0
+                    forward:
+                    - !transform/polynomial-1.2.0
+                      coefficients: !core/ndarray-1.1.0
+                        source: 3
+                        datatype: float64
+                        byteorder: little
+                        shape: [6, 6]
+                      domain:
+                      - [-1, 1]
+                      - [-1, 1]
+                      inputs: [x, y]
+                      outputs: [z]
+                      window:
+                      - [-1, 1]
+                      - [-1, 1]
+                    - !transform/polynomial-1.2.0
+                      coefficients: !core/ndarray-1.1.0
+                        source: 4
+                        datatype: float64
+                        byteorder: little
+                        shape: [6, 6]
+                      domain:
+                      - [-1, 1]
+                      - [-1, 1]
+                      inputs: [x, y]
+                      outputs: [z]
+                      window:
+                      - [-1, 1]
+                      - [-1, 1]
+                    inputs: [x0, y0, x1, y1]
+                    outputs: [z0, z1]
+                  inputs: [x0, x1]
+                  outputs: [z0, z1]
+                outputs: [z0, z1]
+              - !transform/compose-1.3.0
+                forward:
+                - !transform/remap_axes-1.4.0
+                  inputs: [x0, x1]
+                  mapping: [0, 1, 0, 1]
+                  outputs: [x0, x1, x2, x3]
+                - !transform/concatenate-1.3.0
+                  forward:
+                  - !transform/polynomial-1.2.0
+                    coefficients: !core/ndarray-1.1.0
+                      source: 5
+                      datatype: float64
+                      byteorder: little
+                      shape: [2, 2]
+                    domain:
+                    - [-1, 1]
+                    - [-1, 1]
+                    inputs: [x, y]
+                    outputs: [z]
+                    window:
+                    - [-1, 1]
+                    - [-1, 1]
+                  - !transform/polynomial-1.2.0
+                    coefficients: !core/ndarray-1.1.0
+                      source: 6
+                      datatype: float64
+                      byteorder: little
+                      shape: [2, 2]
+                    domain:
+                    - [-1, 1]
+                    - [-1, 1]
+                    inputs: [x, y]
+                    outputs: [z]
+                    window:
+                    - [-1, 1]
+                    - [-1, 1]
+                  inputs: [x0, y0, x1, y1]
+                  outputs: [z0, z1]
+                inputs: [x0, x1]
+                inverse: !transform/compose-1.3.0
+                  forward:
+                  - !transform/remap_axes-1.4.0
+                    inputs: [x0, x1]
+                    mapping: [0, 1, 0, 1]
+                    outputs: [x0, x1, x2, x3]
+                  - !transform/concatenate-1.3.0
+                    forward:
+                    - !transform/polynomial-1.2.0
+                      coefficients: !core/ndarray-1.1.0
+                        source: 7
+                        datatype: float64
+                        byteorder: little
+                        shape: [2, 2]
+                      domain:
+                      - [-1, 1]
+                      - [-1, 1]
+                      inputs: [x, y]
+                      outputs: [z]
+                      window:
+                      - [-1, 1]
+                      - [-1, 1]
+                    - !transform/polynomial-1.2.0
+                      coefficients: !core/ndarray-1.1.0
+                        source: 8
+                        datatype: float64
+                        byteorder: little
+                        shape: [2, 2]
+                      domain:
+                      - [-1, 1]
+                      - [-1, 1]
+                      inputs: [x, y]
+                      outputs: [z]
+                      window:
+                      - [-1, 1]
+                      - [-1, 1]
+                    inputs: [x0, y0, x1, y1]
+                    outputs: [z0, z1]
+                  inputs: [x0, x1]
+                  outputs: [z0, z1]
+                outputs: [z0, z1]
+              inputs: [x0, x1]
+              outputs: [z0, z1]
+            inputs: [x0, x1]
+            outputs: [z0, z1]
+          - !transform/concatenate-1.3.0
+            forward:
+            - !transform/shift-1.3.0
+              inputs: [x]
+              offset: 2581.7807238597356
+              outputs: [y]
+            - !transform/shift-1.3.0
+              inputs: [x]
+              offset: -644.616612272983
+              outputs: [y]
+            inputs: [x0, x1]
+            outputs: [y0, y1]
+          inputs: [x0, x1]
+          outputs: [y0, y1]
+      - !<tag:stsci.edu:gwcs/step-1.3.0>
+        frame: !<tag:stsci.edu:gwcs/frame2d-1.2.0>
+          axes_names: [v2, v3]
+          axes_order: [0, 1]
+          axis_physical_types: ['custom:v2', 'custom:v3']
+          name: v2v3
+          unit: [!unit/unit-1.0.0 arcsec, !unit/unit-1.0.0 arcsec]
+        transform: !transform/compose-1.3.0
+          forward:
+          - !transform/concatenate-1.3.0
+            forward:
+            - !transform/scale-1.3.0
+              factor: 1.0000003455620605
+              inputs: [x]
+              name: dva_scale_v2
+              outputs: [y]
+            - !transform/scale-1.3.0
+              factor: 1.0000003455620605
+              inputs: [x]
+              name: dva_scale_v3
+              outputs: [y]
+            inputs: [x0, x1]
+            outputs: [y0, y1]
+          - !transform/concatenate-1.3.0
+            forward:
+            - !transform/shift-1.3.0
+              inputs: [x]
+              name: dva_v2_shift
+              offset: -0.0008921654667528019
+              outputs: [y]
+            - !transform/shift-1.3.0
+              inputs: [x]
+              name: dva_v3_shift
+              offset: 0.00022275504478372595
+              outputs: [y]
+            inputs: [x0, x1]
+            outputs: [y0, y1]
+          inputs: [x0, x1]
+          name: DVA_Correction
+          outputs: [y0, y1]
+      - !<tag:stsci.edu:gwcs/step-1.3.0>
+        frame: !<tag:stsci.edu:gwcs/frame2d-1.2.0>
+          axes_names: [v2, v3]
+          axes_order: [0, 1]
+          axis_physical_types: ['custom:v2', 'custom:v3']
+          name: v2v3vacorr
+          unit: [!unit/unit-1.0.0 arcsec, !unit/unit-1.0.0 arcsec]
+        transform: !transform/compose-1.3.0
+          forward:
+          - !transform/compose-1.3.0
+            forward:
+            - !transform/compose-1.3.0
+              forward:
+              - !transform/concatenate-1.3.0
+                forward:
+                - !transform/scale-1.3.0
+                  factor: 0.0002777777777777778
+                  inputs: [x]
+                  outputs: [y]
+                - !transform/scale-1.3.0
+                  factor: 0.0002777777777777778
+                  inputs: [x]
+                  outputs: [y]
+                inputs: [x0, x1]
+                outputs: [y0, y1]
+              - !<tag:stsci.edu:gwcs/spherical_cartesian-1.3.0>
+                inputs: [lon, lat]
+                outputs: [x, y, z]
+                transform_type: spherical_to_cartesian
+                wrap_lon_at: 180
+              inputs: [x0, x1]
+              outputs: [x, y, z]
+            - !transform/rotate_sequence_3d-1.1.0
+              angles: [0.7171613121832598, 0.1790601700758286, 60.45394896411254,
+                65.7845863312222, -270.4961504483148]
+              axes_order: zyxyz
+              inputs: [x, y, z]
+              outputs: [x, y, z]
+              rotation_type: cartesian
+            inputs: [x0, x1]
+            outputs: [x, y, z]
+          - !<tag:stsci.edu:gwcs/spherical_cartesian-1.3.0>
+            inputs: [x, y, z]
+            outputs: [lon, lat]
+            transform_type: cartesian_to_spherical
+            wrap_lon_at: 360
+          inputs: [x0, x1]
+          name: v23tosky
+          outputs: [lon, lat]
+      - !<tag:stsci.edu:gwcs/step-1.3.0>
+        frame: !<tag:stsci.edu:gwcs/celestial_frame-1.2.0>
+          axes_names: [lon, lat]
+          axes_order: [0, 1]
+          axis_physical_types: [pos.eq.ra, pos.eq.dec]
+          name: world
+          reference_frame: !<tag:astropy.org:astropy/coordinates/frames/icrs-1.1.0>
+            frame_attributes: {}
+          unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
+        transform: null
+    wcsinfo: {aperture_name: WFI15_FULL, dec_ref: 65.7845863312222, ra_ref: 270.4961504483148,
+      roll_ref: 60.45394896411254, s_region: POLYGON ICRS  270.641691516 65.726483337
+        270.649715697 65.844113976 270.348117508 65.843597344 270.343827910 65.725725733,
+      v2_ref: 2581.7807238597356, v3_ref: -644.616612272983, v3yangle: -60.0, vparity: -1}
+...
+”BLK 0              sá      sá      sákﬂÛ›æYõó–ÅaÅ9ÿ©           gÊ3CWbB        oˆ3C;ÊaB        Û3Cƒê¿;WaB‚àÿ;∏˘90Íp@(ÿ\ùònP@∏˘90Íp@(ÿ\ùònP@        ∂:+Íp@¥!(êònP@        ™®;,Íp@õŸXëònP@        ∞   ∏   5   <   0N?k…>
+>†©>ã©ü=}ê≠BÄı1CK [B]løc;BâÛ>   ]A;B4∫]?« è> ‰,⁄=‘5B;BiËE¿í¶B‹ 8F[à‘BÊAnF´3ˇBYÅF*ïCˆvâF=†kCåçFã{C˙ iF˘X CFsF.˛C-\ßA=f<           `<e@           ÅÜWE¥ÇÔB        ÈÖWEpXÔB        TÜWEºSB;bFÔBÃWF;Í-Ñ0@Êp@»[Wﬂ´nP@Í-Ñ0@Êp@»[Wﬂ´nP@        ˛©D3@Êp@’´nP@        S71@Êp@≈C—´nP@        q    p      ìC÷?æ8>º+>8*—>?+ê=éØ¬°éY@ÂQBÄ+¡><–˜AâÛ>
+   ∏ıBÚT?2 ’æ hH·= 4hAÙHB”p‡FMCJÏ7GÖ“GCUkkGœÖfC≤„~G*Â~C àGzùCBåGßâCª°|G[	zC‘ñvG™=rC2õAˆBà;           ™ºNA           øººD.µC        `ΩºDüC        |ººDÒ‚:(ôCd=;Ó~çÉËp@=qß∫nP@Ó~çÉËp@=qß∫nP@        n÷tãÉËp@ÌÓ¥ú∫nP@        πCãçÉËp@†ò˘ô∫nP@        ‹  Ò  Ç   ó   †ƒa@ﬂ«^>0ÑN>!È¸>PÑï=œá≥B)Ò4C`∞ƒAœ-Ëº‰©AâÛ>   O‚äB≥«l?eâ> ŸrÏ=\’·Bo≠!Bë[ÇGDÛlCÇ»”G†ÕóCºRH^GÆC≥áHÓ™∫Cò.Hø˘“CÌ’!H"ŒCjãHóò¡C>ˇHÎd∏CµìAÚN/;            ÉÈ¯A           ⁄w	E
+∞áC        &x	EÌûáC        x	E7Zß:â§áC™:ï+pÇ∂Áp@'± ˆnP@ï+pÇ∂Áp@'± ˆnP@        c`ÀÄ∂Áp@R¸ØınP@        O‘VÅ∂Áp@œ∆ÓıınP@        á  ®  ˛      ê˙ˆ@Ù⁄î>qà>Y(?y ™=otß¬0aÓ@dﬂ`A˚L˙>µ∏=AâÛ>   ˇÅA'pN??ï¬= êÜ‰=–0Cà∑-BÀPH”ˆ¥CíãoH`ìÂC ˚ôHOÕD™˜¶HE.
+DÑk≤H.ÇD∂#∂HôëDπÙ±H@®Dü÷©Hü^Dh_åAfàÂ:           —œóB           ÁÚ;DYàôC        Cˆ;DÁ{ôC        „Ù;Dìò¢;5zôC‚•;v‘ŒÿfÈp@fT¯YoP@v‘ŒÿfÈp@fT¯YoP@        óû‘fÈp@˘ÉMNoP@        ≤™:÷fÈp@-5ΩLoP@        Ï  Ù  .  7  dRI?Ò>JÑ>@V≥>h|=∂ºíBúã$Crä:BSÁø3Ö/BâÛ>   ⁄ë
+BŒ‡{?ßC= âÎÍ=-MB¢^'B∞#FJ∑¿B¡áFF˝Bä¥ØFìCﬂ∆æF"4C=•ÕF¯ÄC’œ“F î2CXù≥F#àC56¥F ƒC≠£A¯ÄÚ;           hPà@           :¡vE5“´C        3¡vE|≈´C        S¡vEõ„ë:∑√´C~®Æ:ñ}F•´Âp@o^oP@ñ}F•´Âp@o^oP@        É⁄K•´Âp@'Ÿ+RoP@        ÎΩÆ§´Âp@¿¬ÇPoP@        ]  |  G  i  Ê@±–ç>ÈÖ>2Í!?W?|=†˛ñ¬ﬂzAøkAˆT[?/SRAâÛ>   4;Bøe?[i±= åOÏ=ﬁD4CoP"B˘π
+H>f¢CgË]H¸y–CRéH1∑ÔCGöH˚˝Cªß§H$4
+Dj ©H*ÎD
+Ï£H‚¶DúHXõ D™çAû…‰:            £6ãB           ˆ¢E4> C        p¢E- C        Ë¢Eh¯];;1 C¬Ç;òîãúûÁp@œ_û˘3oP@òîãúûÁp@œ_û˘3oP@        (≤ÿûûÁp@ónÍ3oP@        Ó˛£úûÁp@sF}Ì3oP@        Â    é  ö  ˙Ó£?Âã.>“N!>hﬂ≈>ÂTõ=Eù≤B‰{4C√0!B[°æG¨	BâÛ>	   >/qA£=f?Ú˙©> äÆŸ=….¿ëﬁB,ÊôF]…C- ÚFN%CƒﬂG„È@C})G◊[C[ 6GVCéC˘ñ9GsieCQ'%GSãOCWè"G⁄KC†–ûA
+*≠;           N˘
+A           Ò«€CπÚ‘C        U«€CË‘C        |∆€C^XB;ö„‘CÖô?;¯ñ‘ƒÈp@uVnˆCoP@¯ñ‘ƒÈp@uVnˆCoP@        }Q≤‘ƒÈp@ŒÅÏCoP@        ‰F!’ƒÈp@b6PËCoP@        ≤  ø  £  ∞  ¯ì⁄?3å7>qò->dU“>^=g—§¬ÿHAˇÏ
+BÉv?(Ç˘AâÛ>   ⁄ë
+BUW?ﬂ»>  Õ‚=ƒkCÂµ%BmºÓF==#CÿóCG"ïRC}%zGÇrCÊÄáGiåÖCZÚëGÈ£CûÌîG~:êCwÜG¿EÉCØSÉGsª~C≈•öAÄáÜ;           πJA	           ”WEﬂC        XE™˙ﬁC        ˙WEHÑ;¯¯ﬁCÃ∫Å;hNÿ4uÁp@≠˚GoP@hNÿ4uÁp@≠˚GoP@        õªì3uÁp@≤s@˙FoP@        D˜¯3uÁp@ì´¯FoP@        q	  {	  ∏  √  Ù€Ç?®®$>6ç>‘º>xl{=>œù¬ ZDAL“.B§ä¸?DyBâÛ>   >/qAÇX?†Á¨æ •Ô€=¥</BéDBp"ÄF´≤ÎB/ùœFôC≠HGR2C+cGDæLC√‚G˘íàC¡⁄GÂ≈SC˚	G£I<C.	GÌz:CKL†AÆõº;           %ﬂ@
+            ˇLE·®ÊC        ¸ˇLEﬂòÊC        ÿˇLE!°:#õÊCSb≈:&j ZtÊp@ˇÚåÔKoP@&j ZtÊp@ˇÚåÔKoP@        ≤R±YtÊp@Pê‡KoP@        ¬™aZtÊp@&0∞‚KoP@        √  ﬁ  ø  ›  Åùø@}ßà>[∏s>p?b∑›=À∂≤¬¡ÌË?J8çAÁ*¶=˙õ`AâÛ>   ≠4´AúZ|?ÿ7‰= B=›üBC‘%BÅTG{§°CÙå>H”äÃC˝BvHΩÅÈCù|ÖH{`˜CØèéH◊D+uíH˘∑	DN|åHÅD∞gÜHX˘C¥géA© ;           ‹ÛTB           ºD˛DâD        ¬D˛DèD        ¢E˛DZù;uD®d≥;Ë∏ÈÁp@¯Ç≤æ{oP@Ë∏ÈÁp@¯Ç≤æ{oP@        ≠7»∑ÈÁp@7â£±{oP@        u÷ªµÈÁp@∫^,µ{oP@        Ó  ˆ  (  1  JP2?;>¬>˜9Æ>|,=Xó¬P°zA# GBÁ—ˇ?G∞8BâÛ>   IÒAsùl?ﬁ”}> f7Ÿ=•ûúBj0BcF£∏B(uF _ÎB£•ùFF,CŒ¨Fq)C∏GºF0DtCÕ0ΩFh˙%C$+†Fq¯C.E°FéCõÁ§A<¡˙;           ŸÚÑ@           z.RE˙ì"D        °0RE¨å"D        ı0REïÜt:Äã"DŸNä:ÿS)|\Êp@ñC68§oP@ÿS)|\Êp@ñC68§oP@        ñXÆq\Êp@É´q*§oP@        ¶∆p\Êp@É€<(§oP@          :  s  ¢  ≠ÇAxy ?ÅÏ>¨_ë?ΩÙ¢=ÛÒ¨¬àñ@·‚ï@Ú"¥=<I~@âÛ>   È[®Ay’{?Ï= p>bKDgBLIñw'E.mWI-¨+E[ãI_3.E.¶ñI5/E~æ†Im\0EZ˚ôIﬂõ√D	3I∏ÀSD≈(°I"l0E…ÄAÛ˘;           VÄ`C           éîE÷=/D        OîEZ4/D        ¬ïE¥·£:‘3/D%˙v:e˙azÁp@)Ÿá^æoP@e˙azÁp@)Ÿá^æoP@        pÓbzÁp@GS≈LæoP@        öƒ¯[zÁp@–ÃπKæoP@        S	  Ä	  ¶  ”  hqA—á˝>Q1Ì>êÜê?Ì˘É=›ó©¬P*Ã@NÛî@ï ◊=ú®Ç@âÛ>	   œ∑”AÕo?–πdæ ~e>Y¶‹C££bB»Hë√úD˘Î(Iá™DK≥WI)Ô±DuâiI5µDNGyIŒ∏DoI˛d±DïTI"89DéÃyI^˘∏DA ÉAã™Õ:           =±C           úÌ}EıBD        XÓ}E/ÚBD        ØÌ}E‰∆};BD‹Øû;!?;5ãÂp@DSßfﬂoP@!?;5ãÂp@DSßfﬂoP@        08©1ãÂp@õRaﬂoP@        §}À4ãÂp@8∞e]ﬂoP@        €  „      !rF?Wà>b>37±>ˇ X=zì¬úÅãA´)BBUË,@Ú61BâÛ>   4;B£Bx?"84> P{Á=áﬁAÓÙB.Ò(F¥õøB˜?ãFÕ!˘B`V≥FV<C˛U¬F*§.CÆù‘Fÿ8vCßÌ÷F∂—.C)Ó∂FâmC!∏FEïC‹¿£A$Á;           ıÜ@           ’í[EÆDD        Ωí[Eﬂ©DD        :ì[Ep√ü;…ßDD8–≠;Äö0Êp@9‹ Õ„oP@Äö0Êp@9‹ Õ„oP@        πÀg0Êp@cz/≈„oP@        Z¿0Êp@îkA¡„oP@        µ  Ω      ß2L?Bé>fc>)¥>—Ö;=˘®¬¿÷@¿…;Bå◊M?ûH+BâÛ>   È[®AyMk?¯SÿΩ ë‚=RK¿/|BËF¥ ºBöﬂ~FÉúÚB}‡£F+ÃCàG¥F<Ã,Câ–¡Fò«vCPòƒF¸)Còª®F÷˛Cëp©FY)C∫y§Av˜;           QEá@           s<En\gD        ]<EåUgD        Å<Ea5;ÎWgD+íA;Ÿﬁ[„«Êp@Å¸%&pP@Ÿﬁ[„«Êp@Å¸%&pP@        s˚ú„«Êp@Ï'< &pP@        ≥°˛‚«Êp@eÆ&pP@        ∫  »  ñ  •  HıË?Û€9>A~->Å≠”>Cà=m¨ß¬P·Í@ª#BwÍt?AÛAâÛ>   ùõ¡Aı/R?∞∑ö> \Ê⁄=\—¡ïBä¨˙Fù‡!CıãGG4ÏMCÑÄGf"nC\ñäG√çÉC<ëîGß©†C+nòG∆îçC9◊âGÀƒÅC9ÜGuCzCDuöAËSÅ;           Ã∑kA           ¬y!E?–ÖD        o|!Ev…ÖD        û{!E©ìí:4ÀÖDzãª:•‘#WHÁp@õd 4kpP@•‘#WHÁp@õd 4kpP@        ¶˝IHÁp@rNàkpP@        ¥Q¸MHÁp@Vü!kpP@        
+  *
+    A  á&	A¨?Ø>A∆ü>©pE?÷¥=ÆU¨BX1C’-$A√læ<±AâÛ>   N=’Am*0?˜™2? ∏Ë=Q0%C¡)Bı,'H.£¬CJáHù}ˆCÒ≥≠HBvDœGºH|œD¯Ë»Hù¯Då∆H1†:DlöHW†
+DMí¬HÜ1D1ãA–◊:           99ëB           âEz‡çD        ªEﬂﬁçD        {E3QÜ;tﬁçD¢ãÅ;ﬂnﬁ‰’Áp@·tVøäpP@ﬂnﬁ‰’Áp@·tVøäpP@        õKŸ„’Áp@gjNπäpP@        èÂ’Áp@~úæ∑äpP@        <  E  i  t  LÑ?Tº%>? >ﬂ<º> úì=ºœûBï*CyÅ0B%Ç¿ráBâÛ>   ˝∑ΩA•ı]?ƒ õΩ g€=„X'B{‚B◊ﬁuFëÍBÅ˝≈Fû‡C˜¶¸FHk.Cà]	G€œMC6lG"^àCôóGô%PCbòGÌò8C”ZGu6Cêª†A¶˝¡;           %§≠@           @GE<êD        /JEä:êD        ßIE¢Yé:09êDbé:—·ã∂ëÁp@i¢^˝ípP@—·ã∂ëÁp@i¢^˝ípP@        j›f®ëÁp@◊·N˜ípP@        “‚·™ëÁp@jO@ÚípP@        	  7	  n  ï  ëpA…É∏>∑©>¨aP?ãÍ™=‘™¬g∏@∑ÄA
+Ho>C±ˆ@âÛ>   ˝∑ΩAÖ·6?ñæ*ø 53Û=ˆÚiC´’1BOtFH?ﬂCA§HÉGD≥O—HﬂD˝Æ‚H≤ñ$D¿‹ÒH#/D5WÙH9èID/ºH»ZDÄÎH⁄≈)DôàâAq:»:           lªóB           †;E•»êD        ;E•≈êD        t;ELëq;î∆êD—
+É;êŒ˛ÕÊp@NöJfìpP@êŒ˛ÕÊp@NöJfìpP@        ¿—uŒÊp@5
+[ìpP@        ∑sàˇÕÊp@®qâ^ìpP@        ≠  ∑  Ä  å  ‡Ïå?ﬂ)>—†>∂^¿>n©ü=‘cÆ¬¡’~@†Ë*BH ?¥iBâÛ>   ùõ¡AÁÂu?ö∑“= ?·=oœÆBy∂BXèÅF~ΩÍB°îŒFWC;HGx;0CÊG§JCΩ—GhÚÛC*!GΩRQC§$GóÚ;CDó
+GLl9CT3†A–sπ;           ˛*Â@           H√˜C¢8ùD        !ƒ˜CŒ:ùD        a«˜C∫°:9ùDÑîs:.ñKõ∫Èp@;¬&Y…pP@.ñKõ∫Èp@;¬&Y…pP@        )ﬂÎö∫Èp@’La…pP@        lÎﬂò∫Èp@efÏZ…pP@        Ÿ    ‘     K5SAÍ„>Y—>∏îÄ?Æ:†=O=©¬0”—@”&ø@¡Ô+>$·¢@âÛ>   /˜AGRV?22ß= ‚ªÔ=A0ßC¥çIB¨ç£H´˙@DO√I/`DÌh'I∑qDÃ<5IyD	LAIÊYÅD˚å<I∞'éDáQ˜HF@D∂¡?I¬õÄD<LÖAdM∫:           ˆßÒB           ËèECmÛúD        ÉõEC/ÒúD        ÇíEC€ew;‰úDÌøÅ;ÙH¸ôÍp@"jW…pP@ÙH¸ôÍp@"jW…pP@        M…`ñÍp@Àj˜N…pP@        .ôÍp@∑Û„M…pP@        ¿   À   ·  Ì  Ræú?◊F)>Â± >VR¬>∞ßO=ÆDÆ¬@]Å@Œb"B≠1Õ>%jBâÛ>   só=A~!D?÷∫˙> .€=Ò◊æ¿ooBeﬁîFÇC√æÔFSÜ'Cl&G4{BC2Ù&GÜ/[CªŸ2GcXçCME7G≤LgCÒp"G ?OC‰G'IKCoıûAÁ@∞;            a˝	A           œ˛ßB¯âûD        1®BÁÜûD        ˇ®BV}≥;≠áûD≤N≈;B1ù5Íp@úb±œpP@B1ù5Íp@úb±œpP@        jrõ5Íp@èv€•œpP@        @`õ5Íp@Œ•¡®œpP@        P   X     ¯  ç05?RG>yó>#aØ>™Õ˝<∞°ì¬H„äAÚABBÃ˚À?e38BâÛ>   só=Aõx?í!> ÀÓ›=h—XA1çBÄFÂæÆBßSF˝ﬂBOàFyC±?îF≠#CÀ§F…'pC[£FßSC¸ﬁäF˘Õ
+C≥åFCb!¶Awg<           Ùÿk@           	tD±„üD         tDA·üD        ØtD8O;e·üDì;ÿç˚+Èp@$|+Ã—pP@ÿç˚+Èp@$|+Ã—pP@        ∑©‚+Èp@ì◊ √—pP@        É®‡ +Èp@ÂÉ√—pP@        ∆  ⁄  Ù  
+  ß2L@‰[>–µI>êÁ˜>Ç¸°=Åªú¬¯LA{ÊÃAU¸≈?Ü∞AâÛ>   2éA-Än?J©’Ω IÎ=æâÎBj!B8¸cG+1]C"∫GKπéC‚UÓG.£Cn÷ HXØCæØ	H∫ä»C{¡H∑Y¡C:÷H±’¥Cá@˛GFì¨C…ËîA˙i<;           ∫€«A           bˇ©Dæ°D        gˇ©D:º°D        Bˇ©Dà;ùª°DCmó; O∏Ëp@2 ìë◊pP@ O∏Ëp@2 ìë◊pP@        ;ŸN∏Ëp@	¶ä◊pP@        0ö*O∏Ëp@?üWà◊pP@        L  U  	    Hıh?ﬁ6!>2i>o"∏>®y=Õ´£B(-C:Ö6BÙ¬øÙ–!BâÛ>   Ö˛îAnCÄ?¶†ô= 6[Ó=A,dB≈üB:YBF\\ŒBÁ¬°FÚ≤CT—–FîI C0P‚FPÏ;C,•˜F~˙ÅC¥M˙FÜ~>C‡´ÿF;µ(CnÂ◊FO(CÛ^¢Aÿ;           ‹tõ@           7‹vE<ˆ¢D        P›vE¥Ù¢D        y‹vE˜Çå:ëÛ¢DZñØ:	π„ÄØÂp@r$™’pP@	π„ÄØÂp@r$™’pP@        |è{ØÂp@p@Y§’pP@        /ÆèØÂp@bc†’pP@        `  }  	  )  ¥≥◊@ﬂVç>î<~>ìC?‹Œ=kA®¬pë·@´ÖÅAç!?WzRAâÛ>   ÊKBóhk?tJ§> åÎ=`MCΩB ìˇGjÁ†CnÇMH˚ÃCÙ\ÉHpÄÈCÚ/éH~ÏˆCyÀóHHDl¡õH¥U	DdhñHDDë¬èH˘C“çAb˚:           ÚûxB           j Eóˇ®D        °è E¯:©D        Ïè Eá§c:v9©DnJÖ:J¿q®NÁp@‚æCÅÔpP@J¿q®NÁp@‚æCÅÔpP@        ”Y]NÁp@óØ˛_pP@        ûÄ·[NÁp@á·PZpP@        Ù	  
+  (  _  'PA≤Hg?‰ˆ∑>–9œ?,0? tB»_C…n«@˝0∞¿8H/@âÛ>     ¿µA&∏ ?Ÿ—ˆ?ÚÅá>0·C&ËQBˇ–∆FÛOCf˙$HÃ∞ÃC:ÙHÅ CDú√IBÑODÌÁI¬9YD%¶I†ˆhD[ÒH‡-D^  Isf_DÕﬁÜAƒË¡:            D◊B           √°∑DEî≥D        r°∑DÆí≥D        ´°∑DÖ≤;˜ë≥Dµ~2;†¬%üòËp@¯QPqP@†¬%üòËp@¯QPqP@        `æœüòËp@≠ÆYJqP@        ¢^>üòËp@r¶GqP@        ∂  ≈  î  ¶  åT	@C>6>ô,ﬁ>sªà=¬≥BJ5C,˝Aˇ4çºc‹AâÛ>   Ö˛îAVAj?“˚= Nï·=|û@ËBÃbG£‘3CgG/xbCRüîG*ÃÅCà°G,éCdT≠GE“©CüÉ∞GÕöC~°GÏáéC 	ùG√àC:ôAN®q;           êÇA           º5ZEá'πD        f5ZEÁ$πD        Ø5ZElZ";«%πD˘“#;e∆:Êp@U[à(*qP@e∆:Êp@U[à(*qP@        CeH:Êp@Sz¶*qP@        ∞æÚ:Êp@6µÔ!*qP@        ú  ™  ¬  —  „#@´Ÿ>>Âü2>x°Ÿ>X1É=Àª°¬∏ı$AZB˚Ç£?Ñ ÁAâÛ>,   <Bp3g?f‡Q< ¥π‡=ét»¡â®B%GG´62CòﬁsG‚bCË=úG,dÇC≠W©GÜAéC#{¥G•©CpˇπG,ﬁöC§!©G∆ÓçCáê§G¨àC∞òAÑÈf;           É©ãA           ®ß9E©–ºD        •¶9E) ºD        µß9E-Œ£:oÀºD ÈΩ: º˝∑÷Êp@…%s9qP@ º˝∑÷Êp@…%s9qP@        …îº÷Êp@yΩ9qP@        å<Ü∑÷Êp@U√
+9qP@        Ñ  ∞  –  ¸  6ORAH…Ò>ï,‡>*Aâ?˘-ï=MU≤¬°¶ @HÎ¶@¶{Æ<#è@âÛ>$   F5¨Aóù?/è¯æ %Î={1ÇCuEB7ùHwÿ(D*8 I,ÛPDÿ4$I'îbD«1ILÓiD¢Æ=IÄ.sDP–.I˝ºöD4o–H+† D@=I|πrD~iÖA≈"≤:           ß«C            JéEˇö¿D        LêEõ¿D        êêEö;Pö¿DÄÅi;≤\qÁp@}Jù•HqP@≤\qÁp@}Jù•HqP@        N‰∏qÁp@HÔ•HqP@        Fh
+qÁp@([Û¢HqP@        î	  ü	  ˇ  
+  À˝ñ?Ï/>sû>≈≈>h‘Ω=Óà¶¬@˝@#9$B‹ÿ?lÎBâÛ>    ¿µA}=Ä?Nd!= œeÓ=®UÄB–)BiôëF™¸B@=F?9#CcCG<0>C2(GÿπVClC5G∆ÙäC;GôÉxC$√G°CC¥—!GçÀGC«⁄ûA!-´;           Áﬂ@!           Ø◊Dò”¡D        ◊Ds—¡D        '◊DF;‘–¡Dbé;ˆ)ANËp@¿`ﬂ5OqP@ˆ)ANËp@¿`ﬂ5OqP@        ç–óNËp@buœ-OqP@        Ár¸NËp@È\t+OqP@        ¥  Ω  	    Uvt?GÃ >∞≠>gõ∏>›”N=z úB~-)C/*3B"ÖÊø≈˚"BâÛ>%   ≈)Aˇ\?Ó‚Ω K‹=€Ø¡ø∂B_±jFW5‹BäºF”7CFVÒF]⁄&C¶cGuB@Cµ7G§¢ÅCjäGıïFC<y˙FLv/Co˘FN.C∑ °A€Ú¡;           dõÕ@"           ôPDÑ´¬D        ZODî®¬D        }QDkÙù;°©¬DÑß¨;;⁄rñÈp@‚√H¥UqP@;⁄rñÈp@‚√H¥UqP@        ÖÇ√ñÈp@RY=©UqP@        é EñÈp@—,+≠UqP@        m  v      ﬁëC?œŒ>◊S>PÏ±>uÎE=X.òBmD'CP/@Bp¿J0BâÛ>+   πP˜Ag7k?ïÍá> v€=±â¡˝‡Bfˇ FlÄ∏BRtFz0ÌB∆ƒ§Fº˝C¬≤F´ª(Cπ˘æF(upCi≈Fı¬&C˙®F®ZC€q©FòùC©y§AÚQÒ;           ÙÃò@#           ∆G•C>dÀD        ∆Z•C˘aÀD        ÇV•CgãÒ:bbÀD˘ÌÌ:<ˆ«ÓÈp@7î“|wqP@<ˆ«ÓÈp@7î“|wqP@        çìtºÓÈp@O¥'twqP@         øÓÈp@€èπuwqP@        @  V  P  g  #Nr@Êg>”L>!Ã ?7Ô=m¢ØBx˛2C[„«A∆+÷æyúAâÛ>(   í˙êA|Fp?VMïΩ ôx‰=)Ÿ™Bæ
+BÙèGäfxC•EÊG°∫ùCRñHˇ8µC%|HÙ]¡Czå*HÁŸCÅÒ.Hñ’◊C§1Hm[≈C∫HLxøCÌìAz(;           oP“A$           s”BEç+œD        U“BEo&œD        ·“BEòπú:z'œD)ß≥:z˜ni´Êp@0{ÕÒ}qP@z˜ni´Êp@0{ÕÒ}qP@        ÕÂîn´Êp@õ9çﬁ}qP@        Ë∞ l´Êp@	Év‚}qP@          =  f  é  j‰Axh≥>¸h†>t]H?2ﬁÿ=P&§¬ê°Aæa"Adﬂ?UÓAâÛ>   F5¨AΩ€w?õ∞> µÔ=Ñ¯pCm¶"Bmh*H˛ÿ–CÔ$ÜHZﬂ˝C^≠HhrD}âªHQYD3"»HúùD	ä≈HÎz?D5	îHjD¬H^∑DN6ãA◊Ì€:           ]ÉòB%           ’¯◊D¨ÜŒD        £˘◊D ÑŒD        w¯◊D˙0é;´ÑŒDﬁõï;sÀ	ÉLËp@¡√lqP@sÀ	ÉLËp@¡√lqP@        Ì˜ÄLËp@y˙W˙~qP@        ¢é–ÉLËp@‰¸~qP@        ª  ƒ  p  x  ﬁëC?Ç¨>1m>ﬁìØ>zv=ËûÄ¬hÓ÷A˘™DB⁄¥í@â6BâÛ>!   ≈)A4xv?ÑΩ Í¸‡=f‚BçvBë®<F-%«BÏ∂òFìX CßdƒF~¥CÈ}”F2Cà¿ÂF√*xCÊYÌF{)6C‘ı≈F"ºCvÒ»FcCå˛¢A
+Ÿ;           Ÿ9z@&           ©ﬂƒDaËœD        ‡ƒDÑÂœD        ÃﬂƒDPby;:ÊœDé;xÌòezËp@F£Ú¶ÑqP@xÌòezËp@F£Ú¶ÑqP@        ?ñdzËp@˜¿&úÑqP@        îC(ezËp@íu‘ûÑqP@        #  +  z  Ñ  œµn?R!>Ñ‡>K)∑>Cé=x™B}•0CEê:B_|øœﬁ!BâÛ>%   '~A8Z~?åt‡= ÉN‡=ÔÑX¬osB:ÈfF›Btñ∑FÃ≤C˜·ÏF)&C( G’§?CÊa	G6˜ÄC∞%GˆCFC›9ıFÆ(.Cˇ‚ÛFÁ'-C‚O°A∂Àƒ;           «4≈@'           Á&œB k”D        ]œB:€”D        l8œB  ¿ï^”D  ¿¨|(3Íp@å°	vñqP@¨|(3Íp@å°	vñqP@        ≤“Ä'3Íp@9xòqP@        àw%3Íp@ƒbHDñqP@        P      }  ∑  †ƒ·A<{\?Gƒ?à∞‚?π˝å>áüØB˝2C}4$@≤ìæΩ9 ¨?âÛ>(   C…¢AÙ,≠=(ﬁNø–Ë?¥j≠EÅÆ†CñSóFW∞ CºjHõ™≤CmuΩIwpE  ¿  ¿  ¿  ¿◊Õ†G  ¿ˇ8FJ"O”D`ÛÔJâåÈEøìbA⁄1á:           ]û-F(           <àC ˚ﬂD        ˘àC˚ˆﬂD        àCŒÃÇ:ùˆﬂD©\p:¢◊åäÍp@∂t4≈qP@¢◊åäÍp@∂t4≈qP@        ä®àÍp@rœJ%≈qP@        z9ÉÍp@ºˇ⁄#≈qP@        ˙   '  È    òVwA‹n ?∏°Ó>#Ûë? bë= ¥Ø¬∑T@;Hì@≈QA=JU~@âÛ>#   í˙êAÂÌq?…ÆΩ V∂>%◊ÊCÎ∞WBnˇ⁄H|xE∞8I E)œkI#F EÜÇIº4!EeoàIjR"E®?ÑI &∂D–IO¸?Dw◊àIËc"E55ÇAª$;           [%C)           UœLE€#·D        ‰œLEô!·D        ˚œLEÆf:Æ!·Dªäå:Çe |Êp@:£Ç]¡qP@Çe |Êp@:£Ç]¡qP@        `zõ|Êp@ ˙T¡qP@        æÈ-|Êp@u™HU¡qP@        ∏  ·  Ù    BÙ1AÎ*«> î∂>≤Ú`?Áî™=mí´¬PÅ¨@€m˚@Ll<>L∞”@âÛ>$    F≤A3Ç?ª›Y= ™Ç>‚ÃåCôP1BÂŒhHt De¢ΩH´®5D#ıHÔGED%ÅIò‘KD$TIŒ”TD¬ÅI¶§aDdÃHΩ⁄DCú
+IΩVQDÏàATª—:           õΩæB*           64Eá‡D        ÿ54E‡D        %64E¬mÄ;‡Dµét;ÁÈgÚÊp@äœ≤¸ΩqP@ÁÈgÚÊp@äœ≤¸ΩqP@        ÚµiÚÊp@4b˜ΩqP@        6õgÚÊp@äu˜ΩqP@        ?  I  ˚    úä?ıÏ!>%>¡iº>¸°¡<z0õ¬@PYAìq'BøÖR?T BâÛ>.   ⁄3ùA∏h?ˇ6æ ò?ﬁ=fP~AºB∏ç~FÔ1ÈBkÕF∏ÚC5®GÑ-C^äG`CGCrGV∂ÑCGm‰NCqtGt48C¯Gµ¢5Cùl†A‘f∫;           Ï¥@+           ≤ï>Dc√„D        ‡î>Dã¡„D        Iñ>D‹<;¬¡„D_^;ôHoÈp@Òyß‰—qP@ôHoÈp@Òyß‰—qP@        F‘(	oÈp@M∂›—qP@        ˚{oÈp@ø#Äﬁ—qP@        Ú      &  Uı@PôD>wä9>–·>«bf=:Eë¬ UîADMÒAí÷Ú?4h€AâÛ>"   πP˜A?Ìm?cöÕΩ 8ÍÊ=z‚÷øÖôB‚ù$Gd≥6C*~ÖG/£kCπÆ™G‡jáC¡"πGr{ìCë∑≈GuÆCÌˇÀGOˇ†CÃ∫G(áîCåà¥G‘µéC*‚óA¸`[;           TMÖA,           C\Ek9ÊD        [\EU8ÊD        b\EÇôö;§6ÊDÚE∑;NÌ≈∞2Êp@Ãr‘qP@NÌ≈∞2Êp@Ãr‘qP@        .ùz´2Êp@á…P‘qP@        UH∞2Êp@wÊÙ˝”qP@        æ  ∆  .  6  =œ&?•á>?ö>£œ™>C®£<Ç-U¬ÇáB≈ÑHB6Ωˆ?Ω8FBâÛ>)   ¥›ÕA„t?›úU> Q%ﬂ=9˙N¬xóBZˇE∞ı£BƒûNFﬁ’Bp(ÑF%XˇBI„éFa≠CéRñF’iüCj<ûF—ƒC•xÑFCoáFñ,Cr¶AgÑ<            ]@-            E:ÍD        à E(ÍD        õ E˚ù;ìÍD=ü*;®{`ß]Áp@íM|¯‰qP@®{`ß]Áp@íM|¯‰qP@        R•]Áp@ö◊3¯‰qP@        H¬∂§]Áp@«| ˆ‰qP@        Ÿ	  Á	  I  X  ¬≥ @∆?@>·'2>ç7⁄>Z"ñ=–ç§B)t-CèœBmüøÓ£„AâÛ>.   9ÿAVXÇ?7Ôﬂ< 1Ò=SìBEÕB’
+G∏+C‹•^Gô\CÃFèG‡ÿ|CÖ{õGUMäCb¶G!©Cpû´G†®ñC
+eõGÃ‚âCK„ñGõÁÑCqôA¢gt;           ±CA/           ÁºE0J˝D        ‡æEI˝D        ∫æE⁄f:„H˝D◊*¬:.e∏ÌßÁp@‚|/Ú-rP@.e∏ÌßÁp@‚|/Ú-rP@        Kë0‰ßÁp@h=Ì-rP@        Æ£‰‰ßÁp@¬k2Ì-rP@        ◊  	  ’     ƒ}BADHﬁ>ïŸœ>]}?˛¯Ñ=&d®¬¿eﬂ@èÏ¡@¸>Ï™@âÛ>-   ï7ÔA◊_u?
+¶Ã= QJ¯=}SgCãØ>BzŸâH®‘&DõöŸHMÓ@DπYI	óQD	IÆ¢XDh"IÚ‡aDÁ
+I6jÅD˘˝≈Hﬂ"DŸ IÊ`D”ÜAX|¡:           I≠ÍB0           ;z°D“E        ≤{°D”E        z°Dù?ã;CEÕú;Ò∞c$“Ëp@$1∏JrP@Ò∞c$“Ëp@$1∏JrP@         r¬ “Ëp@% %JrP@        ⁄Ö∞$“Ëp@Ç†ÄJrP@              %  q”T?®Ü>ß>≥>º5=9k¨¬êÙû@zº=BkÜ
+??y-BâÛ>1   èzÅA$o?ˆ˜Ä= ”Tÿ=∂a¡ûBV)@F€¨…B„cñF:6 CYÕ¡FúÖCpΩ–F‚=2CÉ·F∆∆xC⁄$ËF¥’3CW+«F&¸CÉ∑∆FWCS£A◊o‹;           ñD£@1           Îø¥D∏äE        4¿¥D+äE        Íø¥DÓŒl;ìâEı±É;nI
+§Ëp@Ä`Ë!UrP@nI
+§Ëp@Ä`Ë!UrP@        &wW	§Ëp@ÓùªUrP@        Ò˜	§Ëp@[(CUrP@        ¢  ´  3  >  {úà?W·$>5>@Ω>uW=Õb°¬®Ω'A™n+B*⁄≥?≈æBâÛ>0   èzÅAÑ-o?>B> J”ﬁ=Û}Å@›ëBÜPzFˆw‡B8Ü«FuAC…_ˇFxƒ*Cj∆
+GÒíDCYrGcÉC:G5˘JC∫G%ê5CxEGQ#3Cõ†AÕ∑ª;           á€Œ@2           mÒD∂ôE        `ÒD˝òE        ¶ÒDY≠;àòEà4¡; rWËp@â#’GTrP@ rWËp@â#’GTrP@        ›póËp@l¡SBTrP@        )±Ëp@ƒ˚Í>TrP@        Ö  ç  6  >  ˙Ó#?{™>…Q>fX´>1€.=Sß¬Ù@ƒ€NBº*w?
+˛=BâÛ>5   ÂxlA¬Òa?hØ> Ô˛Ÿ=œ
+©A‘lBﬂo˙E+ƒ¶BÏ`GF˚Ø’B~OÄFOˇB∆åFokC\GúFÊ
+jCoôFµsCóIÅF·"Ce'ÉF4C>≥¶AÓ}<           R.@3           uóMEYÛE        ⁄óME°ÚE        §óME±Mê;&ÛEùËï;o#%ÏyÊp@éÙ5ªSrP@o#%ÏyÊp@éÙ5ªSrP@        ƒD.ÍyÊp@‰o¡µSrP@        å=ÎyÊp@ö´ØπSrP@        ’  ﬁ  :  D  ;t]?øJ>\B>«µ>;Â=+Yï¬\ÑAﬁÇ6BÖÇΩ?óÑ,BâÛ>)   ˇ∏ B≠{S?π∏•º ◊áŸ=®ÒÂ¿ﬁBÅ»@F," B˝ôF¶@C°V≈Fb"CNâ÷Fà63CüÊF ìxC˝ÏFÈÁ4C≥¨ÀFü
+CÛÀF≤CÀÊ¢AÑÙÿ;           w0ß@4           \ÖˆCæE        ÒÑˆCIE        ]áˆCÁ>+:EÄôT::y–¬Èp@ÒP[krP@:y–¬Èp@ÒP[krP@        T„¬Èp@…PPkrP@        xg¬Èp@k
+/NkrP@        ◊    K  x  5ÑA’˛Û>&Â>˜Vã?:<y=¥±¬Aœ@høü@kc¡<†Èå@âÛ>8   ¢XªAÃ◊v?ﬂù= _¸>TÛCD2`BƒÑI∑ú€Dë]I¡ÏD3éIËBÛD€
+öI7&ˆD5d§Igh˘Db¸ûIÌªD"KKI∞k]DË>§IY˘DPüÄA4’“:           ÍWC5           ö‚DD«E        “õ‚D¨∆E        3ö‚Dn‰¨;∏∆EÛõ¡;9-jp6Ëp@¬π∂{rP@9-jp6Ëp@¬π∂{rP@        ‰EEl6Ëp@q„y±{rP@        ÒŸ+p6Ëp@Í·±{rP@            à  ê  ÄØ)?õ\>z>kd≠>|{*=	(©¬ê'”@ô’IB%:F?&™9BâÛ>2   ÂxlA®b?Bh;= ß◊=x_YA‰HBâûF«™BL}NFTl⁄B∞•ÖF	”CÁÇëFt Cù7üFNzkCú†F!C–káFDÏC⁄ïàFÑCY¶A`]
+<           Só]@6           8'ÇDñHE        &ÇD,HE        x'ÇD˙Ë®;‹GE_qΩ;KÀ\Èp@¡å‰ƒêrP@KÀ\Èp@¡å‰ƒêrP@        û+©^Èp@∆¡êrP@        ﬁ’`[Èp@(¡bøêrP@            ∞  π  ç05?√Q>ï >∆ÉÆ>èß_=≠Y™BZ0C˝JBˇ~føÄÓ4BâÛ>0   ¬ÄÒAùäU?‡)‰Ω ¯Ã’=Ûï¡J•Bû◊F|±BR≠aFf÷·BíûêF≤úC√ÎùF˘d#C*©™F/ÀmCBŒ≠Fâ8CÌlìFÅŒ
+CîFn∫C"••A»í<           È_Ü@8           Ê∂◊C±E        Ü∑◊CÃ∞E        &π◊CE";Ï∞EP€;/_;÷Èp@S§$“rP@/_;÷Èp@S§$“rP@        x†Ø:÷Èp@)ûc"“rP@        ÿ‰π9÷Èp@U≥Q#“rP@        ®  ∑  2	  C	  ‡Ï@VCE>∏G4>|ﬁ>RQ∞= ≥B¡ª4CB}®Ω›ì◊AâÛ>4   ¢XªA≤≠a?  æ S±‡=eb–B¥˚B‡G‚8Cü˜yGà‘jC5¡üGøòÜCØ¨G8íCi>∏Gœ∑¨C¡çæG†ÀüC1ô≠Gß‡íCd®G±VçC¸|òA{Íh;            pÛeA9           =î‰Dm1E        ñ‰D⁄0E        Îî‰D=˜ê;Ú0EH’ê;lJÚ2Ëp@t MèŸrP@lJÚ2Ëp@t MèŸrP@        }ÃÀÌ2Ëp@Ò7ËäŸrP@        πö2Ëp@út§ãŸrP@           )  N	  X	  ;t]?w[>˙o>˝·µ>˘~=ﬁ:ò¬ ˝pA€É:BL‰(@x&BâÛ>5   ÏL•Aõåq?k›√Ω Ån›=¥Í*¬LbB>EFìÕB#ÎúFÒÁCÙç…FQCàw€FŸ√5CÎÒF≤CÀ{ÚF`Ä8Cˆ–FF1"Ch¿œF7&"Cu¥¢A€Gÿ;           ˆ#ê@:           ƒG EPàE        ıH EAáE        cI ER“A:áEû}:∆5O∆ÔÁp@–•"„rP@∆5O∆ÔÁp@–•"„rP@        .¨y¿ÔÁp@Á
+î„rP@        ÓbæÔÁp@∫®–„rP@        Ó    Q	  Ä	  ?ÔõAèæ?n©?W¶?_A=∞„≥¬Å¥ù?πì`@“hV:ruE@âÛ>9   2å∫AXŸ?∫
+:ø _µÍ=+DØêáBòLmID=EÿÊæIÃî_E˙•ÛIÆbEØÊJpÒcECΩJ9?eEÿá˛I EÅ!~I∂DtDúJÈòeE@®wAíﬂ:           /ÁÃC;           a(EºE        R)E*E        «(E@æÎ:˚EN0¸:◊rœêÁp@H]üsP@◊rœêÁp@H]üsP@        âÑ êÁp@’√ˇösP@        /JÕêÁp@aË†ôsP@        8	  M	  ÷	  Ì	  Q?@¥k>3ùU>⁄j?Óø=,≤¬¡ 
+@u”∑AÑ>Î óAâÛ>=   Q•LA∑D?#^≠æ g∏‹=-„(Cˇ◊B<&èGôÁwC1ª‰G¢≈úCzH£k≤C6∑HßzæCËè)H-≈’CKï,HáÌ—C`$HÖ‡∆CÛ≈H-1ΩCâìA
+u&;           7;B<           ≥FDE˘ E        ûπFDí˘ E        „∂FDüé=;˘ E:‹P;€~ÀjÈp@ã!ä5sP@€~ÀjÈp@ã!ä5sP@        ˜GÆ√jÈp@∆å?å5sP@        ÿ‰∆jÈp@g„à5sP@          !  
+  
+  Ü¬ ?ç41>X·*>ÙÃ>3=ìk°B„+C∏`B	^MøÏ‘BâÛ>D   ·ÂBJi?»Dö> 3!€=≤ˆ|¬>hBÅ«∆FÚ≈C-ﬂGŒ˝8C$'HGVfVC!^YG6≥nC›·hGËïCåïnGC€C‚öSG—ÄfCºGQGQaC‚ûúAá)ï;           `%A=           P%E∂Ú"E        O%EYÚ"E        ú%E ˝ó;©Ú"EÙ0ò;™¿itÁp@oä1@sP@™¿itÁp@oä1@sP@        øitÁp@‹? .@sP@        @QhtÁp@‡<"1@sP@        û	  ¶	  *
+  4
+  ÎO?Ç‰>4L>¥è≤>Ò”a=`£¬aA√›@BΩP¡?á	-BâÛ>;   Q•LAO´g?N*ú< ±›=9ÓΩ?YœBÒ'0F$$æB≠jéFÎˆB]ŸµFE?C}çƒFT,CYu‘F◊ÒqC®±⁄FW®,CŒ∫F?CÃ∫FiæCﬁ†£A∆·;           Úéì@>           eLE6'E        ‰dLE^5'E        ?eLE™ò;Ñ5'Eâ˜£;Ä=ƒÅÇÊp@6ô.À^sP@Ä=ƒÅÇÊp@6ô.À^sP@        ‰mÕÇÇÊp@;Y	∆^sP@        JÅÇÊp@Ú)«^sP@        ¬  À  o
+  x
+  .ÛQ?ßM>7D>’¬≤>ró9=‡§î¬à÷ÜAiê=B±@/"/BâÛ>B   HÎ3B1QZ?ˇ-¶> d{ÿ=ÎzBœBŸı7F0ƒB0íFΩ˚Bëˇ∫FSCg⁄ F¶§.CﬁUÿF—:tC¡Ü‡FGi0C/(¿FÄ4C-¿FHàC∞b£A˘Âﬁ;           ¨›ß@?           ◊4jEDh(E        I4jE_h(E        Ó4jEÎ˛9;…g(Eû˘@;∂0r∏ÚÂp@ábÙfsP@∂0r∏ÚÂp@ábÙfsP@        ò-#ªÚÂp@yV8ıfsP@        v˙∑ÚÂp@ø…øfsP@        ú  ™  
+  ç
+  ¡4„?µ~9>:¢,>“˜“>hˇç=ãæ¶¬pø˘@v|Bı;ä?&LÙAâÛ>7   îÌ=B>R?Óîæ 5!⁄=æBæßBZ—ÈFG|Cå9G…UCCN@mGY	aC ›ÄGyC
+äG,ºòC◊⁄çG(ÜC˙ÌGweuCêyGò‚lC õAoÉ;           !{NA@           Õé›DÃE*E        Úé›DïE*E        ”é›DàM; E*EtÉ;÷ﬂ8˘EËp@v-A]ysP@÷ﬂ8˘EËp@v-A]ysP@        ¯ Ÿ¯EËp@”pú[ysP@        ¢ù*˘EËp@N/]ysP@        ‰  ı  õ
+  Æ
+  ¢+@-<N>Â√@>˚Î>›¬Ö=aÏ´¬‚¶@lú·A]@ ?)^≈AâÛ>F   ‹/ÈAúÌG?ßõ> ÇU›=to…BB`<G∆ÔDC‡ôïGCàyC]Ç¿GØJèCG“–G€!õCŸ°ﬂG´ë¥C¢õ‰G±C™Ceù“G˛«ùCc≥ÃGOKóCœ ñA#M;           BπAA           ˜’VC–+E        @ÁVC˘+E        K‡VC_§:ò+Eët≤:Î—'Íp@–ÙÚÉsP@Î—'Íp@–ÙÚÉsP@        Ò∑›Íp@ËI¨ÎÉsP@        ÛÁ	Íp@3ÊœËÉsP@        »   Â   ¢
+  ¬
+  `‘@h å>≥Ù|>h?`‘≈=·„ß¬jÁ@ƒ‘ÇAÕ–!?—ÜVAâÛ>I   Aö"B¸ée? ê°> ^^Ê=}‚+C‡s1B¢_ˇG_§C \IH1nŒCsÅH∞ûÍCx∫ãHQ#¯CHïHDªÏòHHÃ	D‚ìHü¢D˙çH_z˙C¸çAoâˆ:           Ã∂zBB           ˇî3EK"2E        9ñ3E)!2E        ªñ3E „Ü:ä!2E`8\:>P˚Êp@à~≤sP@>P˚Êp@à~≤sP@        /≈˚Êp@qËu≤sP@        íÑó˚Êp@P÷¿x≤sP@        #  O    9  “ÏcAÆŸÍ>⁄Éÿ>X¯Ñ?H‰ü=√ìß¬kÏ@◊†≤@Ô’8>"hò@âÛ>C   ”:AàFg?–ˇæ ¨]˚=˚rCy˚FBíŸ¿H∑èDÿzI‰gúDŸÂHI e£D™^YI"`¶DÛgI?™D/YaIRØùD
+›I>¨7D§≈fIó°©Dk∞ÉAì(Ã:           ´_,CC           Gå,E1]2E        ç,E…]2E        |å,Eﬂ:&]2ERâ¯:N Áp@™Ùz¥sP@N Áp@™Ùz¥sP@        vèTÁp@Ü÷ ¥sP@        CH Áp@"_-z¥sP@        ø
+  “
+    1  ÉP@t{Z>oK>Cã¯>2ç={#•¬8∏	A‘< AT8]?Ä/∞AâÛ>B   ”:AòÒy?À√Í= ÖÕÏ=qGÕB∫AB8ïeGwlRC˛I∫G'áC°NÓG)õC-H/5ßC˛
+H.§øC HΩ∂∏C˙FH#Ô¨C°!ˇGió§C·îA3;           e≥©AD           Úm{D!3E        ®q{D€ 3E        üo{D.	;;‰ 3E˘LA;¢„¢Ä-Èp@	‡iÉæsP@¢„¢Ä-Èp@	‡iÉæsP@        bø(|-Èp@ë≥$ÇæsP@        ‘Ûõ~-Èp@wGrÇæsP@        Á  Ù  +  8  ÷#Ÿ?c:5>82,>l!–>#"L=≤k°¬Äv'ARB≠+å?E BâÛ><   ·ÂBíAx?}∆Áº Ú•Â=Å§¡ñ÷B1Í÷FÿCJù-G§@Cı^G(^CÂpGûruCuÅGÛ”óCLøÖGÚnÑCa€nG‰pC3rhGÆ¿hCqµõAö‚ä;           7AE            †E;¿4E        ~†E·¡4E        ◊†Eï›6:O¡4Ekë:˜ñπ¬®Áp@Ãòú«sP@˜ñπ¬®Áp@Ãòú«sP@        B/¡®Áp@∑©«sP@        •lbø®Áp@∑8ƒ§«sP@        ‰  	  5  d  ª|AlXÓ> Iﬂ>]Ùá?ÎfÅ=8R≠¬†Ñê@m/®@æCô=ºì@âÛ>G   e=·AîÅ?ûã= €T>·ÏC?]OBÂ·HvúπDÆÒ9I ≈DÖpI>GÃD
+ÇIQ#œD4ºäIàv“D4∏ÑI›OßDô1Iá˙KDDRäI˙@“DJÇA@”:           U<7CF           íÂD˜o;E        LÂD≠o;E        eÂDK˛w;oo;Eπq_;%ÕF©5Ëp@‡ìót˚sP@%ÕF©5Ëp@‡ìót˚sP@        ¥¢Äß5Ëp@æar˚sP@        ÀZ=ß5Ëp@z›áp˚sP@        $  .  ≤  º  úä?;">)>i›∫>W‚3=ÃŸ≤B'ö4C/W.BﬁÀôΩ›]BâÛ>H   ´™~@M~c?}Öæ ˚‚‹=≥`vC{•,Bá©âF)#ÔB≥t›F‹«Cº“G[R1CY≤G°IC{;%GƒÁÑCVn(GÀHTCu¯G.!;C%`G„”8C…üAÁ@∞;           'Å…@G           µ' Eππ;E        ( E¬π;E        ˜' Eﬂl;—∏;E&Øh;òoÕˇÛÁp@U“˜!˝sP@òoÕˇÛÁp@U“˜!˝sP@        *û-˛ÛÁp@"ñ:"˝sP@        ÚÑy˛ÛÁp@ÜY˝sP@        ˝    µ  ¡  ∑°?C+>ÖG >xI√>™TÉ=mØ¬Å≠]@∞<#B§‚Œ>ÖBâÛ>H   ˆH≤AÜ:?ÍZø lÎŸ=¿
+BüB¸ÚíFbÚB`®ÏF >CYQGÊ+6C'%GŸZCde2G»ºãCäˆ5Gk-YC¯ìGÙ©CCQ>G‹_?CêüA§Ω®;           Ñ$AH           K≈ÂDˆŒ=E        Ñ≈ÂDqŒ=E        ∆ÂDLq¬:Œ=Eˇ∆æ:l†‘(4Ëp@àB√rtP@l†‘(4Ëp@àB√rtP@        ∆B<(4Ëp@€ä—ntP@        9∆æ&4Ëp@…p)ltP@        "  <  —  Î  •@øWÄ>H±i>™Ä?Ôs∑=†æ´¬ æ©@èwôAÌçÒ>%Ë~AâÛ>F   ´™~@‹˘|?s÷©Ω ¢«ˆ=≥u*CRwBS¬∏GãƒâC¿$HË∫±C˚FCHàΩ CH≥SHXl◊ChbH´ÌC'≤hH`ÔC …]Hv¯„C11TH¸Ô◊CúuêAI;           Ò#BI           â0øAÍ@E        ÷s≠AvA@E        (7øAÙYæ=˘@E…∂™=L‘£VÍp@∑˙B¡&tP@L‘£VÍp@∑˙B¡&tP@        k<%ßVÍp@#ˇÈ$tP@        •fVÍp@œS±¡&tP@               ˝    ]@ap+?πÁ>∂èí?BND?3ÁrBÁC†„˝AuS¬	8A∞>A   Aö"B56◊¿¯ö‚øÔ$?ªb~BlµB4œBEıxA¯û CPóÛAÜKE=éB∆bIGkdCŒd~Gc7óCÌà∂CU:B;˘jGöWuC±BqG)|ÑCÆbõAÊMò;           ìRçCJ           å,HEÇBE        X-HE0BE        â,HEúÇ;PBEè6;1Â`ôÊp@Œú./+tP@1Â`ôÊp@Œú./+tP@        ìôÊp@ø"V4+tP@        Í	iôÊp@'≥-+tP@        |  â    )  ‹?ÄB;>Ç¸'>Wq—>Ñ…“=Nô¨¬@ú@ŒÇBAo?¥vÔAâÛ>O   ∆_+BπNt?HVX> ¢‚=N¯¿t⁄BO‚F>ΩCñƒ5GRFBCÕMhG	v_Cc|Gû=wCàgÜG°òóCãGkCÖCÒsyG@¢rCÏ>sG¡∑jCvPõA[ŸÖ;           õ:AK           zÌ‡De&GE        #Ì‡D$GE        AÔ‡Dó+:>$GE—ic:2\ó√@Ëp@6ìÑTtP@2\ó√@Ëp@6ìÑTtP@        ÖŸ+ƒ@Ëp@˝√krTtP@        @Xø@Ëp@ì÷*tTtP@            [  ä  aM≥A‹?∞?'∑?ôna=≈©¬`W…@§•7@°§_=ŸH$@âÛ>H   \ÄALFY?_˘> 8Ô=Hr/DöπBõvÛIÊ®E_AJ¿∑øEV4wJRç¡E∫…ÖJù@¬Eç∏éJXÌ¬E≠ÉJæ˙]EÅ‹I(úDRöëJm8√EVAkA¥7∫:           !]DL           rpnE¢áKE        ÖpnERàKE        qnEœ∏ó:úáKEB|≈:!B ‡Âp@w¸«æqtP@!B ‡Âp@w¸«æqtP@        ^vΩ…‡Âp@∑ÆƒqtP@         tB«‡Âp@€ΩíæqtP@        ◊  ˙  •  Õ  bAïÕ>Ë∑∏>òf?1ÿœ=†±¬A(@¡—ı@L_ô=‚Ç∆@âÛ>W   }ÙbBSÿX?=H∏> ÒÈÈ=)<(CmQ#B≠´9H†Ì”Cï»èHdÎ DfY∏H™DÅu«H-êD°À‘HXΩ!DÛ«»H,∑YDÖèxHÅÉ¯Cê˙–Hñ˚DDíäA
+¯—:           ∂ôBM           ÿ∞DDÏóOE        !∑DD≠ñOE        µDD¯ËR:èñOEëà:Ë"ërÈp@9<ótP@Ë"ërÈp@9<ótP@        ê2`ârÈp@KLÖ2ótP@        ¢⁄—ãrÈp@ﬁ®1ótP@        ¸  )  „    ‰ízAÂP ?Ÿy>˘fí?ÓÄ=òˆ±Bç(4C’ë@kÒ†ºx¿~@âÛ>R   û¸Ajd?qíõ= +Ô=°"¡C¢tQBˆH{KEË]@IºE^YvId
+El~ÖIAEzéIk)Eê¥ÖIDz∑D=IÄ>D•ÛéIX=E‘ÅAÏ¡;           \mfCN           V E}vOE        n EÇvOE        g E∏è;0vOE=';#î˘πsÁp@˙≥3;ítP@#î˘πsÁp@˙≥3;ítP@        °záπsÁp@uX;ítP@        ÓG†πsÁp@Æ¶Á8ítP@        ™	  ∫	    ˇ  æ|@B>É5>„~›>^Ä='îö¬ÿ2^AhÌ˚AÒZ”?k"‡AâÛ>X   !Ç0BO5h?›èã> ˚Ä‹=C¸ãB
+ B0]Gñö2CËoG
+∂^C:öG≤ÄC"ßGŒñãC6Ú≤G≈·•C·õ∑GòCIößGåCó¢G¬ßÜC òAM“e;           „µëAO           mDEΩõ[E        QDEKú[E        éDEwï:cõ[EÏ
+ß:ÇnºÆÊp@ê∆°iÌtP@ÇnºÆÊp@ê∆°iÌtP@        U/∏ÆÊp@,˝ÿmÌtP@        2e…ªÆÊp@
+âˆfÌtP@        3  Q  ™  …  ‚∂Œ@AÌâ>/~>„ ?:f°=_£≥¬¡»≠?'ËÅAÃa~<%z\AâÛ>S   E%˛AÖÇq?µŸX> nÄÍ=≥ôNB™O"BœÚGê≈úCÔ©AHsõ∆C!°vHR·CﬂÉÖH∆VÓC∆éHÚ˙Di+ìHh‚DFçH∆â˛CˇÃÜH\èC*aéAA ˜:           ‚ŸOBP           àb„D°Ì]E        ˇa„DÓ]E        0b„DºÄ1;ÄÌ]E†)3;‡*=Ëp@™` uP@‡*=Ëp@™` uP@        &=Ëp@y}ôÕuP@        Ô˘=Ëp@……uP@          "  ÿ  Ê  ]‰ﬁ?<97>»Ò,>Â√—>Ø e=∫M≥B‘4C4;BT>Ω‡˘AâÛ>U   \‰JAtFÅ?ä®: Z7Í=>T›As	BCÿFcˆCi/G.}>C≤taG4Ë[C≈tG•ˆrC™oÇG¬_ïCT
+áG7ÉC)írG "oC`lG∫ÚfCxìõAöπá;            ‰ï2AQ           y˜˘D@_E        j˘˘Dà@_E        }¯˘D*;`@_E˜{;˛‹∫Ëp@TÔívuP@˛‹∫Ëp@TÔívuP@        º7∂Ëp@>Y˘yuP@        ‚Sp∏Ëp@U xuP@        «  ÿ  Í  ˇ  9:@ã¡V>Õ§A>Äø>≈U…= ∂≥¬Å ©?\µﬂAIÿ<‡‚µAâÛ>P   „ñAy≥{?gdº ËîÏ=]™B≥BºÕCG–cHCÂüG†ÕC@ÁÀG38íC§í‹GﬁÇùC=ôÏG.∂C>oÙGa⁄≠C
+‡Gn∞°C‡ŸÿGSöCóJñA{àE;            ÉäAR            `DÏXaE        x"`DYaE        ‹!`DAù:+XaE ƒö:; äSÈp@.∂uP@; äSÈp@.∂uP@        ¯«ËÜSÈp@üNüuP@        ìÿãáSÈp@™‰ÚˇuP@        o  î    )  f∂A≥9ô>≥íç>QØ-?äæõ=Ï&≤¬¡r@BQA±¬|=ˆß2AâÛ>V   ï†!A£Ï1?»*ø  ‘‡=ßˆâC
+ô*Bm!HiÌµC¯<ÅHf¶ÊC‰»§H@∑Dôà≤Hœ	DpØæHrDÆÆ√H0_Dì9øHº∞DA∂H UDÜ¬ãAo›’:           √∞BS           r-UEAHdE        `.UEIdE        û-UEåã;@HdE⁄H#;‰y’\Êp@Zxh/uP@‰y’\Êp@Zxh/uP@        Éu•–\Êp@,oo/uP@        4œA‘\Êp@“\/uP@        L  Z  <  M  ¬≥ @ï–B>à/>ˆQ⁄>Ï∂ =5Ë£¬híAg†B¬5„?˘ﬁAâÛ>W   (π2A8⁄f?#iü> „8⁄=†˛ø‹ˇBC‰	G–e&CXGˆØQC•ÄäGœoqCDñG‘rÑCZ
+†GîªüC|7•G¢èC:ñGnGÑCÎ◊ëG≈ ~C£ºôA¿q;           ‡?~AT           √Y}DÏ‰dE        ˜Z}Dª‰dE        \[}D©"Û:‹‰dEXu;’‡∑0Èp@5¿éΩ8uP@’‡∑0Èp@5¿éΩ8uP@        ˆ7úµ0Èp@/æº8uP@        :ï&µ0Èp@∏ÊΩ8uP@        Í     C  Z  úçl@0Æe>#ßP>B,?Dª=9´B»…0C!|¿A˚b$ø™6üAâÛ>V   Iö€@voS?ˇt> ±≠‡=,ICœòB∆ÜGèﬂiCC◊G‘~îC‘Õ	Ho¨©C‹0HúÑµC[†H’ıÃC{#H¥^»C,˙HgΩC∆·H≤≥CÄòìA†¨(;            odBU           ¯“€D)ídE        Ì‘€D*ídE        —”€D~ñö;fídE(7ú;‚ ØPËp@◊÷÷á4uP@‚ ØPËp@◊÷÷á4uP@        ˛“ˆ¸OËp@’“á4uP@        †˘©ˇOËp@V¢â4uP@        ⁄  „  D  N  ¯ìZ?çG>Ì>MÙ¥>ÚG==Á®¬∞Ÿ‰@Í3:BÉ˛^?DΩ)BâÛ>P   \‰JA˚Cg?u·_æ fËŸ=R¬ÇB‘ÉB©˙1Ff»øBo®çF˜ıBK¥FíC!`ƒFﬁ+CÅg⁄F©crC ïÿFFÈ+C.h∫FÕC±ÈπFz Ck´£A7‚;           >¥ô@V           æ‰mDï^fE        ÅÈmD‘^fE        8ËmD¯∂:A^fEYZ≠:P∫ÅCÈp@J†√!DuP@P∫ÅCÈp@J†√!DuP@        X¯|CÈp@XÜë#DuP@        :°Ä}CÈp@
+8DuP@        ©  ∆  V  u  ÊÌ√@Î}â>ﬁvz>”’?ù∂=Åy§Bj-CNÖA&CøÄ¥^AâÛ>T   Iö€@J”l?
+Õ—ª .àÁ=ÆëCi$Bó ›G¶5ïCóY0H
+ΩCß``H¡]÷C—	sHdL„C—¸ÅHYY˘CñÜH˝CñkÄHpÛCW#uHMÂCÆ4èAü·;           Ú"BW           ©ˇZE9™gE          [E0´gE        ¬ˇZE–`‹:R™gE•xÌ:ˇ≤mÈ@Êp@GU´HuP@ˇ≤mÈ@Êp@GU´HuP@        ⁄?ﬂÁ@Êp@†‰™≤HuP@        /Ä¯Ë@Êp@∂Ú¨HuP@        ß  ∫  p  Ü  †ƒa@me>LO>k∑ ?€Å≈=˝˝≥B@,5CB4√A‡!∫x^üAâÛ>S   (π2Aß w?CìË= ÓyÊ=pgBP`
+BŒxGÜ«aC⁄ƒG†éCΩ˚G–%¢C—HHZ"ÆC˙ŒH
+∆C9Hﬁm¿CWÉHgµCJH$I¨CòaîAV1;           e◊AX           ∏ExjE        ™∏E„jE        Å∏E€7Á:PjE’+€:]ΩöxÁp@¸@ãÿ\uP@]ΩöxÁp@¸@ãÿ\uP@        ˆ≈√xÁp@?∑€\uP@        *¡|xÁp@3äW◊\uP@        °	  ∂	  ï  ≠  %p@Hh>ˆ¥S>'√?ƒ¶≥=Æ≠¬P∆ä@MªAÑ/›>–‹õAâÛ>N   !Ç0Bõî_?-ÄxΩ 4ﬁ‡={ZBôâBŸ!ÜG/)dCÊ◊G‘∏ëCFπH·'¶CYıH∏≤CVH=+ C%$Hè≈C<—Hd–πCNÁH˝y∞CCßìA‹¿&;           ]j AY           —%—D}ÁnE        %—DËnE        &—D¬Ü;XÁnEÅ:(;ÙHÔŒjËp@ÄÉuP@ÙHÔŒjËp@ÄÉuP@        &.Ê–jËp@s∂ŒÉÉuP@        åaSŒjËp@€æÎ}ÉuP@        Å  ë  Ê  ˆ  ≠ƒ
+@ÎC>(P6>%Mﬁ>Ü=]⁄å¬î ¶A˜ ¯Açe!@u‡AâÛ>Z   8ÙYAœ“T?lÙ> Á€=ùUB@Bì2G=/+CVØcGÑ7WCˇëG¶wC}MûGSqáCW„©GüË°CÚÆGÈHìC’ûGÁÒáC5öGqéÇC
+BôAçk;           {6âAZ           C™–DwwE        åÆ–D}wE        6±–DR"1:IwEıaÜ:∞  lËp@B1F¬uP@∞  lËp@B1F¬uP@        £¿lËp@"≈£-¬uP@        ﬁº/∫lËp@µ†,¬uP@        n  ù  Z  â  eÑ®AaË?±
+?x∑≠?Qo=° Ø¬!<g@·ÚL@€è¸<ÄÕ5@âÛ>Y   8ÙYAxj]?;&¡æ ˚=˛=–#1DåüîBêÃ£IˆıïEB—J“¶EFœ+Jñ+®EÛ“9J„∂®EO)FJgC©E}û8J·)E‘û©I—
+àD fIJ+q©E4©qA¶È:           ö˛C[           ])aEﬂåvE        Â*aE§évE        *aEØåò;ŒçvEå%ù;
+\œ*$Êp@¸t¨∫uP@
+\œ*$Êp@¸t¨∫uP@        .ÏÑ#$Êp@ú“&-∫uP@        YÌÑ'$Êp@ø•«&∫uP@            e  m  ˙Ó#?È=>Œ>#©>ïG=GV¬ΩûBVNBl(l@¸íIBâÛ>W   ˙’’A∆o?’f€< öÖ◊=©B=B¯äBŒÚFÿs¨BUGgFMø›B¶íFÉCGüFúCÛ¥™FFgCI–±F~GC•ëF»‡CØîFPƒCKú•A˘Â¸;           "1@\           |≈uE„zE        Ï≈uEU„zE        ∆uEEä;g„zEoëê;ájò¿Âp@E{ ∑⁄uP@ájò¿Âp@E{ ∑⁄uP@        ~QQñ¿Âp@à≤ﬂπ⁄uP@        ä;Œï¿Âp@“,e∫⁄uP@        X  a  ©  ≥  ã’k?/ò>H°>5∂>Ü≤M=í•®¬ O€@,Æ8Bﬁd?Ô&BâÛ>]   Ùj|@áû^?$gØ= ‚4ﬁ=!|5C≥õ?BùÅYF\“Bp∞FI‡CUº·FÕC€BıFá¸8CsGÊµ{C òGà«=CıËF:ò&C-GËFı◊%CRº°AöÊ≈;           Ú¥Ã@]           FxEìï{E        @xEñ{E        XxElœÜ:üï{E÷¸§:$ΩU†µÂp@ˆ≈v˝ﬂuP@$ΩU†µÂp@ˆ≈v˝ﬂuP@        °c£õµÂp@∑ªY‡uP@        ¢}˛üµÂp@P’˝ﬂuP@        q  ê  ™  À   ê„@k¿ç>E˝Å>  ?y©=¶ó¬‡6zA√uA ≈ò?ú3SAâÛ>\   Ùj|@âÅa?œ∫ΩΩ ≤ÍÂ=
+8CTBwùHºπ•CaH¶“Cª.êHËÄÔC’úHå˝CˆN¶Hh8	D:ã©Hø^Dt•HöDa„ùHUÛˇC§çA¥·:           VÛ≥B^           úØkDtH}E        @≥kDÌH}E        ¡≤kDã∂:ÊG}EMK:rQL±HÈp@3(ﬂÚuP@rQL±HÈp@3(ﬂÚuP@        åDÙ¨HÈp@î ¡‚ÚuP@        Úq≠HÈp@’!Ë⁄ÚuP@        ò  ∆  Ω  Ï  ⁄ï¢A^?„!?©§?€Gk=.ô¨¬@ú@,ïe@,OS=¨*L@âÛ>V   €BA;`?†4—> ˛∂Ó=Ë )DÔêîBµµîIRkáEZ÷ËI†yìE∆LJq÷îEñÜ J√bïE∞?+JûÒïE:NJ®ÄE‡Z°I%‘ÖDØP-J›ñEEtAPy:           #ÚD”BLK 0                             ÓkÜj‹∞eT¯¡X20        \å® ˚Vø0ú¸ü√…\> z¢É√∆qΩ-˘û8•ºpâ#Œo7!<ìBè∏ª?æóL!éå> Xå{ñΩ ã¶ûSõ∞º @{‰·ÜÃª        ¿¶`Äÿx>¿≈mªê= ù∫¨Î˝Üº‡°M±1â/º                 ‡«åF≤åΩ ÊyÏ)A©< »éøoÔ"<                        Ä•$‘ë
+ßº¸„GÕ∂Qº                                 òVBaÑº                                        ”BLK 0                             ü…Tíö˚b%ŸÏÑX⁄+2        m«H}∞é∫?I≤!I9î>„∂aˇ:¬ÉΩAàÀ…Ûﬂ¿ºSÈ°dº¯ì◊
+FWø"ÿ }‚Øk>>ao˛â=m~ÌÖ∫z™ºÂ†0xÊΩº        »[àTØ{>∆FóGîΩ/.H•p’¶º⁄vö›È'º                ìóΩ]ÂÑΩ™∫{´, ºßK¬
+Ãº                        mVﬂ«çêº—˘8w0<                                /Ì¨Å‡$<                                        ”BLK 0                             ’Ÿ]√˚—Ω0mE∫∂ƒ        p∏H&∑¯ø?§æ•6D˛æ‰(Ó}ÅcG>Á˙øeâ„≠=ö«°‚XΩÂ¯?y"@Ÿ éŸ'ø†C˘4cøi>£9$∞∞=è¡“’2˜<        >”˝≤ºπøUêöNVæ°d¬@ùÔnΩUŸè‰d=                ‰G"≈ä\>Ap£Ô∞ΩÄ>√∆UΩ                        ≠∞Åˆ—„¢=¥∆_{”åJ=                                [
+∏®x1L=                                        ”BLK 0                             :êzû‰ÑZ<:R¶Ñnúñ        ˇ¶Ñ3MH#@‰Î¸JZ¬1ø B7áÉb>¿ˇPQu¬= P=ç¢b:= -RGk0¿?€äí@∂_ø FÉ2‚JQæ∞Oñ¥=∞=Äi(™?N=        dœ‡.†≠ø ç
+ˆ
+h> ¸JÏQt¢= ÃêÀMN=                Ä3∏˘ñ?V>àZ•´™Õ=Ä(Cõ⁄J=                        ‡^«>"∆ñ= ÿRü".RΩ                                Äˇ4ÿ‰YΩ                                        ”BLK 0                                Ø<Î ≈IIØÙ[PYR        ™LXËz∂Îø     ‡ø        ”BLK 0                                Ô[Ωñ_dy‘K4ﬁπ£é             ‡?™LXËz∂Îø        ”BLK 0                                Ø<Î ≈IIØÙ[PYR        ™LXËz∂Îø     ‡ø        ”BLK 0                                Ô[Ωñ_dy‘K4ﬁπ£é             ‡?™LXËz∂Îø        #ASDF BLOCK INDEX
+%YAML 1.1
+---
+- 48617
+- 78246
+- 78588
+- 78930
+- 79272
+- 79614
+- 79700
+- 79786
+- 79872
+...

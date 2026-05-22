@@ -73,13 +73,20 @@ static asdf_value_err_t asdf_gwcs_remap_axes_deserialize(
     remap->mapping = mapping;
     mapping = NULL;
 
-    /* Compute implicit n_inputs = max(mapping) + 1, n_outputs = n */
+    /* n_inputs: explicit value takes precedence; fall back to max(mapping)+1. */
     uint32_t max_input = 0;
     for (int idx = 0; idx < n; idx++) {
         if (remap->mapping[idx] > max_input)
             max_input = remap->mapping[idx];
     }
-    asdf_gwcs_transform_arity_set(&remap->base, asdf_value_file(value), max_input + 1, (uint32_t)n);
+    uint32_t n_inputs = max_input + 1;
+    uint64_t explicit_n_inputs = 0;
+    if (asdf_get_optional_property(
+            map, "n_inputs", ASDF_VALUE_UINT64, NULL, (void *)&explicit_n_inputs) ==
+            ASDF_VALUE_OK &&
+        explicit_n_inputs > 0)
+        n_inputs = (uint32_t)explicit_n_inputs;
+    asdf_gwcs_transform_arity_set(&remap->base, asdf_value_file(value), n_inputs, (uint32_t)n);
 
     *out = remap;
     err = ASDF_VALUE_OK;
@@ -131,6 +138,23 @@ static asdf_value_t *asdf_gwcs_remap_axes_serialize(
     if (ASDF_IS_ERR(err)) {
         asdf_sequence_destroy(seq);
         goto cleanup;
+    }
+
+    /* Emit n_inputs only when it exceeds max(mapping)+1; the schema defines
+     * n_inputs=max(mapping)+1 as the default, so omitting it is unambiguous
+     * otherwise.  Mappings with unused inputs (e.g. mapping=[0,0,0], n_inputs=3)
+     * must be explicit or any reader would infer the wrong arity. */
+    uint32_t max_mapping = 0;
+    for (uint32_t idx = 0; idx < remap->n_outputs; idx++) {
+        if (remap->mapping[idx] > max_mapping)
+            max_mapping = remap->mapping[idx];
+    }
+
+    if (remap->base.n_inputs > max_mapping + 1) {
+        err = asdf_mapping_set_uint64(map, "n_inputs", remap->n_inputs);
+
+        if (ASDF_IS_ERR(err))
+            goto cleanup;
     }
 
     return asdf_value_of_mapping(map);

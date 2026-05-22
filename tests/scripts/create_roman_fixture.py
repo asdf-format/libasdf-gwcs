@@ -3,14 +3,11 @@
 create_roman_fixture.py
 
 Creates a small test fixture from a Roman Space Telescope ASDF file by
-stripping out large image data arrays while preserving all metadata
-(including the full WCS tree with its embedded small ndarrays).
+stripping all top-level array data from the roman node while preserving
+all metadata (including the full WCS tree with its embedded ndarrays).
 
 Usage:
     create_roman_fixture.py <input.asdf> [-o output.asdf]
-
-The output defaults to tests/fixtures/<input_stem>.asdf relative to the
-repository root (two levels up from this script).
 """
 
 import argparse
@@ -21,11 +18,8 @@ import asdf
 import numpy as np
 
 
-LARGE_ARRAY_THRESHOLD = 1024 * 1024  # 1 MB
-
-
-def strip_large_arrays(tree, threshold=LARGE_ARRAY_THRESHOLD):
-    """Remove ndarray entries larger than threshold from the roman top-level dict."""
+def strip_arrays(tree):
+    """Remove all ndarray entries from the roman top-level dict."""
     roman = tree.get('roman')
     if roman is None:
         print("Warning: no 'roman' key found in tree", file=sys.stderr)
@@ -33,17 +27,14 @@ def strip_large_arrays(tree, threshold=LARGE_ARRAY_THRESHOLD):
 
     removed = []
     for key in list(roman.keys()):
-        val = roman[key]
-        if isinstance(val, np.ndarray) and val.nbytes > threshold:
+        if isinstance(roman[key], np.ndarray):
             del roman[key]
-            removed.append((key, val.shape, val.dtype, val.nbytes))
+            removed.append(key)
 
     if removed:
-        for key, shape, dtype, nbytes in removed:
-            print(f"  Removed roman[{key!r}]: shape={shape} dtype={dtype} "
-                  f"({nbytes / 1024 / 1024:.1f} MB)")
+        print(f"  Removed: {', '.join(removed)}")
     else:
-        print("  No large arrays found to remove.")
+        print("  No arrays found to remove.")
 
     return tree
 
@@ -60,10 +51,6 @@ def main():
     parser.add_argument('-o', '--output', default=None,
                         metavar='output.asdf',
                         help='Output fixture path (default: tests/fixtures/<input_stem>.asdf)')
-    parser.add_argument('--threshold', type=int, default=LARGE_ARRAY_THRESHOLD,
-                        metavar='BYTES',
-                        help='Arrays larger than this (bytes) are removed '
-                             f'(default: {LARGE_ARRAY_THRESHOLD})')
     args = parser.parse_args()
 
     if args.output is None:
@@ -73,12 +60,11 @@ def main():
     print(f'Reading {args.input} ...')
     with asdf.open(args.input, lazy_load=False, memmap=False) as af:
         tree = dict(af.tree)
-        # Make a mutable shallow copy of the roman subtree
         if 'roman' in tree:
             tree['roman'] = dict(tree['roman'])
 
-        print('Stripping large arrays:')
-        strip_large_arrays(tree, threshold=args.threshold)
+        print('Stripping arrays:')
+        strip_arrays(tree)
 
         out_dir = os.path.dirname(args.output)
         if out_dir:

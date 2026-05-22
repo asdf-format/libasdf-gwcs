@@ -66,6 +66,7 @@ libasdf_gwcs_la_CFLAGS = $(AM_CFLAGS)
 libasdf_gwcs_la_LIBADD = third_party/libstc.la $(LIBASDF_LIBS)
 
 if HAVE_AST
+src_files += src/backends/ast_yaml.c
 libasdf_gwcs_la_SOURCES += src/backends/ast_yaml.c
 libasdf_gwcs_la_CFLAGS  += $(AST_CFLAGS)
 libasdf_gwcs_la_LIBADD  += $(AST_LIBS)

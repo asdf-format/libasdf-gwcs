@@ -1,6 +1,7 @@
-#ifdef HAVE_AST
-
+#include <math.h>
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -8,35 +9,53 @@
 
 #include <asdf/file.h>
 
+#include "asdf/emitter.h"
 #include "asdf/gwcs/backend.h"
 #include "asdf/gwcs/core.h"
-#include "asdf/gwcs/eval.h"
 #include "asdf/gwcs/wcs.h"
 
 #include "../eval.h"
+#include "../util.h"
 
 
 typedef struct {
     asdf_gwcs_eval_t base;
     AstFrameSet *frameset;
     AstMapping *mapping;
+    /** output frame is a SkyFrame -> outputs are in radians */
+    bool is_sky_frame;
 } asdf_gwcs_ast_eval_t;
 
 
+static const double R2D = 180.0 / M_PI;
+
+
 static asdf_gwcs_err_t ast_eval_2d(
-        asdf_gwcs_eval_t *self,
-        const double *xin, const double *yin,
-        double *xout, double *yout, size_t n) {
+    asdf_gwcs_eval_t *self,
+    const double *xin,
+    const double *yin,
+    double *xout,
+    double *yout,
+    size_t n) {
 
     asdf_gwcs_ast_eval_t *ctx = (asdf_gwcs_ast_eval_t *)self;
 
     astTran2(ctx->mapping, (int)n, xin, yin, 1, xout, yout);
 
-    if (astOK)
-        return ASDF_GWCS_OK;
+    if (!astOK) {
+        astClearStatus;
+        return ASDF_GWCS_ERR_EVALUATION_FAILED;
+    }
 
-    astClearStatus;
-    return ASDF_GWCS_ERR_EVALUATION_FAILED;
+    /* AST SkyFrame outputs are in radians; convert to degrees. */
+    if (ctx->is_sky_frame) {
+        for (size_t kdx = 0; kdx < n; kdx++) {
+            xout[kdx] *= R2D;
+            yout[kdx] *= R2D;
+        }
+    }
+
+    return ASDF_GWCS_OK;
 }
 
 
@@ -60,6 +79,7 @@ typedef struct {
     size_t nlines;
     char *buf;
 } line_cursor_t;
+
 
 static const char *yaml_source(void) {
     line_cursor_t *cur = astChannelData;
@@ -114,19 +134,24 @@ static char **split_lines(char *buf, size_t *nlines_out) {
 
 
 static asdf_gwcs_eval_t *ast_pipeline_create(
-        asdf_file_t *file, const asdf_gwcs_t *wcs,
-        asdf_gwcs_err_t *err_out) {
+    UNUSED(asdf_file_t *file), const asdf_gwcs_t *wcs, asdf_gwcs_err_t *err_out) {
 
     asdf_gwcs_err_t err = ASDF_GWCS_OK;
     asdf_gwcs_ast_eval_t *ctx = NULL;
     asdf_file_t *tmp = NULL;
-    void *buf = NULL;
+    char *buf = NULL;
     size_t len = 0;
     line_cursor_t cur = {0};
     AstYamlChan *chan = NULL;
     AstObject *obj = NULL;
+    AstFrame *frame = NULL;
 
-    tmp = asdf_open(NULL);
+    /* Force all ndarrays inline so AST's YamlChan can read them without
+     * needing access to binary block data. */
+    asdf_config_t cfg = {
+        .emitter = {
+            .array_storage = ASDF_ARRAY_STORAGE_INLINE, .inline_ndarray_warning_thresh = SIZE_MAX}};
+    tmp = asdf_open_mem_ex(NULL, 0, &cfg);
 
     if (!tmp) {
         err = ASDF_GWCS_ERR_OOM;
@@ -135,7 +160,7 @@ static asdf_gwcs_eval_t *ast_pipeline_create(
 
     asdf_set_gwcs(tmp, "wcs", wcs);
 
-    if (asdf_write_to_mem(tmp, &buf, &len) != 0) {
+    if (asdf_write_to_mem(tmp, (void **)&buf, &len) != 0) {
         err = ASDF_GWCS_ERR_PARSE_FAILED;
         goto done;
     }
@@ -184,6 +209,20 @@ static asdf_gwcs_eval_t *ast_pipeline_create(
     ctx->mapping = astGetMapping(ctx->frameset, AST__BASE, AST__CURRENT);
     obj = NULL;
 
+    /* TODO: When dealing with sky frames, by default the units of the AST
+     * output are in radians, while the default units in GWCS are degrees.
+     * A correct fix would be to integrate proper units handling (we may
+     * still want radians for example) so this is just a temporary fix to
+     * get the correct results in the common case
+     */
+    frame = astGetFrame(ctx->frameset, AST__CURRENT);
+    ctx->is_sky_frame = frame ? astIsASkyFrame(frame) : false;
+
+    if (frame)
+        astAnnul(frame);
+
+    astClearStatus;
+
 done:
     if (chan)
         astAnnul(chan);
@@ -224,5 +263,3 @@ static const asdf_gwcs_pipeline_vtable_t ast_pipeline_vtable = {
 };
 
 ASDF_GWCS_REGISTER_BACKEND(ast_yaml, &ast_pipeline_vtable, NULL, NULL)
-
-#endif /* HAVE_AST */

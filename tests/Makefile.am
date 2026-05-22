@@ -36,6 +36,9 @@ unit_test_ldflags += -rdynamic
 endif
 
 unit_test_ldadd = libmunit.a $(top_builddir)/libasdf-gwcs.la $(LIBASDF_LIBS)
+if HAVE_AST
+unit_test_ldadd += $(AST_LIBS) -lm
+endif
 
 check_LIBRARIES = libmunit.a
 libmunit_a_SOURCES = util.c $(munit_dir)/munit.c
@@ -51,9 +54,43 @@ test_gwcs_unit_LDADD = $(unit_test_ldadd)
 
 # test-gwcs-eval.unit
 test_gwcs_eval_unit_SOURCES = test-gwcs-eval.c
-test_gwcs_eval_unit_CPPFLAGS = $(unit_test_cppflags)
 test_gwcs_eval_unit_CFLAGS = $(unit_test_cflags) $(AST_CFLAGS)
 test_gwcs_eval_unit_LDFLAGS = $(unit_test_ldflags)
 test_gwcs_eval_unit_LDADD = $(unit_test_ldadd) $(AST_LIBS)
+
+if HAVE_AST
+test_gwcs_eval_unit_CPPFLAGS = $(unit_test_cppflags) -DHAVE_AST
+else
+test_gwcs_eval_unit_CPPFLAGS = $(unit_test_cppflags)
+endif
+
+roman_build21_fixtures = \
+    fixtures/roman/build21/r0000101001001001001_0001_wfi01_f158_cal.asdf \
+    fixtures/roman/build21/r0000101001001001001_0001_wfi02_f158_cal.asdf \
+    fixtures/roman/build21/r0000101001001001001_0001_wfi03_f158_cal.asdf \
+    fixtures/roman/build21/r0000101001001001001_0001_wfi04_f158_cal.asdf \
+    fixtures/roman/build21/r0000101001001001001_0001_wfi05_f158_cal.asdf \
+    fixtures/roman/build21/r0000101001001001001_0001_wfi06_f158_cal.asdf \
+    fixtures/roman/build21/r0000101001001001001_0001_wfi07_f158_cal.asdf \
+    fixtures/roman/build21/r0000101001001001001_0001_wfi08_f158_cal.asdf \
+    fixtures/roman/build21/r0000101001001001001_0001_wfi09_f158_cal.asdf \
+    fixtures/roman/build21/r0000101001001001001_0001_wfi10_f158_cal.asdf \
+    fixtures/roman/build21/r0000101001001001001_0001_wfi11_f158_cal.asdf \
+    fixtures/roman/build21/r0000101001001001001_0001_wfi12_f158_cal.asdf \
+    fixtures/roman/build21/r0000101001001001001_0001_wfi13_f158_cal.asdf \
+    fixtures/roman/build21/r0000101001001001001_0001_wfi14_f158_cal.asdf \
+    fixtures/roman/build21/r0000101001001001001_0001_wfi15_f158_cal.asdf \
+    fixtures/roman/build21/r0000101001001001001_0001_wfi16_f158_cal.asdf \
+    fixtures/roman/build21/r0000101001001001001_0001_wfi17_f158_cal.asdf \
+    fixtures/roman/build21/r0000101001001001001_0001_wfi18_f158_cal.asdf
+
+roman_build21_refs = \
+    fixtures/roman/build21/ast_wcs_results.csv \
+    fixtures/roman/build21/gwcs_wcs_results.csv
+
+EXTRA_DIST = \
+    $(roman_build21_fixtures) \
+    $(roman_build21_refs) \
+    scripts/create_roman_fixture.py
 
 check-local: $(munit_submodule)
