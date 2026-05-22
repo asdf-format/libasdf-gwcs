@@ -9,6 +9,15 @@
 #include <asdf/util.h>
 
 
+/**
+ * Return a heap-allocated canonical tag string (always "tag:..." form).
+ * Prepends "tag:" if absent.  Caller must free.  Returns NULL on OOM.
+ *
+ * TODO: This duplicates logic in libasdf; add to its public API someday.
+ */
+ASDF_LOCAL char *tag_canonicalize(const char *tag);
+
+
 #if defined(__GNUC__) || defined(__clang__)
 #define LIKELY(x) __builtin_expect(!!(x), 1)
 #define UNLIKELY(x) __builtin_expect(!!(x), 0)

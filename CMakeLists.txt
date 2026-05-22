@@ -56,6 +56,50 @@ configure_file(${CMAKE_SOURCE_DIR}/config.h.cmake
     ${CMAKE_BINARY_DIR}/include/config.h @ONLY)
 include_directories(${CMAKE_BINARY_DIR}/include)
 
+if(ASDF_GWCS_ENABLE_AST)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(YAML REQUIRED yaml-0.1)
+
+    if(EXISTS "${CMAKE_SOURCE_DIR}/third_party/ast/CMakeLists.txt")
+        include(ExternalProject)
+        set(AST_INSTALL_DIR ${CMAKE_BINARY_DIR}/ast-install)
+        # Pass through our prefix path so AST's find_library/find_path can
+        # locate libyaml on non-standard installs (e.g. Homebrew on macOS).
+        ExternalProject_Add(ast_vendored
+            SOURCE_DIR ${CMAKE_SOURCE_DIR}/third_party/ast
+            CMAKE_ARGS
+                -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+                -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+                -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+                -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+                -DBUILD_SHARED_LIBS=OFF
+                -DBUILD_TESTING=OFF
+                -DAST_BUILD_FORTRAN=OFF
+                -DAST_WITH_YAML=ON
+            INSTALL_DIR ${AST_INSTALL_DIR}
+        )
+        set(AST_INCLUDE_DIR ${AST_INSTALL_DIR}/include)
+        set(_ast_lib_dir ${AST_INSTALL_DIR}/lib)
+        # AST's CMake build compiles ast_pal and ast_cminpack as OBJECT
+        # libraries embedded directly into libast.a, so they don't need to
+        # be listed separately here (unlike the autotools build).
+        set(AST_LIBRARIES
+            ${_ast_lib_dir}/libast.a
+            ${_ast_lib_dir}/libast_grf_2.0.a
+            ${_ast_lib_dir}/libast_grf_3.2.a
+            ${_ast_lib_dir}/libast_grf_5.6.a
+            ${_ast_lib_dir}/libast_grf3d.a
+            ${_ast_lib_dir}/libast_err.a
+            ${YAML_LIBRARIES}
+        )
+        set(AST_LIBRARY ${AST_LIBRARIES})
+    else()
+        find_library(AST_LIBRARY NAMES ast REQUIRED)
+        find_path(AST_INCLUDE_DIR NAMES ast.h REQUIRED)
+    endif()
+endif()
+
 add_subdirectory(third_party)
 add_subdirectory(src)
 add_subdirectory(include)

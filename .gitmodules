@@ -4,3 +4,7 @@
 [submodule "tests/munit"]
 	path = tests/munit
 	url = https://github.com/nemequ/munit.git
+[submodule "third_party/ast"]
+	path = third_party/ast
+	url = https://github.com/embray/ast.git
+	branch = roman-wcs

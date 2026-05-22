@@ -11,7 +11,7 @@
 
 #include "gwcs.h"
 #include "step.h"
-#include "transform.h"
+#include "transform/transform.h"
 #include "util.h"
 
 

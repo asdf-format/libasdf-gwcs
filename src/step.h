@@ -3,7 +3,7 @@
 #include <stdbool.h>
 
 #include "frame.h"
-#include "transform.h"
+#include "transform/transform.h"
 
 
 /** Internal definition of asdf_gwcs_step_t */

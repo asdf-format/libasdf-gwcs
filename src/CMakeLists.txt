@@ -1,25 +1,31 @@
 project(libasdf-gwcs)
 
 set(libasdf_gwcs_sources
+    backend.c
+    coordinates/baseframe.c
+    coordinates/fk4.c
+    coordinates/fk5.c
+    eval.c
     fitswcs_imaging.c
     frame.c
     frame2d.c
     frame_celestial.c
     step.c
-    transform.c
-    transforms/affine.c
-    transforms/compose.c
-    transforms/concatenate.c
-    transforms/constant.c
-    transforms/divide.c
-    transforms/identity.c
-    transforms/polynomial.c
-    transforms/property/bounding_box.c
-    transforms/remap_axes.c
-    transforms/rotate_sequence_3d.c
-    transforms/scale.c
-    transforms/shift.c
-    transforms/spherical_cartesian.c
+    transform/affine.c
+    transform/compose.c
+    transform/concatenate.c
+    transform/constant.c
+    transform/divide.c
+    transform/identity.c
+    transform/polynomial.c
+    transform/property/bounding_box.c
+    transform/remap_axes.c
+    transform/rotate_sequence_3d.c
+    transform/scale.c
+    transform/shift.c
+    transform/spherical_cartesian.c
+    transform/transform.c
+    util.c
     wcs.c
 )
 
@@ -53,6 +59,17 @@ set_target_properties(libasdf-gwcs PROPERTIES
     SOVERSION ${PROJECT_SOVERSION}
     OUTPUT_NAME "asdf-gwcs"
 )
+
+if(ASDF_GWCS_ENABLE_AST)
+    target_sources(libasdf_gwcs_objs PRIVATE backends/ast_yaml.c)
+    target_compile_definitions(libasdf_gwcs_objs PRIVATE HAVE_AST)
+    target_include_directories(libasdf_gwcs_objs PRIVATE ${AST_INCLUDE_DIR})
+    target_link_libraries(libasdf-gwcs PUBLIC ${AST_LIBRARY})
+    target_link_directories(libasdf-gwcs PUBLIC ${YAML_LIBRARY_DIRS})
+    if(TARGET ast_vendored)
+        add_dependencies(libasdf_gwcs_objs ast_vendored)
+    endif()
+endif()
 
 install(TARGETS libasdf-gwcs
     DESTINATION ${CMAKE_INSTALL_LIBDIR}

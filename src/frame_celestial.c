@@ -1,5 +1,6 @@
 #include <stdlib.h>
 
+#include <asdf/extension.h>
 #include <asdf/extension_util.h>
 #include <asdf/value.h>
 
@@ -26,7 +27,8 @@ static asdf_value_err_t asdf_gwcs_frame_celestial_deserialize(
         .axes_names = (char **)frame_celestial->axes_names,
         .axes_order = frame_celestial->axes_order,
         .unit = (char **)frame_celestial->unit,
-        .axis_physical_types = (char **)frame_celestial->axis_physical_types};
+        .axis_physical_types = (char **)frame_celestial->axis_physical_types,
+        .reference_frame = &frame_celestial->reference_frame};
 
     if (ASDF_VALUE_OK !=
         asdf_gwcs_frame_parse(value, (asdf_gwcs_frame_t *)frame_celestial, &params))
@@ -48,7 +50,6 @@ static asdf_value_t *asdf_gwcs_frame_celestial_serialize(
 
     const asdf_gwcs_frame_celestial_t *frame_celestial = obj;
 
-    // Count actual axes (may be 2 or 3)
     uint32_t naxes = 0;
 
     while (naxes < 3 && frame_celestial->axes_names[naxes])
@@ -70,14 +71,16 @@ static asdf_value_t *asdf_gwcs_frame_celestial_serialize(
         frame_celestial->axes_order,
         frame_celestial->unit,
         frame_celestial->axis_physical_types,
+        frame_celestial->reference_frame,
         map);
 
-    if (ASDF_IS_ERR(err)) {
-        asdf_mapping_destroy(map);
-        return NULL;
-    }
+    if (ASDF_IS_ERR(err))
+        goto cleanup;
 
     return asdf_value_of_mapping(map);
+cleanup:
+    asdf_mapping_destroy(map);
+    return NULL;
 }
 
 
@@ -85,8 +88,10 @@ static void asdf_gwcs_frame_celestial_dealloc(void *value) {
     if (!value)
         return;
 
-    asdf_gwcs_base_frame_t *frame = (asdf_gwcs_base_frame_t *)value;
-    asdf_gwcs_base_frame_destroy(frame);
+    asdf_gwcs_frame_celestial_t *frame = value;
+    asdf_gwcs_coordinate_frame_destroy(frame->reference_frame);
+    frame->reference_frame = NULL;
+    asdf_gwcs_base_frame_destroy((asdf_gwcs_frame_t *)frame);
 }
 
 

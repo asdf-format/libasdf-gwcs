@@ -189,6 +189,16 @@ asdf_value_err_t asdf_gwcs_frame_parse(
             frame_map, params->axes_order, params->min_axes, params->max_axes))))
         goto failure;
 
+    if (params->reference_frame) {
+        asdf_value_t *rf_val = asdf_mapping_get(frame_map, "reference_frame");
+        if (rf_val) {
+            asdf_gwcs_baseframe_t *baseframe = NULL;
+            if (asdf_value_as_gwcs_coordinate_frame(rf_val, &baseframe) == ASDF_VALUE_OK)
+                *params->reference_frame = baseframe;
+            asdf_value_destroy(rf_val);
+        }
+    }
+
     return ASDF_VALUE_OK;
 failure:
     return err;
@@ -203,6 +213,7 @@ asdf_value_err_t asdf_gwcs_frame_serialize_common(
     const uint32_t *axes_order,
     const char *const *unit,
     const char *const *axis_physical_types,
+    const asdf_gwcs_baseframe_t *reference_frame,
     asdf_mapping_t *map) {
     asdf_value_err_t err;
 
@@ -271,6 +282,17 @@ asdf_value_err_t asdf_gwcs_frame_serialize_common(
         }
     }
 
+    if (reference_frame) {
+        asdf_value_t *rf = asdf_gwcs_coordinate_frame_value_of(file, reference_frame);
+        if (!rf)
+            return ASDF_VALUE_ERR_OOM;
+        err = asdf_mapping_set(map, "reference_frame", rf);
+        if (ASDF_IS_ERR(err)) {
+            asdf_value_destroy(rf);
+            return err;
+        }
+    }
+
     return ASDF_VALUE_OK;
 }
 
@@ -305,14 +327,14 @@ static asdf_value_t *asdf_gwcs_base_frame_serialize(
     if (UNLIKELY(!file || !obj))
         return NULL;
 
-    const asdf_gwcs_base_frame_t *frame = obj;
+    const asdf_gwcs_frame_t *frame = obj;
     asdf_mapping_t *map = asdf_mapping_create(file);
 
     if (!map)
         return NULL;
 
     asdf_value_err_t err = asdf_gwcs_frame_serialize_common(
-        file, frame->name, 0, NULL, NULL, NULL, NULL, map);
+        file, frame->name, 0, NULL, NULL, NULL, NULL, NULL, map);
 
     if (ASDF_IS_ERR(err)) {
         asdf_mapping_destroy(map);
@@ -327,12 +349,21 @@ static void asdf_gwcs_base_frame_dealloc(void *value) {
     if (!value)
         return;
 
-    asdf_gwcs_base_frame_t *frame = (asdf_gwcs_base_frame_t *)value;
+    asdf_gwcs_frame_t *frame = (asdf_gwcs_frame_t *)value;
     free(frame);
 }
 
 
-// Generic constructor for frames of different types from a value, depending on the tag
+/**
+ * Generic constructor for frames of different types from a value, depending
+ * on the tag
+ *
+ * .. todo::
+ *
+ *   This should get a frame "subclass" registration system as done with
+ *   transforms and astropy coordinates frames.  At the moment we only really
+ *   use celestial frame so that is deferred for later.
+ */
 asdf_value_err_t asdf_value_as_gwcs_frame(asdf_value_t *value, asdf_gwcs_frame_t **out) {
     // TODO: It will be useful in the future to have some registery of known frame
     // extension types.  Because there are only two currently it's hard-coded for now,
@@ -371,12 +402,15 @@ asdf_value_t *asdf_gwcs_frame_value_of(asdf_file_t *file, const asdf_gwcs_frame_
         return asdf_value_of_gwcs_frame_celestial(file, (const asdf_gwcs_frame_celestial_t *)frame);
     case ASDF_GWCS_FRAME_GENERIC:
     default:
-        return asdf_value_of_gwcs_base_frame(file, (const asdf_gwcs_base_frame_t *)frame);
+        return asdf_value_of_gwcs_base_frame(file, (const asdf_gwcs_frame_t *)frame);
     }
 }
 
 
-// Generic destructor for frames of different types from a value, depending on the tag
+/**
+ * Generic destructor for frames of different types from a value,
+ * depending on the tag
+ */
 void asdf_gwcs_frame_destroy(asdf_gwcs_frame_t *frame) {
     if (!frame)
         return;
@@ -398,7 +432,7 @@ void asdf_gwcs_frame_destroy(asdf_gwcs_frame_t *frame) {
 ASDF_REGISTER_EXTENSION(
     gwcs_base_frame,
     ASDF_GWCS_TAG_PREFIX "frame-1.2.0",
-    asdf_gwcs_base_frame_t,
+    asdf_gwcs_frame_t,
     &libasdf_software,
     asdf_gwcs_base_frame_serialize,
     asdf_gwcs_base_frame_deserialize,

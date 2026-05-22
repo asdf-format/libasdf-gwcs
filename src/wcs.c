@@ -14,6 +14,16 @@
 #include "util.h"
 
 
+asdf_version_t libasdf_gwcs_version = {0};
+
+
+asdf_software_t libasdf_gwcs_software = {
+    .name = PACKAGE_NAME,
+    .version = &libasdf_gwcs_version,
+    .homepage = PACKAGE_URL,
+    .author = "The libasdf Developers"};
+
+
 static asdf_gwcs_err_t asdf_gwcs_finalize_fitswcs_imaging(
     const asdf_file_t *file, asdf_gwcs_t *gwcs) {
     assert(gwcs->n_steps == 2);
@@ -201,3 +211,20 @@ ASDF_REGISTER_EXTENSION(
     NULL, /* TODO: copy */
     asdf_gwcs_dealloc,
     NULL);
+
+
+ASDF_CONSTRUCTOR static void asdf_gwcs_version_init() {
+    asdf_version_t *version = asdf_version_parse(PACKAGE_VERSION);
+    libasdf_gwcs_version.version = version->version;
+    libasdf_gwcs_version.major = version->major;
+    libasdf_gwcs_version.minor = version->minor;
+    libasdf_gwcs_version.patch = version->patch;
+    libasdf_gwcs_version.extra = version->extra;
+    free(version);
+}
+
+
+ASDF_DESTRUCTOR static void asdf_gwcs_version_destroy() {
+    free((void *)libasdf_gwcs_version.version);
+    free((void *)libasdf_gwcs_version.extra);
+}

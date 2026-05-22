@@ -59,6 +59,7 @@ static asdf_value_t *asdf_gwcs_frame2d_serialize(
         frame2d->axes_order,
         frame2d->unit,
         frame2d->axis_physical_types,
+        NULL,
         map);
 
     if (ASDF_IS_ERR(err)) {
@@ -74,7 +75,7 @@ static void asdf_gwcs_frame2d_dealloc(void *value) {
     if (!value)
         return;
 
-    asdf_gwcs_base_frame_t *frame = (asdf_gwcs_base_frame_t *)value;
+    asdf_gwcs_frame_t *frame = (asdf_gwcs_frame_t *)value;
     asdf_gwcs_base_frame_destroy(frame);
 }
 
