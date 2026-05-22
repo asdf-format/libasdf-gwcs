@@ -6,6 +6,7 @@ src_files = \
     src/coordinates/fk4.c \
     src/coordinates/fk5.c \
     src/eval.c \
+    src/grid.c \
     src/fitswcs_imaging.c \
     src/frame.c \
     src/frame2d.c \
