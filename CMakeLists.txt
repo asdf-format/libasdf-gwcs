@@ -60,28 +60,32 @@ if(ASDF_GWCS_ENABLE_AST)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(YAML REQUIRED yaml-0.1)
 
-    if(EXISTS "${CMAKE_SOURCE_DIR}/third_party/ast/.git")
+    if(EXISTS "${CMAKE_SOURCE_DIR}/third_party/ast/CMakeLists.txt")
         include(ExternalProject)
         set(AST_INSTALL_DIR ${CMAKE_BINARY_DIR}/ast-install)
+        # Pass through our prefix path so AST's find_library/find_path can
+        # locate libyaml on non-standard installs (e.g. Homebrew on macOS).
         ExternalProject_Add(ast_vendored
             SOURCE_DIR ${CMAKE_SOURCE_DIR}/third_party/ast
-            CONFIGURE_COMMAND
-                sh -c "cd <SOURCE_DIR> && [ -f configure ] || ./bootstrap.local"
-                COMMAND <SOURCE_DIR>/configure
-                    --prefix=<INSTALL_DIR>
-                    --disable-shared
-                    --enable-static
-                    "CFLAGS=-fPIC"
-            BUILD_COMMAND make -j${CMAKE_BUILD_PARALLEL_LEVEL}
+            CMAKE_ARGS
+                -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+                -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+                -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+                -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+                -DBUILD_SHARED_LIBS=OFF
+                -DBUILD_TESTING=OFF
+                -DAST_BUILD_FORTRAN=OFF
+                -DAST_WITH_YAML=ON
             INSTALL_DIR ${AST_INSTALL_DIR}
-            BUILD_IN_SOURCE TRUE
         )
         set(AST_INCLUDE_DIR ${AST_INSTALL_DIR}/include)
         set(_ast_lib_dir ${AST_INSTALL_DIR}/lib)
+        # AST's CMake build compiles ast_pal and ast_cminpack as OBJECT
+        # libraries embedded directly into libast.a, so they don't need to
+        # be listed separately here (unlike the autotools build).
         set(AST_LIBRARIES
             ${_ast_lib_dir}/libast.a
-            ${_ast_lib_dir}/libast_pal.a
-            ${_ast_lib_dir}/libast_cminpack.a
             ${_ast_lib_dir}/libast_grf_2.0.a
             ${_ast_lib_dir}/libast_grf_3.2.a
             ${_ast_lib_dir}/libast_grf_5.6.a
