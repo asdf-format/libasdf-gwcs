@@ -114,10 +114,17 @@ AS_IF([test "x$enable_ast" = "xyes"], [
          [AC_MSG_ERROR([Failed to bootstrap AST submodule])])])
     dnl Build vendored AST as a PIC static library so it can be embedded in
     dnl our shared library.
+    dnl
+    dnl AST's configure uses AC_CHECK_LIB to find libyaml, which only searches
+    dnl standard system paths.  On macOS (Homebrew) or other non-standard
+    dnl installs libyaml may live outside those paths.  Pass it
+    dnl CPPFLAGS/LDFLAGS with our pkg-config findings so AST's configure sees
+    dnl it.
     AX_SUBDIRS_CONFIGURE(
       [[third_party/ast]],
       [[--disable-shared], [--enable-static], [--with-pic]],
-      [], [], [])
+      [[CPPFLAGS=$YAML_CFLAGS], [LDFLAGS=$YAML_LIBS]],
+      [], [])
     dnl ast.h is generated in the top of the AST build directory
     AST_CFLAGS="-I\$(top_builddir)/third_party/ast"
     dnl Reference .la files directly so libtool uses the vendored library.
