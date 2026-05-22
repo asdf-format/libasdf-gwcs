@@ -77,7 +77,19 @@ if(ASDF_GWCS_ENABLE_AST)
             BUILD_IN_SOURCE TRUE
         )
         set(AST_INCLUDE_DIR ${AST_INSTALL_DIR}/include)
-        set(AST_LIBRARY ${AST_INSTALL_DIR}/lib/libast.a)
+        set(_ast_lib_dir ${AST_INSTALL_DIR}/lib)
+        set(AST_LIBRARIES
+            ${_ast_lib_dir}/libast.a
+            ${_ast_lib_dir}/libast_pal.a
+            ${_ast_lib_dir}/libast_cminpack.a
+            ${_ast_lib_dir}/libast_grf_2.0.a
+            ${_ast_lib_dir}/libast_grf_3.2.a
+            ${_ast_lib_dir}/libast_grf_5.6.a
+            ${_ast_lib_dir}/libast_grf3d.a
+            ${_ast_lib_dir}/libast_err.a
+            ${YAML_LIBRARIES}
+        )
+        set(AST_LIBRARY ${AST_LIBRARIES})
     else()
         find_library(AST_LIBRARY NAMES ast REQUIRED)
         find_path(AST_INCLUDE_DIR NAMES ast.h REQUIRED)
