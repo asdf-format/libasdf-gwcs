@@ -1,0 +1,5 @@
+roman_wcs_perf
+.venv/
+results/
+__pycache__/
+*.pyc
