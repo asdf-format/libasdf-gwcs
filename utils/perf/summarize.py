@@ -223,6 +223,57 @@ def print_table(rows):
     print()
 
 
+def print_table_markdown(rows):
+    libraries = sorted({r['library'] for r in rows})
+    n_values = sorted(
+        {r['n_points'] for r in filter_rows(rows, phase='eval')}
+    )
+
+    cols = [_col_label(l, rows) for l in libraries]
+
+    print('### Parse times (median across all detectors)\n')
+    header = '| Phase | ' + ' | '.join(cols) + ' |'
+    sep = '|:------|' + '|'.join('---:' for _ in cols) + '|'
+    print(header)
+    print(sep)
+    for phase in ('parse_cold', 'parse_hot'):
+        label = 'cold parse' if 'cold' in phase else 'hot parse'
+        row = f'| {label} |'
+        for lib in libraries:
+            stats = collect_parse_stats(rows, lib)
+            v = stats.get(phase, math.nan)
+            row += f' {v*1e3:.1f} ms |'
+        print(row)
+
+    has_ratio = len(libraries) == 2
+    ratio_cols = cols + ['C/Py'] if has_ratio else cols
+
+    print('\n### Eval throughput (median px/s)\n')
+    header = '| N | ' + ' | '.join(ratio_cols) + ' |'
+    sep = '|--:|' + '|'.join('---:' for _ in ratio_cols) + '|'
+    print(header)
+    print(sep)
+    for N in n_values:
+        medians = {}
+        for lib in libraries:
+            stats = collect_eval_stats(rows, lib)
+            _, p50, _ = stats.get(N, (math.nan, math.nan, math.nan))
+            medians[lib] = p50
+        row = f'| {_format_n(N)} |'
+        for lib in libraries:
+            m = medians[lib]
+            tps = N / m if m > 0 else math.nan
+            row += f' {tps:,.0f} |'
+        if has_ratio:
+            c_med = medians.get('libasdf_gwcs', math.nan)
+            py_med = medians.get('gwcs', math.nan)
+            ratio = (py_med / c_med
+                     if (c_med > 0 and py_med > 0) else math.nan)
+            row += f' {ratio:.2f} |'
+        print(row)
+    print()
+
+
 # Plots
 
 COLORS = {
@@ -348,6 +399,8 @@ def main():
     parser.add_argument('c_csv', metavar='C_CSV')
     parser.add_argument('python_csv', metavar='PYTHON_CSV')
     parser.add_argument('--output-dir', default='plots', metavar='DIR')
+    parser.add_argument('--markdown', action='store_true',
+                        help='print tables in GitHub markdown format')
     args = parser.parse_args()
 
     rows = []
@@ -367,7 +420,10 @@ def main():
     sysinfo = _get_system_info()
     print(f'\nSystem: {_format_system_info(sysinfo)}')
 
-    print_table(rows)
+    if args.markdown:
+        print_table_markdown(rows)
+    else:
+        print_table(rows)
     print(f'Writing plots to {args.output_dir}/')
     plot_eval_time(rows, libraries, args.output_dir, sysinfo)
     plot_throughput(rows, libraries, args.output_dir, sysinfo)
