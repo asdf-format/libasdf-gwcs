@@ -62,37 +62,38 @@ variables.
 
 Measured on an Intel Core i7-7820HQ laptop (2.90 GHz, 8 cores, 31 GB RAM).
 Python evaluation used OpenBLAS with 8 threads; the C library is
-single-threaded throughout.
+single-threaded throughout.  Both libraries built with full optimisation
+(`-O2` or equivalent).
 
 ### Parse times (median across all detectors)
 
 | Phase | GWCS (Py) [8t] | libasdf-gwcs (C) |
 |:------|---:|---:|
-| cold parse | 909.1 ms | 36.7 ms |
-| hot parse | 792.4 ms | 25.5 ms |
+| cold parse | 972.2 ms | 38.4 ms |
+| hot parse | 926.6 ms | 24.1 ms |
 
 ![Parse time comparison](results/plots/parse_time.png)
 
 The C library parses roughly **25x faster** than Python in both cases.
-The cold/hot difference in C (~11 ms) reflects file I/O almost exclusively.
-The Python cold/hot difference (~120 ms median, though highly variable across
-files and runs) is harder to attribute precisely--it likely reflects a mix of
-page cache state, internal caching within astropy/gwcs (unit registries,
-coordinate frame singletons, schema validation), and Python interpreter
-effects. The exact causes have not been fully investigated; the parse timings
-should be treated as approximate.
+The cold/hot difference in C (~14 ms) reflects file I/O almost exclusively.
+The Python cold/hot difference is highly variable across files and runs and
+is harder to attribute precisely--it likely reflects a mix of page cache
+state, internal caching within astropy/gwcs (unit registries, coordinate
+frame singletons, schema validation), and Python interpreter effects. The
+exact causes have not been fully investigated; the parse timings should be
+treated as approximate.
 
 ### Eval throughput (median px/s)
 
 | N | GWCS (Py) [8t] | libasdf-gwcs (C) | C/Py |
 |--:|---:|---:|---:|
-| 1 | 233 | 15,776 | 67.64 |
-| 10 | 2,259 | 140,905 | 62.37 |
-| 1e2 | 22,419 | 520,088 | 23.20 |
-| 1e3 | 203,150 | 822,535 | 4.05 |
-| 1e4 | 1,314,815 | 762,003 | 0.58 |
-| 1e5 | 3,102,788 | 739,777 | 0.24 |
-| 1e6 | 2,191,954 | 729,454 | 0.33 |
+| 1 | 241 | 24,167 | 100.27 |
+| 10 | 2,350 | 219,015 | 93.21 |
+| 1e2 | 23,149 | 948,065 | 40.95 |
+| 1e3 | 211,054 | 1,677,430 | 7.95 |
+| 1e4 | 1,377,465 | 1,438,930 | 1.04 |
+| 1e5 | 3,147,311 | 1,432,711 | 0.46 |
+| 1e6 | 1,680,373 | 1,415,603 | 0.84 |
 
 ![Eval throughput vs N](results/plots/throughput.png)
 
@@ -102,7 +103,7 @@ should be treated as approximate.
 
 ### Small N: C is dramatically faster
 
-At N=1 and N=10, the C library is **60-70x faster**. This regime is dominated
+At N=1 and N=10, the C library is **~100x faster**. This regime is dominated
 by per-call overhead: Python's function call machinery, object allocation,
 argument checking, and the NumPy array creation and ufunc dispatch overhead on
 every `pixel_to_world` call. The C library incurs none of this--evaluation is a
@@ -112,20 +113,25 @@ This is the most practically important regime for many use cases. Opening a
 handful of ASDF files and extracting a small cutout per file (the typical
 interactive or pipeline-setup pattern) may involve relatively few coordinate
 evaluations per call. In that scenario the C library is faster in every
-dimension: parse time is ~25x lower and per-evaluation overhead is ~60x lower.
+dimension: parse time is ~25x lower and per-evaluation overhead is ~100x lower.
 
-### Large N: Python overtakes C
+### Large N: Python overtakes C, then C recovers
 
-Above roughly N=10000, Python's throughput exceeds the C library's and
-continues to grow while C plateaus. At N=100000 and N=1000000, Python is
-**3-4x faster**.
+The two implementations reach parity around N=10,000. Above that, Python
+pulls ahead, peaking at roughly **2x faster** at N=100,000. By N=1,000,000
+C recovers to within ~15% of Python throughput.
 
-The crossover is likely explained by NumPy's vectorised evaluation. Once N is
-large enough, NumPy's compiled ufuncs and--for affine transforms--BLAS routines
-dominate the runtime, amortising all Python overhead. The C library currently
-evaluates each transform with scalar loops via the
+The Python advantage in the N=10,000--100,000 range is likely explained by
+NumPy's vectorised evaluation. Once N is large enough, NumPy's compiled
+ufuncs and--for affine transforms--BLAS routines dominate the runtime,
+amortising all Python overhead. The C library currently evaluates each
+transform with scalar loops via the
 [AST](https://github.com/Starlink/ast) library, which does not use BLAS or
 explicit SIMD intrinsics.
+
+The partial C recovery at N=1,000,000 is consistent with the working set
+exceeding L3 cache, at which point both implementations become
+memory-bandwidth-bound and the vectorisation advantage narrows.
 
 A rerun with `OPENBLAS_NUM_THREADS=1` (forcing NumPy to single-threaded BLAS)
 produced almost the same crossover point and curve shape, with only a slight
