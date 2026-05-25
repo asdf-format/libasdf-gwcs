@@ -75,8 +75,8 @@ static asdf_value_err_t asdf_gwcs_compose_deserialize(
     asdf_gwcs_transform_arity_set(
         &compose->base,
         asdf_value_file(value),
-        compose->forward[n - 1]->n_inputs,
-        compose->forward[0]->n_outputs);
+        compose->forward[0]->n_inputs,
+        compose->forward[n - 1]->n_outputs);
 
     *out = compose;
     err = ASDF_VALUE_OK;
