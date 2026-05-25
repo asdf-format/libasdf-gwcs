@@ -17,6 +17,7 @@ import argparse
 import csv
 import math
 import os
+import platform
 import sys
 from collections import defaultdict
 
@@ -26,7 +27,62 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
-# Data loading
+def _get_system_info():
+    cpu = 'unknown'
+    try:
+        with open('/proc/cpuinfo') as f:
+            for line in f:
+                if line.startswith('model name'):
+                    cpu = line.split(':', 1)[1].strip()
+                    break
+    except OSError:
+        cpu = platform.processor() or 'unknown'
+
+    n_cores = os.cpu_count() or 0
+
+    ram_gb = None
+    try:
+        with open('/proc/meminfo') as f:
+            for line in f:
+                if line.startswith('MemTotal'):
+                    ram_gb = int(line.split()[1]) / 1024 ** 2
+                    break
+    except OSError:
+        pass
+
+    blas_info = None
+    try:
+        from threadpoolctl import threadpool_info
+        for pool in threadpool_info():
+            if pool.get('user_api') == 'blas':
+                blas_info = {
+                    'impl': pool.get('internal_api', 'unknown'),
+                    'threads': pool['num_threads'],
+                }
+                break
+    except ImportError:
+        pass
+
+    return {
+        'cpu': cpu,
+        'n_cores': n_cores,
+        'ram_gb': ram_gb,
+        'blas_info': blas_info,
+    }
+
+
+def _format_system_info(info):
+    parts = [info['cpu'], f"{info['n_cores']} cores"]
+    if info['ram_gb'] is not None:
+        parts.append(f'{info["ram_gb"]:.0f} GB RAM')
+    if info['blas_info'] is not None:
+        _blas_names = {'openblas': 'OpenBLAS', 'mkl': 'MKL', 'blis': 'BLIS'}
+        raw = info['blas_info']['impl']
+        impl = _blas_names.get(raw, raw.upper())
+        threads = info['blas_info']['threads']
+        parts.append(f'{impl} ({threads} threads)')
+    return '  |  '.join(parts)
+
 
 def load_csv(path):
     rows = []
@@ -85,7 +141,7 @@ def collect_parse_stats(rows, library):
 
 # Text table
 
-def _fmt_n(n):
+def _format_n(n):
     if n <= 10:
         return str(n)
     return f'1e{int(math.log10(n))}'
@@ -131,7 +187,7 @@ def print_table(rows):
             stats = collect_eval_stats(rows, lib)
             p25, p50, p75 = stats.get(N, (math.nan, math.nan, math.nan))
             medians[lib] = p50
-        line = f'{_fmt_n(N):>4}'
+        line = f'{_format_n(N):>4}'
         for lib in libraries:
             m = medians[lib]
             tps = N / m if m > 0 else math.nan
@@ -154,7 +210,12 @@ COLORS = {
 }
 
 
-def plot_eval_time(rows, libraries, output_dir):
+def _add_sysinfo_footer(fig, sysinfo):
+    fig.text(0.5, 0.01, _format_system_info(sysinfo),
+             ha='center', va='bottom', fontsize=6.5, color='#555555')
+
+
+def plot_eval_time(rows, libraries, output_dir, sysinfo=None):
     fig, ax = plt.subplots(figsize=(8, 5))
 
     for lib in libraries:
@@ -178,14 +239,16 @@ def plot_eval_time(rows, libraries, output_dir):
         'WCS eval time vs N  [median ± IQR across detectors & reps]')
     ax.legend()
     ax.grid(True, which='both', ls='--', alpha=0.4)
-    fig.tight_layout()
+    if sysinfo:
+        _add_sysinfo_footer(fig, sysinfo)
+    fig.tight_layout(rect=[0, 0.04, 1, 1])
     path = os.path.join(output_dir, 'eval_time.png')
     fig.savefig(path, dpi=150)
     plt.close(fig)
     print(f'  wrote {path}')
 
 
-def plot_throughput(rows, libraries, output_dir):
+def plot_throughput(rows, libraries, output_dir, sysinfo=None):
     fig, ax = plt.subplots(figsize=(8, 5))
 
     for lib in libraries:
@@ -209,14 +272,16 @@ def plot_throughput(rows, libraries, output_dir):
         'WCS eval throughput vs N  [median ± IQR across detectors & reps]')
     ax.legend()
     ax.grid(True, which='both', ls='--', alpha=0.4)
-    fig.tight_layout()
+    if sysinfo:
+        _add_sysinfo_footer(fig, sysinfo)
+    fig.tight_layout(rect=[0, 0.04, 1, 1])
     path = os.path.join(output_dir, 'throughput.png')
     fig.savefig(path, dpi=150)
     plt.close(fig)
     print(f'  wrote {path}')
 
 
-def plot_parse_time(rows, libraries, output_dir):
+def plot_parse_time(rows, libraries, output_dir, sysinfo=None):
     phases = ('parse_cold', 'parse_hot')
     x = np.arange(len(phases))
     width = 0.35
@@ -243,7 +308,9 @@ def plot_parse_time(rows, libraries, output_dir):
     ax.set_title('Parse time comparison  [median across detectors]')
     ax.legend()
     ax.grid(True, axis='y', ls='--', alpha=0.4)
-    fig.tight_layout()
+    if sysinfo:
+        _add_sysinfo_footer(fig, sysinfo)
+    fig.tight_layout(rect=[0, 0.04, 1, 1])
     path = os.path.join(output_dir, 'parse_time.png')
     fig.savefig(path, dpi=150)
     plt.close(fig)
@@ -276,11 +343,14 @@ def main():
     libraries = sorted({r['library'] for r in rows})
     os.makedirs(args.output_dir, exist_ok=True)
 
+    sysinfo = _get_system_info()
+    print(f'\nSystem: {_format_system_info(sysinfo)}')
+
     print_table(rows)
     print(f'Writing plots to {args.output_dir}/')
-    plot_eval_time(rows, libraries, args.output_dir)
-    plot_throughput(rows, libraries, args.output_dir)
-    plot_parse_time(rows, libraries, args.output_dir)
+    plot_eval_time(rows, libraries, args.output_dir, sysinfo)
+    plot_throughput(rows, libraries, args.output_dir, sysinfo)
+    plot_parse_time(rows, libraries, args.output_dir, sysinfo)
     return 0
 
 

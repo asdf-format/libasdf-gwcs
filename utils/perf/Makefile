@@ -88,7 +88,7 @@ $(PYTHON):
 	$(VENV)/bin/pip install --quiet --upgrade pip
 	$(VENV)/bin/pip install --quiet \
 	    asdf gwcs asdf-astropy asdf-wcs-schemas roman-datamodels \
-	    matplotlib
+	    matplotlib threadpoolctl
 
 venv: $(PYTHON)
 
