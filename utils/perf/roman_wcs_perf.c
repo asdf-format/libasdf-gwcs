@@ -23,12 +23,15 @@
  *   roman_wcs_perf [-o output.csv] file1.asdf [file2.asdf ...]
  */
 
+#include <fcntl.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <time.h>
+#include <unistd.h>
 
 #include <asdf.h>
 #include <asdf/gwcs/core.h>
@@ -105,13 +108,26 @@ static void read_detector(asdf_file_t *file, char *buf, size_t buflen) {
 }
 
 
+/* Evict filepath from the OS page cache via POSIX_FADV_DONTNEED. */
+static void evict_file(const char *filepath) {
+    int fd = open(filepath, O_RDONLY);
+    if (fd < 0)
+        return;
+    struct stat st;
+    if (fstat(fd, &st) == 0)
+        posix_fadvise(fd, 0, st.st_size, POSIX_FADV_DONTNEED);
+    close(fd);
+}
+
+
 /* Benchmark one file. Returns 1 on success, 0 on failure. */
 static int bench_file(const char *filepath, FILE *fout,
                       double *xin, double *yin,
                       double *xout, double *yout) {
     char detector[64] = "unknown";
 
-    /* Cold parse */
+    /* Cold parse--evict first to ensure page cache is cold. */
+    evict_file(filepath);
     double t0 = now_s();
     asdf_file_t *file_cold = NULL;
     asdf_gwcs_eval_t *eval_cold = NULL;
@@ -126,7 +142,7 @@ static int bench_file(const char *filepath, FILE *fout,
     asdf_gwcs_eval_destroy(eval_cold);
     asdf_close(file_cold);
 
-    fprintf(fout, "libasdf_gwcs,%s,%s,parse_cold,0,0,%.9f\n",
+    fprintf(fout, "libasdf_gwcs,%s,%s,parse_cold,0,0,%.9f,1\n",
             filepath, detector, cold_s);
     fflush(fout);
 
@@ -140,7 +156,7 @@ static int bench_file(const char *filepath, FILE *fout,
     }
     double hot_s = now_s() - t0;
 
-    fprintf(fout, "libasdf_gwcs,%s,%s,parse_hot,0,0,%.9f\n",
+    fprintf(fout, "libasdf_gwcs,%s,%s,parse_hot,0,0,%.9f,1\n",
             filepath, detector, hot_s);
     fflush(fout);
 
@@ -172,7 +188,7 @@ static int bench_file(const char *filepath, FILE *fout,
             asdf_gwcs_eval_2d(eval, xin, yin, xout, yout, N);
             rep_times[rep] = now_s() - t0;
 
-            fprintf(fout, "libasdf_gwcs,%s,%s,eval,%zu,%d,%.9f\n",
+            fprintf(fout, "libasdf_gwcs,%s,%s,eval,%zu,%d,%.9f,1\n",
                     filepath, detector, N, rep, rep_times[rep]);
         }
         fflush(fout);
@@ -186,7 +202,7 @@ static int bench_file(const char *filepath, FILE *fout,
                     rep_times[b] = tmp;
                 }
         double median = rep_times[reps / 2];
-        fprintf(stderr, "  N=%-8zu  median=%.3f ms  (%.0f pts/s)\n",
+        fprintf(stderr, "  N=%-8zu  median=%.3f ms  (%.0f px/s)\n",
                 N, median * 1e3, (double)N / median);
     }
 
@@ -218,7 +234,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "error: cannot open %s for writing\n", outpath);
         return 1;
     }
-    fprintf(fout, "library,file,detector,phase,n_points,rep,time_s\n");
+    fprintf(fout, "library,file,detector,phase,n_points,rep,time_s,blas_threads\n");
 
     size_t max_n = N_SWEEP[N_N_SWEEP - 1];
     double *xin  = malloc(max_n * sizeof(double));

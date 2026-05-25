@@ -16,7 +16,7 @@ included in the parse window to ensure the full pipeline (including any
 deferred construction) is counted.
 
 Output CSV (long format, matches roman_wcs_perf.c):
-  library,file,detector,phase,n_points,rep,time_s
+  library,file,detector,phase,n_points,rep,time_s,blas_threads
 
 Usage:
     roman_wcs_perf.py [-o output.csv] file1.asdf [file2.asdf ...]
@@ -24,6 +24,7 @@ Usage:
 
 import argparse
 import csv
+import os
 import sys
 from time import perf_counter
 
@@ -46,6 +47,19 @@ RAND_SEED = 42
 
 N_SWEEP = [1, 10, 100, 1_000, 10_000, 100_000, 1_000_000]
 N_REPS = [50, 50, 30, 15, 8, 5, 3]
+
+
+def _evict_file(filepath):
+    """Evict filepath from the OS page cache via POSIX_FADV_DONTNEED."""
+    try:
+        fd = os.open(filepath, os.O_RDONLY)
+        try:
+            size = os.stat(filepath).st_size
+            os.posix_fadvise(fd, 0, size, os.POSIX_FADV_DONTNEED)
+        finally:
+            os.close(fd)
+    except (AttributeError, OSError):
+        pass
 
 
 def _load_wcs(filepath):
@@ -72,9 +86,10 @@ def _median(values):
     return s[len(s) // 2]
 
 
-def bench_file(filepath, writer, fout):
+def bench_file(filepath, writer, fout, blas_threads):
     """Benchmark one ASDF file. Returns True on success."""
-    # Cold parse
+    # Cold parse--evict first to ensure page cache is cold.
+    _evict_file(filepath)
     try:
         t0 = perf_counter()
         af_cold, _, detector = _load_wcs(filepath)
@@ -85,7 +100,8 @@ def bench_file(filepath, writer, fout):
         return False
 
     writer.writerow([
-        'gwcs', filepath, detector, 'parse_cold', 0, 0, f'{cold_s:.9f}'
+        'gwcs', filepath, detector, 'parse_cold', 0, 0,
+        f'{cold_s:.9f}', blas_threads,
     ])
     fout.flush()
 
@@ -99,7 +115,8 @@ def bench_file(filepath, writer, fout):
         return False
 
     writer.writerow([
-        'gwcs', filepath, detector, 'parse_hot', 0, 0, f'{hot_s:.9f}'
+        'gwcs', filepath, detector, 'parse_hot', 0, 0,
+        f'{hot_s:.9f}', blas_threads,
     ])
     fout.flush()
 
@@ -122,13 +139,13 @@ def bench_file(filepath, writer, fout):
                 rep_times.append(elapsed)
                 writer.writerow([
                     'gwcs', filepath, detector, 'eval', N, rep,
-                    f'{elapsed:.9f}',
+                    f'{elapsed:.9f}', blas_threads,
                 ])
             fout.flush()
 
             med = _median(rep_times)
             print(f'  N={N:<8d}  median={med*1e3:.3f} ms'
-                  f'  ({N/med:.0f} pts/s)', file=sys.stderr)
+                  f'  ({N/med:.0f} px/s)', file=sys.stderr)
     except Exception as exc:
         print(f'  error during eval sweep: {exc}', file=sys.stderr)
         af_hot.close()
@@ -147,6 +164,18 @@ def main():
                         metavar='output.csv')
     args = parser.parse_args()
 
+    blas_threads = 1
+    try:
+        from threadpoolctl import threadpool_info
+        for pool in threadpool_info():
+            if pool.get('user_api') == 'blas':
+                blas_threads = pool['num_threads']
+                break
+    except ImportError:
+        pass
+
+    print(f'BLAS threads: {blas_threads}', file=sys.stderr)
+
     n_success = 0
     nfiles = len(args.files)
 
@@ -154,11 +183,11 @@ def main():
         writer = csv.writer(fout)
         writer.writerow([
             'library', 'file', 'detector',
-            'phase', 'n_points', 'rep', 'time_s',
+            'phase', 'n_points', 'rep', 'time_s', 'blas_threads',
         ])
         for file_idx, filepath in enumerate(args.files, 1):
             print(f'[{file_idx}/{nfiles}] {filepath}', file=sys.stderr)
-            if bench_file(filepath, writer, fout):
+            if bench_file(filepath, writer, fout, blas_threads):
                 n_success += 1
 
     print(f'\nSummary: {n_success}/{nfiles} files succeeded', file=sys.stderr)

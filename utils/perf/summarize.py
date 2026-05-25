@@ -6,7 +6,7 @@ Merge C and Python benchmark CSVs, print a summary table, and render
 three matplotlib figures into --output-dir:
 
   eval_time.png       eval time (s) vs N (log-log)
-  throughput.png      throughput (pts/s) vs N (log-log)
+  throughput.png      throughput (px/s) vs N (log-log)
   parse_time.png      parse cold/hot comparison (bar chart)
 
 Usage:
@@ -88,14 +88,17 @@ def load_csv(path):
     rows = []
     with open(path, newline='') as f:
         for row in csv.DictReader(f):
+            blas_threads = (int(row['blas_threads'])
+                            if row.get('blas_threads') else None)
             rows.append({
-                'library':  row['library'],
-                'file':     row['file'],
+                'library': row['library'],
+                'file': row['file'],
                 'detector': row['detector'],
-                'phase':    row['phase'],
+                'phase': row['phase'],
                 'n_points': int(row['n_points']),
-                'rep':      int(row['rep']),
-                'time_s':   float(row['time_s']),
+                'rep': int(row['rep']),
+                'time_s': float(row['time_s']),
+                'blas_threads': blas_threads,
             })
     return rows
 
@@ -153,6 +156,22 @@ LIBRARY_LABEL = {
 }
 
 
+def _blas_threads_for(rows, library):
+    """Return the BLAS thread count recorded for a library, or None."""
+    for r in rows:
+        if r['library'] == library and r['blas_threads'] is not None:
+            return r['blas_threads']
+    return None
+
+
+def _col_label(library, rows):
+    label = LIBRARY_LABEL.get(library, library)
+    t = _blas_threads_for(rows, library)
+    if t is not None and t != 1:
+        label += f' [{t}t]'
+    return label
+
+
 def print_table(rows):
     libraries = sorted({r['library'] for r in rows})
     n_values = sorted(
@@ -161,7 +180,9 @@ def print_table(rows):
 
     print('\n=== Parse times (median across all detectors) ===')
     hdr = (f"{'Phase':<14}"
-           + ''.join(f'  {LIBRARY_LABEL.get(l, l):>20}' for l in libraries))
+           + ''.join(
+               f'  {_col_label(l, rows):>20}' for l in libraries
+           ))
     print(hdr)
     print('-' * len(hdr))
     for phase in ('parse_cold', 'parse_hot'):
@@ -173,9 +194,9 @@ def print_table(rows):
             line += f'  {v*1e3:>17.1f} ms'
         print(line)
 
-    print('\n=== Eval throughput (median pts/s) ===')
+    print('\n=== Eval throughput (median px/s) ===')
     hdr = (f"{'N':>4}"
-           + ''.join(f'  {LIBRARY_LABEL.get(l, l):>20}' for l in libraries))
+           + ''.join(f'  {_col_label(l, rows):>20}' for l in libraries))
     if len(libraries) == 2:
         hdr += f"  {'C/Py':>8}"
     print(hdr)
@@ -267,7 +288,7 @@ def plot_throughput(rows, libraries, output_dir, sysinfo=None):
     ax.set_xscale('log')
     ax.set_yscale('log')
     ax.set_xlabel('N (number of pixel coordinate pairs)')
-    ax.set_ylabel('Throughput (pts / s)')
+    ax.set_ylabel('Throughput (px / s)')
     ax.set_title(
         'WCS eval throughput vs N  [median ± IQR across detectors & reps]')
     ax.legend()
