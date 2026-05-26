@@ -45,8 +45,10 @@ IMAGE_NX = 4088.0
 IMAGE_NY = 4088.0
 RAND_SEED = 42
 
-N_SWEEP = [1, 10, 100, 1_000, 10_000, 100_000, 1_000_000]
-N_REPS = [50, 50, 30, 15, 8, 5, 3]
+# Upper bound is the active science area of a Roman WFI detector (4088 x 4088 px;
+# full array is 4096 x 4096 with a 4-pixel reference pixel border on each edge).
+N_SWEEP = [1, 10, 100, 1_000, 10_000, 100_000, 1_000_000, 10_000_000, 16_711_744]
+N_REPS  = [50, 50, 30, 15, 8, 5, 3, 2, 2]
 
 
 def _evict_file(filepath):

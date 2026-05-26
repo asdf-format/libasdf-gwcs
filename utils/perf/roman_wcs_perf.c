@@ -42,9 +42,12 @@
 #define IMAGE_NY   4088.0
 #define RAND_SEED  42UL
 
-/* Eval sweep: N values and repetitions per N. */
-static const size_t N_SWEEP[] = {1, 10, 100, 1000, 10000, 100000, 1000000};
-static const int    N_REPS[]  = {50, 50, 30, 15, 8, 5, 3};
+/* Eval sweep: N values and repetitions per N.
+ * Upper bound is the active science area of a Roman WFI detector (4088 x 4088 px;
+ * full array is 4096 x 4096 with a 4-pixel reference pixel border on each edge). */
+static const size_t N_SWEEP[] = {
+    1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 16711744};
+static const int    N_REPS[]  = {50, 50, 30, 15, 8, 5, 3, 2, 2};
 static const size_t N_N_SWEEP = sizeof(N_SWEEP) / sizeof(N_SWEEP[0]);
 
 

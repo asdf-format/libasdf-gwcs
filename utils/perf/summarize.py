@@ -147,7 +147,11 @@ def collect_parse_stats(rows, library):
 def _format_n(n):
     if n <= 10:
         return str(n)
-    return f'1e{int(math.log10(n))}'
+    exp = int(math.log10(n))
+    mantissa = n / 10 ** exp
+    if abs(mantissa - round(mantissa)) < 0.01:
+        return f'{int(round(mantissa))}e{exp}'
+    return f'{mantissa:.1f}e{exp}'
 
 
 LIBRARY_LABEL = {
@@ -165,11 +169,7 @@ def _blas_threads_for(rows, library):
 
 
 def _col_label(library, rows):
-    label = LIBRARY_LABEL.get(library, library)
-    t = _blas_threads_for(rows, library)
-    if t is not None and t != 1:
-        label += f' [{t}t]'
-    return label
+    return LIBRARY_LABEL.get(library, library)
 
 
 def print_table(rows):
