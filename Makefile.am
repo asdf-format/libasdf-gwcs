@@ -70,7 +70,7 @@ if HAVE_AST
 src_files += src/backends/ast_yaml.c
 libasdf_gwcs_la_SOURCES += src/backends/ast_yaml.c
 libasdf_gwcs_la_CFLAGS  += $(AST_CFLAGS)
-libasdf_gwcs_la_LIBADD  += $(AST_LIBS)
+libasdf_gwcs_la_LIBADD  += $(AST_LIBS) $(YAML_LIBS)
 endif
 
 pkgconfigdir = $(libdir)/pkgconfig

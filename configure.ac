@@ -127,11 +127,16 @@ AS_IF([test "x$enable_ast" = "xyes"], [
       [], [])
     dnl ast.h is generated in the top of the AST build directory
     AST_CFLAGS="-I\$(top_builddir)/third_party/ast"
-    dnl Reference .la files directly so libtool uses the vendored library.
-    dnl libast_pal and libast_cminpack are already in libast.la's dependency_libs.
-    dnl The grf and err stubs are not, so they must be listed explicitly.
+    dnl Reference .la files directly so libtool absorbs them into
+    dnl libasdf-gwcs.so.
+    dnl Libtool only absorbs static archives listed directly in LIBADD; archives
+    dnl referenced only via dependency_libs of another .la are treated as -l
+    dnl flags and are NOT statically linked in. Thus all AST sub-libraries
+    dnl must be listed explicitly here.
     _ast_dir="\$(top_builddir)/third_party/ast"
     AST_LIBS="$_ast_dir/libast.la"
+    AST_LIBS="$AST_LIBS $_ast_dir/libast_pal.la"
+    AST_LIBS="$AST_LIBS $_ast_dir/libast_cminpack.la"
     AST_LIBS="$AST_LIBS $_ast_dir/libast_grf_2.0.la"
     AST_LIBS="$AST_LIBS $_ast_dir/libast_grf_3.2.la"
     AST_LIBS="$AST_LIBS $_ast_dir/libast_grf_5.6.la"

@@ -180,7 +180,7 @@ void asdf_gwcs_transform_clean(asdf_gwcs_transform_t *transform) {
 
 void asdf_gwcs_transform_arity_set(
     asdf_gwcs_transform_t *transform,
-    UNUSED(const asdf_file_t *file),
+    const asdf_file_t *file,
     uint32_t implicit_n_inputs,
     uint32_t implicit_n_outputs) {
     if (implicit_n_inputs > 0) {
