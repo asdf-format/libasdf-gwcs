@@ -176,9 +176,146 @@ is to add SIMD vectorisation to AST's transform evaluation:
 
 These would be contributions to AST itself rather than to libasdf-gwcs.
 
+## Python performance experiments
+
+The large-N Python throughput in the [reference results](#reference-results) was
+significantly lower than expected and showed high run-to-run variability.  A series
+of experiments investigated the causes and tested mitigations.
+
+### CPU pinning and frequency stability
+
+Initial attempts to reduce variance used `taskset -c 0` to pin both benchmarks
+to a single CPU core, and disabled Intel Turbo Boost via
+`/sys/devices/system/cpu/intel_pstate/no_turbo` to stabilise clock frequency.
+These measures reduced timing scatter but did not materially improve Python's
+large-N throughput--the instability had a different root cause.
+
+### NumPy allocation overhead: glibc mmap and minor page faults
+
+The primary cause of Python's poor and variable large-N throughput is glibc's
+allocator behaviour for large arrays.
+
+Each call to `wcs.pixel_to_world` allocates and frees a series of N-element
+intermediate arrays (one per pipeline stage).  Once an array exceeds glibc's
+`M_MMAP_THRESHOLD` (128 KB by default), `malloc()` routes the request to
+`mmap(MAP_ANONYMOUS)` rather than the brk-based heap.  When `free()` calls
+`munmap()`, the virtual and physical mapping is destroyed.  The next allocation
+of similar size receives a fresh virtual address with no page table entry, so
+every element access causes a **minor page fault**--a kernel trap to install a
+PTE, with no disk I/O involved but still measurable overhead.  At
+N = 10,000,000, this amounts to roughly 300,000 minor faults per
+`pixel_to_world` call, contributing several seconds of kernel overhead per
+repetition.
+
+I believe run-to-run variability arose from glibc's dynamic threshold: glibc
+automatically raises `M_MMAP_THRESHOLD` when it observes large mmap'd chunks
+being freed, sometimes pushing it above 80 MB automatically (producing a fast
+run) but inconsistently (making the next run slow).
+
+**`mallopt` workaround (partial).** The `--fast-malloc` flag in
+`roman_wcs_perf.py` calls `mallopt(M_MMAP_THRESHOLD, 256 MB)` before the eval
+sweep, and `mallopt(M_TRIM_THRESHOLD, 512 MB)` to prevent glibc from trimming
+the brk heap between N levels.  On 64-bit Linux, however, glibc silently caps
+`M_MMAP_THRESHOLD` at
+`DEFAULT_MMAP_THRESHOLD_MAX = 4 x 1024 x 1024 x sizeof(long)` = **32 MB**.
+Arrays at N >= ~4,000,000 (32 MB / 8 bytes/element) therefore still go through
+mmap/munmap.  The workaround eliminates faults for smaller intermediate
+arrays but cannot prevent them for the large arrays that dominate at
+N = 10M–16.7M.  A further complication: as N grows from 10M to 16.7M,
+additional intermediate arrays cross the 32 MB threshold, so fault counts grow
+faster than N (observed: 3.4x more faults for only 1.67x more data).
+
+### jemalloc
+
+[jemalloc](https://jemalloc.net/) manages its own pool of large memory extents
+and avoids `mmap`/`munmap` per allocation.  Instead of unmapping freed extents
+it marks them with `madvise(MADV_DONTNEED)` (returning physical pages to the OS
+while keeping the virtual mapping), avoiding the TLB shootdown and kernel VMA
+management cost of `munmap`.  Repeated allocations of similar size reuse the
+same virtual address range.
+
+For this experiment both benchmarks were run under jemalloc via `LD_PRELOAD`,
+with page decommitting disabled entirely:
+
+```sh
+MALLOC_CONF=dirty_decay_ms:-1,muzzy_decay_ms:-1 \
+LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2 \
+    ./roman_wcs_perf -o results/jemalloc/c_perf_results.csv *.asdf
+
+MALLOC_CONF=dirty_decay_ms:-1,muzzy_decay_ms:-1 \
+LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so.2 \
+    python3 roman_wcs_perf.py --fast-malloc \
+        -o results/jemalloc/python_perf_results.csv *.asdf
+```
+
+`dirty_decay_ms:-1` disables `MADV_DONTNEED` on dirty (recently freed) extents;
+`muzzy_decay_ms:-1` disables `MADV_FREE` on muzzy (speculatively retained)
+extents. With both flags set, physical pages are never returned to the OS
+between allocations, so repeated allocations of the same size incur page faults
+only the first time jemalloc extends a new extent.  The trade-off is peak RSS:
+by the end of the N = 16,711,744 level the Python process retains roughly 4 GB
+of jemalloc-managed heap.  Because that pool grows monotonically, later files
+in the benchmark (which reuse already-faulted extents) show lower fault counts
+and higher throughput than the first file.
+
+jemalloc makes little difference to the C benchmark--libasdf-gwcs pre-allocates
+coordinate buffers once at startup and AST's internal working memory is
+relatively modest, so there is no repeated large-allocation pressure during the
+eval sweep.
+
+#### Results (jemalloc)
+
+| Phase | GWCS (Py) | libasdf-gwcs (C) |
+|:------|---:|---:|
+| cold parse | 824.9 ms | 37.9 ms |
+| hot parse | 563.0 ms | 28.7 ms |
+
+| N | GWCS (Py) | libasdf-gwcs (C) | C/Py |
+|--:|---:|---:|---:|
+| 1 | 203 | 22,220 | 109.34 |
+| 10 | 1,990 | 201,564 | 101.29 |
+| 1e2 | 19,712 | 1,082,972 | 54.94 |
+| 1e3 | 181,217 | 1,865,874 | 10.30 |
+| 1e4 | 1,129,961 | 1,962,031 | 1.74 |
+| 1e5 | 2,562,569 | 1,975,831 | 0.77 |
+| 1e6 | 2,539,806 | 1,968,526 | 0.78 |
+| 1e7 | 2,517,166 | 1,962,383 | 0.78 |
+| 1.7e7 | 2,527,470 | 1,960,801 | 0.78 |
+
+![Eval throughput with jemalloc](results/jemalloc/plots/throughput.png)
+
+With jemalloc and page decommitting disabled, Python's throughput at large N
+rises from roughly 650K px/s to ~2.5M px/s and is essentially flat from
+N = 100,000 onward.  The large-N collapse seen in the earlier reference
+results is an allocator artefact, not a fundamental property of the GWCS
+pipeline.  At N >= 100,000 Python's throughput still (~2.5M px/s) slightly
+exceeds that of the (non-SIMD) libasdf-gwcs build (~1.96M px/s), indicating
+that NumPy's vectorised ufuncs have better raw throughput than AST's scalar
+point-by-point evaluation once allocation overhead is eliminated.
+
 ## History
 
 This is a living document updated as new benchmark runs are performed.
+
+### 2026-06-02
+
+Investigation into the root cause of Python's poor and variable large-N
+throughput. The primary cause was identified as glibc routing large NumPy
+intermediate-array allocations through `mmap(MAP_ANONYMOUS)` / `munmap()`,
+causing hundreds of thousands of minor page faults per `pixel_to_world` call.
+A `mallopt` workaround (`--fast-malloc` flag) provides partial relief but is
+limited by the 32 MB `DEFAULT_MMAP_THRESHOLD_MAX` cap on 64-bit glibc.
+Running both benchmarks under jemalloc with
+`MALLOC_CONF=dirty_decay_ms:-1,muzzy_decay_ms:-1` eliminates the large-N
+throughput collapse; Python reaches ~2.5M px/s flat from N = 100,000 onward,
+slightly exceeding the non-SIMD C build at large N.  Results committed to
+`results/jemalloc/`.
+
+Additional benchmark hygiene changes in this session: bounding-box checking 
+disabled by default in the Python benchmark (matching libasdf-gwcs/AST
+behaviour).
+
+**Software versions:** same as 2026-05-26, plus jemalloc 5.3.0.
 
 ### 2026-05-26
 

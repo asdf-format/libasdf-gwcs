@@ -3,7 +3,7 @@
 # Performance benchmark: libasdf-gwcs vs Python GWCS
 #
 # Measures cold/hot parse times and eval throughput across a sweep of
-# input sizes (N = 1 to 1 000 000 points) on Roman ASDF calibration files.
+# input sizes (N = 1 to 16M points) on Roman ASDF calibration files.
 #
 # Prerequisites
 # -------------
@@ -13,20 +13,21 @@
 #
 # Usage
 # -----
-#   make                 # build C binary + Python venv, run both, generate plots
-#   make build-c         # compile roman_wcs_perf only
-#   make venv            # create Python venv with requirements
-#   make run-c           # run C benchmark  -> C_CSV
-#   make run-python      # run Python benchmark -> PYTHON_CSV
-#   make plot            # merge CSVs and render plots into PLOT_DIR
-#   make clean           # remove CSVs and plots
-#   make distclean       # also remove venv and compiled binary
+#   make                          # build, run both benchmarks, generate plots
+#   make build-c                  # compile roman_wcs_perf only
+#   make venv                     # create Python venv with requirements
+#   make run-c                    # run C benchmark  -> C_CSV
+#   make run-python               # run Python benchmark -> PYTHON_CSV
+#   make plot                     # merge CSVs and render plots into PLOT_DIR
+#   make clean                    # remove CSVs and plots
+#   make distclean                # also remove venv and compiled binary
 #
 # Overrides
 # ---------
 #   make PREFIX=/opt/local          # where libasdf-gwcs is installed
 #   make DATA_DIR=/path/to/asdf     # directory containing *.asdf files
 #   make PKG_CONFIG_PATH=...        # supplement the default search path
+#   make TASKSET_CORE=0             # pin both benchmarks to a single CPU core
 
 REPO_ROOT := $(abspath ../..)
 
@@ -49,8 +50,15 @@ ifneq ($(GWCS_LIBDIR),)
 LDFLAGS += -Wl,-rpath,$(GWCS_LIBDIR)
 endif
 
-PERF_BIN := roman_wcs_perf
-PERF_SRC := roman_wcs_perf.c
+# Optional core pinning: make TASKSET_CORE=0 pins both benchmarks to core 0.
+# Reduces scheduler-migration noise and ensures comparable L1/L2 cache state.
+TASKSET_CORE ?=
+_TASKSET     := $(if $(TASKSET_CORE),taskset -c $(TASKSET_CORE),)
+
+PERF_BIN    := roman_wcs_perf
+PERF_SRC    := roman_wcs_perf.c
+PROFILE_BIN := wcs_profile
+PROFILE_SRC := wcs_profile.c
 
 DATA_DIR   ?= $(REPO_ROOT)/utils/roman/.data
 ASDF_FILES := $(wildcard $(DATA_DIR)/*.asdf)
@@ -75,7 +83,7 @@ PYTHON3 := $(shell \
         2>/dev/null && echo $$py)
 endif
 
-.PHONY: all build-c venv run-c run-python plot clean distclean
+.PHONY: all build-c build-profile venv run-c run-python plot clean distclean
 
 all: build-c venv run-c run-python plot
 
@@ -98,9 +106,19 @@ $(PERF_BIN): $(PERF_SRC)
 	    echo "  Install both to PREFIX=$(PREFIX) or set PKG_CONFIG_PATH."; \
 	    exit 1; \
 	fi
-	$(CC) $(CFLAGS) $< $(LDFLAGS) -lm -o $@
+	$(CC) $(CFLAGS) $< $(LDFLAGS) -o $@
 
 build-c: $(PERF_BIN)
+
+$(PROFILE_BIN): $(PROFILE_SRC)
+	@if [ -z "$(GWCS_CFLAGS)" ]; then \
+	    echo "error: pkg-config cannot find libasdf or libasdf-gwcs."; \
+	    echo "  Install both to PREFIX=$(PREFIX) or set PKG_CONFIG_PATH."; \
+	    exit 1; \
+	fi
+	$(CC) $(CFLAGS) -g $< $(LDFLAGS) -o $@
+
+build-profile: $(PROFILE_BIN)
 
 $(RESULTS_DIR):
 	mkdir -p $@
@@ -111,16 +129,18 @@ $(C_CSV): $(PERF_BIN) | $(RESULTS_DIR)
 	    exit 1; \
 	fi
 	LD_LIBRARY_PATH=$(GWCS_LIBDIR):$$LD_LIBRARY_PATH \
-	    ./$(PERF_BIN) -o $@ $(ASDF_FILES)
+	    $(_TASKSET) ./$(PERF_BIN) -o $@ $(ASDF_FILES)
 
 run-c: $(C_CSV)
 
 $(PYTHON_CSV): | $(PYTHON) $(RESULTS_DIR)
 	@if [ -z "$(ASDF_FILES)" ]; then \
-	    echo "ERROR: no *.asdf files found in DATA_DIR=$(DATA_DIR)"; \
+	    echo "error: no *.asdf files found in DATA_DIR=$(DATA_DIR)"; \
 	    exit 1; \
 	fi
-	$(PYTHON) roman_wcs_perf.py -o $@ $(ASDF_FILES)
+	$(_TASKSET) $(PYTHON) roman_wcs_perf.py \
+	    --fast-malloc \
+	    -o $@ $(ASDF_FILES)
 
 run-python: $(PYTHON_CSV)
 
@@ -143,5 +163,5 @@ clean:
 	rm -rf $(PLOT_DIR)
 
 distclean: clean
-	rm -f $(PERF_BIN)
+	rm -f $(PERF_BIN) $(PROFILE_BIN)
 	rm -rf $(VENV) $(RESULTS_DIR)

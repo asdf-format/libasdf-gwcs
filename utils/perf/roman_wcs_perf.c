@@ -24,7 +24,6 @@
  */
 
 #include <fcntl.h>
-#include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,7 +46,7 @@
  * full array is 4096 x 4096 with a 4-pixel reference pixel border on each edge). */
 static const size_t N_SWEEP[] = {
     1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 16711744};
-static const int    N_REPS[]  = {50, 50, 30, 15, 8, 5, 3, 2, 2};
+static const int REPS[] = {100, 100, 50, 20, 10, 5, 3, 2, 2};
 static const size_t N_N_SWEEP = sizeof(N_SWEEP) / sizeof(N_SWEEP[0]);
 
 
@@ -123,6 +122,7 @@ static void evict_file(const char *filepath) {
 }
 
 
+
 /* Benchmark one file. Returns 1 on success, 0 on failure. */
 static int bench_file(const char *filepath, FILE *fout,
                       double *xin, double *yin,
@@ -167,7 +167,7 @@ static int bench_file(const char *filepath, FILE *fout,
             cold_s * 1e3, hot_s * 1e3);
 
     /* Eval sweep */
-    double *rep_times = malloc(N_REPS[0] * sizeof(double));  /* N_REPS[0] is max */
+    double *rep_times = malloc(REPS[0] * sizeof(double));
     if (!rep_times) {
         fprintf(stderr, "  error: out of memory for rep_times\n");
         asdf_gwcs_eval_destroy(eval);
@@ -177,7 +177,7 @@ static int bench_file(const char *filepath, FILE *fout,
 
     for (size_t ni = 0; ni < N_N_SWEEP; ni++) {
         size_t N = N_SWEEP[ni];
-        int    reps = N_REPS[ni];
+        int reps = REPS[ni];
 
         /* Reproducible random pixel coordinates; regenerate per N level. */
         srand48((long)RAND_SEED);
@@ -190,7 +190,6 @@ static int bench_file(const char *filepath, FILE *fout,
             t0 = now_s();
             asdf_gwcs_eval_2d(eval, xin, yin, xout, yout, N);
             rep_times[rep] = now_s() - t0;
-
             fprintf(fout, "libasdf_gwcs,%s,%s,eval,%zu,%d,%.9f,1\n",
                     filepath, detector, N, rep, rep_times[rep]);
         }
@@ -204,9 +203,10 @@ static int bench_file(const char *filepath, FILE *fout,
                     rep_times[a] = rep_times[b];
                     rep_times[b] = tmp;
                 }
+
         double median = rep_times[reps / 2];
-        fprintf(stderr, "  N=%-8zu  median=%.3f ms  (%.0f px/s)\n",
-                N, median * 1e3, (double)N / median);
+        fprintf(stderr, "  N=%-8zu  reps=%-3d  median=%.3f ms  (%.0f px/s)\n",
+                N, reps, median * 1e3, (double)N / median);
     }
 
     free(rep_times);
@@ -240,8 +240,8 @@ int main(int argc, char *argv[]) {
     fprintf(fout, "library,file,detector,phase,n_points,rep,time_s,blas_threads\n");
 
     size_t max_n = N_SWEEP[N_N_SWEEP - 1];
-    double *xin  = malloc(max_n * sizeof(double));
-    double *yin  = malloc(max_n * sizeof(double));
+    double *xin = malloc(max_n * sizeof(double));
+    double *yin = malloc(max_n * sizeof(double));
     double *xout = malloc(max_n * sizeof(double));
     double *yout = malloc(max_n * sizeof(double));
     if (!xin || !yin || !xout || !yout) {
