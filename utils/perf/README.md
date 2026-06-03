@@ -293,9 +293,105 @@ exceeds that of the (non-SIMD) libasdf-gwcs build (~1.96M px/s), indicating
 that NumPy's vectorised ufuncs have better raw throughput than AST's scalar
 point-by-point evaluation once allocation overhead is eliminated.
 
+## SIMD vectorisation in AST
+
+The recommendations above were acted on. Experimental SIMD evaluation support
+for three key transform types was added to AST and submitted as
+[pull request #51](https://github.com/Starlink/ast/pull/51):
+
+- **PolyMap** (polynomial transforms): Horner evaluation restructured to
+  process all N input points per coefficient, making the inner loop
+  auto-vectorisable by GCC. On AVX2 hardware this processes four doubles
+  per cycle.
+- **MatrixMap** (matrix transforms, including rotations): the matrix-vector
+  multiply loop vectorised; this transform accounted for roughly 16% of
+  total pipeline instruction count before the change (measured by callgrind).
+- **SphMap** (spherical <-> Cartesian): trigonometric operations (`sin`,
+  `cos`, `atan2`) replaced by libmvec vectorised equivalents via GCC
+  auto-vectorisation with `-ffast-math`.
+
+### Results (SIMD C build, glibc + --fast-malloc)
+
+Standard conditions: glibc allocator with `--fast-malloc` on the Python side
+(same as used for the reference results), SIMD C binary built against the
+SIMD branch of AST.
+
+| Phase | GWCS (Py) | libasdf-gwcs (C) |
+|:------|---:|---:|
+| cold parse | 853.3 ms | 19.4 ms |
+| hot parse | 613.6 ms | 11.2 ms |
+
+| N | GWCS (Py) | libasdf-gwcs (C) | C/Py |
+|--:|---:|---:|---:|
+| 1 | 205 | 19,709 | 96.37 |
+| 10 | 1,979 | 184,077 | 93.00 |
+| 1e2 | 19,657 | 1,381,540 | 70.28 |
+| 1e3 | 178,978 | 4,585,284 | 25.62 |
+| 1e4 | 1,153,844 | 2,716,078 | 2.35 |
+| 1e5 | 2,670,879 | 2,530,143 | 0.95 |
+| 1e6 | 2,663,465 | 2,496,934 | 0.94 |
+| 1e7 | 1,445,047 | 2,481,963 | 1.72 |
+| 1.7e7 | 713,184 | 2,486,192 | 3.49 |
+
+![Eval throughput, SIMD C vs Python](results/simd/plots/throughput.png)
+
+The SIMD C build reaches ~2.5M px/s at large N, compared to ~1.57M px/s for
+the non-SIMD reference build -- roughly a **1.6x improvement** from
+vectorisation.  At N = 100,000 and N = 1,000,000 C and Python are essentially
+tied; the brief Python advantage seen in the non-SIMD reference results is
+eliminated.  At N >= 10,000,000, Python's throughput collapses again due to
+the glibc mmap allocation issue described above (the `--fast-malloc` workaround
+is only partially effective; see [Python performance experiments](#python-performance-experiments)).
+
+### Results with jemalloc (both C and Python)
+
+For completeness, the same SIMD C build was also run alongside the Python
+benchmark under jemalloc (`MALLOC_CONF=dirty_decay_ms:-1,muzzy_decay_ms:-1`),
+following the same methodology as the [jemalloc section above](#jemalloc).
+This removes Python's allocation overhead, allowing a cleaner comparison of
+raw pipeline throughput.
+
+| Phase | GWCS (Py) | libasdf-gwcs (C) |
+|:------|---:|---:|
+| cold parse | 825.8 ms | 37.8 ms |
+| hot parse | 549.2 ms | 28.6 ms |
+
+| N | GWCS (Py) | libasdf-gwcs (C) | C/Py |
+|--:|---:|---:|---:|
+| 1 | 201 | 22,175 | 110.44 |
+| 10 | 1,951 | 207,788 | 106.49 |
+| 1e2 | 19,407 | 1,674,187 | 86.27 |
+| 1e3 | 177,820 | 4,831,840 | 27.17 |
+| 1e4 | 1,114,818 | 5,516,869 | 4.95 |
+| 1e5 | 2,540,755 | 5,671,545 | 2.23 |
+| 1e6 | 2,556,520 | 5,654,804 | 2.21 |
+| 1e7 | 2,550,335 | 5,644,214 | 2.21 |
+| 1.7e7 | 2,543,704 | 5,654,381 | 2.22 |
+
+![Eval throughput, SIMD C vs Python, jemalloc](results/simd-jemalloc/plots/throughput.png)
+
+With jemalloc eliminating Python's allocation overhead, the C/Py ratio
+stabilises at ~2.22 from N = 100,000 onward and remains flat across all larger
+N.  The SIMD C build reaches ~5.65M px/s, compared to ~1.96M px/s for the
+non-SIMD build under the same jemalloc conditions -- a **~2.9x improvement**
+attributable to vectorisation.  The SIMD build is faster than Python at every
+N above ~10,000.
+
 ## History
 
 This is a living document updated as new benchmark runs are performed.
+
+### 2026-06-03
+
+Experimental SIMD vectorisation added to AST for PolyMap, MatrixMap, and
+SphMap (see [PR #51](https://github.com/Starlink/ast/pull/51)).  Under
+standard conditions (glibc + `--fast-malloc`) the SIMD C build reaches
+~2.5M px/s at large N (~1.6x improvement over non-SIMD).  Under jemalloc,
+it reaches ~5.65M px/s (~2.9x over the non-SIMD jemalloc baseline).
+Results committed to `results/simd/` and `results/simd-jemalloc/`.
+
+**Software versions:** same as 2026-06-02, built against the SIMD branch of
+AST (pre-merge of PR #51).
 
 ### 2026-06-02
 
