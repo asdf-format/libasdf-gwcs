@@ -29,7 +29,7 @@ typedef struct {
      */
     asdf_gwcs_eval_t *(*create)(asdf_file_t *file, const asdf_gwcs_t *wcs,
                                 asdf_gwcs_err_t *err_out);
-} asdf_gwcs_pipeline_vtable_t;
+} asdf_gwcs_pipeline_vtab_t;
 
 /**
  * vtable for per-transform operations (optional; may be NULL on the backend)
@@ -40,7 +40,7 @@ typedef struct {
  */
 typedef struct {
     void *reserved;
-} asdf_gwcs_transform_vtable_t;
+} asdf_gwcs_transform_vtab_t;
 
 /**
  * Descriptor for a WCS evaluation backend.
@@ -53,10 +53,10 @@ struct asdf_gwcs_backend {
     const char *name;
 
     /** Pipeline-level operations; must not be NULL if the backend is usable. */
-    const asdf_gwcs_pipeline_vtable_t *pipeline;
+    const asdf_gwcs_pipeline_vtab_t *pipeline;
 
     /** Per-transform operations; may be NULL. */
-    const asdf_gwcs_transform_vtable_t *transform;
+    const asdf_gwcs_transform_vtab_t *transform;
 
     /** Arbitrary backend-private data. */
     void *userdata;
@@ -89,8 +89,8 @@ extern void asdf_gwcs_backend_register(const asdf_gwcs_backend_t *backend);
  *
  * :param bname: Unquoted backend name token; becomes both the C identifier
  *   suffix and the runtime name string.
- * :param pipeline_ptr: Pointer to the `asdf_gwcs_pipeline_vtable_t`.
- * :param transform_ptr: Pointer to the `asdf_gwcs_transform_vtable_t`, or NULL.
+ * :param pipeline_ptr: Pointer to the `asdf_gwcs_pipeline_vtab_t`.
+ * :param transform_ptr: Pointer to the `asdf_gwcs_transform_vtab_t`, or NULL.
  * :param ud: Arbitrary userdata pointer stored on the backend.
  */
 #define ASDF_GWCS_REGISTER_BACKEND(bname, pipeline_ptr, transform_ptr, ud) \

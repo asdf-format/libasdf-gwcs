@@ -175,14 +175,20 @@ static void asdf_gwcs_remap_axes_dealloc(void *value) {
 }
 
 
+static const asdf_extension_vtab_t asdf_gwcs_remap_axes_vtab = {
+    .serialize = asdf_gwcs_remap_axes_serialize,
+    .deserialize = asdf_gwcs_remap_axes_deserialize,
+    .copy = NULL, /* TODO */
+    .dealloc = asdf_gwcs_remap_axes_dealloc,
+};
+
+
 ASDF_GWCS_REGISTER_TRANSFORM(
     remap_axes,
     REMAP_AXES,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes-1.4.0",
     asdf_gwcs_remap_axes_t,
     &libasdf_gwcs_software,
-    asdf_gwcs_remap_axes_serialize,
-    asdf_gwcs_remap_axes_deserialize,
+    &asdf_gwcs_remap_axes_vtab,
     NULL,
-    asdf_gwcs_remap_axes_dealloc,
-    NULL);
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes-1.4.0"
+);

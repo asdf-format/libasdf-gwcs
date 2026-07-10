@@ -217,8 +217,8 @@ void asdf_gwcs_transform_destroy(asdf_gwcs_transform_t *transform) {
 
     const asdf_extension_t *ext = (const asdf_extension_t *)transform->type;
 
-    if (ext && ext->dealloc) {
-        ext->dealloc(transform);
+    if (ext && ext->vtab && ext->vtab->dealloc) {
+        ext->vtab->dealloc(transform);
         return;
     }
 
@@ -273,7 +273,8 @@ const char *asdf_gwcs_transform_type_to_tag(asdf_gwcs_transform_type_t type) {
     if (!ext)
         return NULL;
 
-    full_tag = tag_canonicalize(ext->tag);
+    /* tags[0] is the tag written when serializing */
+    full_tag = tag_canonicalize(ext->tags[0]);
 
     if (UNLIKELY(!full_tag)) {
         // TODO: libasdf's public headers don't expose its internal error-reporting primitives
@@ -430,26 +431,28 @@ void asdf_gwcs_transform_register(asdf_gwcs_transform_type_t type) {
     /* TODO: Handle tag overlaps on registration */
     // Ensure extension map initialized
     asdf_gwcs_transform_map_create();
-    const char *tag = ((asdf_extension_t *)type)->tag;
+    const char *const *tags = ((asdf_extension_t *)type)->tags;
 
-    char *full_tag = tag_canonicalize(tag);
-    if (!full_tag) {
-        ASDF_LOG(NULL, ASDF_LOG_FATAL, "failed to allocate memory for transform tag %s", tag);
-        return;
-    }
-    asdf_gwcs_transform_map_result res = asdf_gwcs_transform_map_emplace(
-        &g_transform_map, full_tag, type);
+    for (const char *const *tag = tags; *tag; tag++) {
+        char *full_tag = tag_canonicalize(*tag);
+        if (!full_tag) {
+            ASDF_LOG(NULL, ASDF_LOG_FATAL, "failed to allocate memory for transform tag %s", *tag);
+            return;
+        }
+        asdf_gwcs_transform_map_result res = asdf_gwcs_transform_map_emplace(
+            &g_transform_map, full_tag, type);
 
 #ifdef ASDF_LOG_ENABLED
-    if (res.inserted)
-        ASDF_LOG(NULL, ASDF_LOG_DEBUG, "registered transform for tag %s", full_tag);
-    else
-        ASDF_LOG(NULL, ASDF_LOG_WARN, "failed to register transform for tag %s", full_tag);
+        if (res.inserted)
+            ASDF_LOG(NULL, ASDF_LOG_DEBUG, "registered transform for tag %s", full_tag);
+        else
+            ASDF_LOG(NULL, ASDF_LOG_WARN, "failed to register transform for tag %s", full_tag);
 #else
-    (void)res;
+        (void)res;
 #endif
 
-    free(full_tag);
+        free(full_tag);
+    }
 }
 
 
@@ -476,38 +479,39 @@ const asdf_extension_t *asdf_gwcs_transform_get(UNUSED(asdf_file_t *file), const
 }
 
 
+static const asdf_extension_vtab_t asdf_gwcs_transform_generic_vtab = {
+    .serialize = asdf_gwcs_transform_generic_serialize,
+    .deserialize = asdf_gwcs_transform_generic_deserialize,
+    .copy = NULL, /* TODO */
+    .dealloc = asdf_gwcs_transform_generic_dealloc,
+};
+
+
 /** Register a "generic" transform
  *
  * These don't have any special implementation details at the moment, and
  * are registered mainly so that their tags are recognized as known
  * transforms.
  *
- * .. todo::
- *
- *   This would be a very good use case for updating `ASDF_REGISTER_EXTENSION`
- *   to allow registering multiple tags to an extension (besides better
- *   multi-version support which also needs to be done).
+ * One or more tags may be given; the first is the one written on serialize,
+ * and the rest are additional versions recognized when reading.
  */
-#define ASDF_GWCS_REGISTER_TRANSFORM_GENERIC(extname, ttype, tag) \
+#define ASDF_GWCS_REGISTER_TRANSFORM_GENERIC(extname, ttype, ...) \
     ASDF_GWCS_REGISTER_TRANSFORM( \
-        extname, ttype, tag, asdf_gwcs_transform_t, \
+        extname, ttype, asdf_gwcs_transform_t, \
         &libasdf_gwcs_software, \
-        asdf_gwcs_transform_generic_serialize, \
-        asdf_gwcs_transform_generic_deserialize, \
+        &asdf_gwcs_transform_generic_vtab, \
         NULL, \
-        asdf_gwcs_transform_generic_dealloc, \
-        NULL);
+        __VA_ARGS__);
 
 
-#define ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(extname, ttype, tag, ctype) \
+#define ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(extname, ttype, ctype, ...) \
     ASDF_GWCS_REGISTER_TRANSFORM_WITH_CTYPE( \
-        extname, ttype, tag, asdf_gwcs_transform_t, \
+        extname, ttype, asdf_gwcs_transform_t, \
         &libasdf_gwcs_software, \
-        asdf_gwcs_transform_generic_serialize, \
-        asdf_gwcs_transform_generic_deserialize, \
-        NULL, \
-        asdf_gwcs_transform_generic_dealloc, \
-        ctype);
+        &asdf_gwcs_transform_generic_vtab, \
+        ctype, \
+        __VA_ARGS__);
 
 
 /**
@@ -527,149 +531,149 @@ ASDF_GWCS_REGISTER_TRANSFORM_GENERIC(
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     airy,
     AIRY,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "airy-1.3.0",
-    AIR);
+    AIR,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "airy-1.3.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     bonne_equal_area,
     BONNE_EQUAL_AREA,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "bonne_equal_area-1.3.0",
-    BON);
+    BON,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "bonne_equal_area-1.3.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     cobe_quad_spherical_cube,
     COBE_QUAD_SPHERICAL_CUBE,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cobe_quad_spherical_cube-1.3.0",
-    CSC);
+    CSC,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cobe_quad_spherical_cube-1.3.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     conic_equal_area,
     CONIC_EQUAL_AREA,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_equal_area-1.3.0",
-    COE);
+    COE,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_equal_area-1.3.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     conic_equidistant,
     CONIC_EQUIDISTANT,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_equidistant-1.3.0",
-    COD);
+    COD,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_equidistant-1.3.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     conic_orthomorphic,
     CONIC_ORTHOMORPHIC,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_orthomorphic-1.3.0",
-    COO);
+    COO,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_orthomorphic-1.3.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     conic_perspective,
     CONIC_PERSPECTIVE,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_perspective-1.3.0",
-    COP);
+    COP,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_perspective-1.3.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     cylindrical_equal_area,
     CYLINDRICAL_EQUAL_AREA,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cylindrical_equal_area-1.3.0",
-    CEA);
+    CEA,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cylindrical_equal_area-1.3.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     cylindrical_perspective,
     CYLINDRICAL_PERSPECTIVE,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cylindrical_perspective-1.3.0",
-    CYP);
+    CYP,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cylindrical_perspective-1.3.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     gnomonic,
     GNOMONIC,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "gnomonic-1.3.0",
-    TAN);
+    TAN,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "gnomonic-1.3.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     hammer_aitoff,
     HAMMER_AITOFF,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "hammer_aitoff-1.3.0",
-    AIT);
+    AIT,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "hammer_aitoff-1.3.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     healpix_polar,
     HEALPIX_POLAR,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "healpix_polar-1.3.0",
-    XPH);
+    XPH,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "healpix_polar-1.3.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     molleweide,
     MOLLEWEIDE,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "molleweide-1.3.0",
-    MOL);
+    MOL,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "molleweide-1.3.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     parabolic,
     PARABOLIC,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "parabolic-1.2.0",
-    PAR);
+    PAR,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "parabolic-1.2.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     plate_carree,
     PLATE_CARREE,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "plate_carree-1.3.0",
-    CAR);
+    CAR,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "plate_carree-1.3.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     polyconic,
     POLYCONIC,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "polyconic-1.2.0",
-    PCO);
+    PCO,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "polyconic-1.2.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     quad_spherical_cube,
     QUAD_SPHERICAL_CUBE,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "quad_spherical_cube-1.3.0",
-    QSC);
+    QSC,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "quad_spherical_cube-1.3.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     sanson_flamsteed,
     SANSON_FLAMSTEED,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "sanson_flamsteed-1.3.0",
-    SFL);
+    SFL,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "sanson_flamsteed-1.3.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     slant_orthographic,
     SLANT_ORTHOGRAPHIC,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "slant_orthographic-1.3.0",
-    SIN);
+    SIN,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "slant_orthographic-1.3.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     slant_zenithal_perspective,
     SLANT_ZENITHAL_PERSPECTIVE,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "slant_zenithal_perspective-1.3.0",
-    SZP);
+    SZP,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "slant_zenithal_perspective-1.3.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     stereographic,
     STEREOGRAPHIC,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "stereographic-1.3.0",
-    STG);
+    STG,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "stereographic-1.3.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     tangential_spherical_cube,
     TANGENTIAL_SPHERICAL_CUBE,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "tangential_spherical_cube-1.3.0",
-    TSC);
+    TSC,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "tangential_spherical_cube-1.3.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     zenithal_equal_area,
     ZENITHAL_EQUAL_AREA,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_equal_area-1.3.0",
-    ZEA);
+    ZEA,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_equal_area-1.3.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     zenithal_equidistant,
     ZENITHAL_EQUIDISTANT,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_equidistant-1.3.0",
-    ARC);
+    ARC,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_equidistant-1.3.0");
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     zenithal_perspective,
     ZENITHAL_PERSPECTIVE,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_perspective-1.4.0",
-    AZP);
+    AZP,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_perspective-1.4.0");

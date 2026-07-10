@@ -167,14 +167,20 @@ static void asdf_gwcs_concatenate_dealloc(void *value) {
 }
 
 
+static const asdf_extension_vtab_t asdf_gwcs_concatenate_vtab = {
+    .serialize = asdf_gwcs_concatenate_serialize,
+    .deserialize = asdf_gwcs_concatenate_deserialize,
+    .copy = NULL, /* TODO */
+    .dealloc = asdf_gwcs_concatenate_dealloc,
+};
+
+
 ASDF_GWCS_REGISTER_TRANSFORM(
     concatenate,
     CONCATENATE,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate-1.3.0",
     asdf_gwcs_concatenate_t,
     &libasdf_gwcs_software,
-    asdf_gwcs_concatenate_serialize,
-    asdf_gwcs_concatenate_deserialize,
+    &asdf_gwcs_concatenate_vtab,
     NULL,
-    asdf_gwcs_concatenate_dealloc,
-    NULL);
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate-1.3.0"
+);

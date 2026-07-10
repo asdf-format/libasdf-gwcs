@@ -165,14 +165,20 @@ static void asdf_gwcs_polynomial_dealloc(void *value) {
 }
 
 
+static const asdf_extension_vtab_t asdf_gwcs_polynomial_vtab = {
+    .serialize = asdf_gwcs_polynomial_serialize,
+    .deserialize = asdf_gwcs_polynomial_deserialize,
+    .copy = NULL, /* TODO */
+    .dealloc = asdf_gwcs_polynomial_dealloc,
+};
+
+
 ASDF_GWCS_REGISTER_TRANSFORM(
     polynomial,
     POLYNOMIAL,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "polynomial-1.2.0",
     asdf_gwcs_polynomial_t,
     &libasdf_gwcs_software,
-    asdf_gwcs_polynomial_serialize,
-    asdf_gwcs_polynomial_deserialize,
+    &asdf_gwcs_polynomial_vtab,
     NULL,
-    asdf_gwcs_polynomial_dealloc,
-    NULL);
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "polynomial-1.2.0"
+);

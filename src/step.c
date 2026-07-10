@@ -169,13 +169,19 @@ static void asdf_gwcs_step_dealloc(void *value) {
 }
 
 
+static const asdf_extension_vtab_t asdf_gwcs_step_vtab = {
+    .serialize = asdf_gwcs_step_serialize,
+    .deserialize = asdf_gwcs_step_deserialize,
+    .copy = NULL, /* TODO */
+    .dealloc = asdf_gwcs_step_dealloc,
+};
+
+
 ASDF_REGISTER_EXTENSION(
     gwcs_step,
-    ASDF_GWCS_TAG_PREFIX "step-1.3.0",
     asdf_gwcs_step_t,
     &libasdf_software,
-    asdf_gwcs_step_serialize,
-    asdf_gwcs_step_deserialize,
-    NULL, /* TODO: copy */
-    asdf_gwcs_step_dealloc,
-    NULL);
+    &asdf_gwcs_step_vtab,
+    NULL,
+    ASDF_GWCS_TAG_PREFIX "step-1.3.0"
+);

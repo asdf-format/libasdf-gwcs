@@ -201,16 +201,22 @@ static void asdf_gwcs_dealloc(void *value) {
 }
 
 
+static const asdf_extension_vtab_t asdf_gwcs_vtab = {
+    .serialize = asdf_gwcs_serialize,
+    .deserialize = asdf_gwcs_deserialize,
+    .copy = NULL, /* TODO */
+    .dealloc = asdf_gwcs_dealloc,
+};
+
+
 ASDF_REGISTER_EXTENSION(
     gwcs,
-    ASDF_GWCS_TAG_PREFIX "wcs-1.4.0",
     asdf_gwcs_t,
     &libasdf_software,
-    asdf_gwcs_serialize,
-    asdf_gwcs_deserialize,
-    NULL, /* TODO: copy */
-    asdf_gwcs_dealloc,
-    NULL);
+    &asdf_gwcs_vtab,
+    NULL,
+    ASDF_GWCS_TAG_PREFIX "wcs-1.4.0"
+);
 
 
 ASDF_CONSTRUCTOR static void asdf_gwcs_version_init() {

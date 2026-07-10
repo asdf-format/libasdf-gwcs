@@ -53,14 +53,20 @@ static void fk5_dealloc(void *value) {
 }
 
 
+static const asdf_extension_vtab_t fk5_vtab = {
+    .serialize = fk5_serialize,
+    .deserialize = fk5_deserialize,
+    .copy = NULL, /* TODO */
+    .dealloc = fk5_dealloc,
+};
+
+
 ASDF_GWCS_REGISTER_COORDINATE_FRAME(
     fk5,
     FK5,
-    ASDF_COORDINATES_TAG_PREFIX "fk5-1.0.0",
     asdf_gwcs_baseframe_t,
     &libasdf_gwcs_software,
-    fk5_serialize,
-    fk5_deserialize,
+    &fk5_vtab,
     NULL,
-    fk5_dealloc,
-    NULL)
+    ASDF_COORDINATES_TAG_PREFIX "fk5-1.0.0"
+)

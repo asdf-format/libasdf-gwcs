@@ -59,11 +59,8 @@ typedef struct {
  * prefixed with ``coordinates_`` internally so there is no collision with
  * other extension namespaces.
  */
-#define ASDF_GWCS_REGISTER_COORDINATE_FRAME( \
-    extname, ttype, tag, ctype, software, serialize, deserialize, copy, dealloc, userdata) \
-    ASDF_REGISTER_EXTENSION( \
-        coordinates_##extname, tag, ctype, software, \
-        serialize, deserialize, copy, dealloc, userdata); \
+#define ASDF_GWCS_REGISTER_COORDINATE_FRAME(extname, ttype, ctype, software, vtab, userdata, ...) \
+    ASDF_REGISTER_EXTENSION(coordinates_##extname, ctype, software, vtab, userdata, __VA_ARGS__); \
     const asdf_gwcs_coordinate_frame_type_t ASDF_GWCS_COORDINATE_FRAME_##ttype = \
         (asdf_gwcs_coordinate_frame_type_t)&ASDF_EXT_STATIC_NAME(coordinates_##extname); \
     static ASDF_CONSTRUCTOR void asdf_gwcs_coordinate_frame_register_##extname(void) { \

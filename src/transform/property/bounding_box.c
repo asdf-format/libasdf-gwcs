@@ -207,13 +207,19 @@ static void asdf_gwcs_bounding_box_dealloc(void *value) {
 }
 
 
+static const asdf_extension_vtab_t asdf_gwcs_bounding_box_vtab = {
+    .serialize = asdf_gwcs_bounding_box_serialize,
+    .deserialize = asdf_gwcs_bounding_box_deserialize,
+    .copy = NULL, /* TODO */
+    .dealloc = asdf_gwcs_bounding_box_dealloc,
+};
+
+
 ASDF_REGISTER_EXTENSION(
     gwcs_bounding_box,
-    ASDF_GWCS_BOUNDING_BOX_TAG,
     asdf_gwcs_bounding_box_t,
     &libasdf_software,
-    asdf_gwcs_bounding_box_serialize,
-    asdf_gwcs_bounding_box_deserialize,
-    NULL, /* TODO: copy */
-    asdf_gwcs_bounding_box_dealloc,
-    NULL);
+    &asdf_gwcs_bounding_box_vtab,
+    NULL,
+    ASDF_GWCS_BOUNDING_BOX_TAG
+);

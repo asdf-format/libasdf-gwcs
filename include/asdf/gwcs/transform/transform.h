@@ -132,9 +132,8 @@ ASDF_EXPORT const asdf_extension_t *asdf_gwcs_transform_get(asdf_file_t *file, c
 
 
 #define ASDF_GWCS_REGISTER_TRANSFORM( \
-    extname, ttype, tag, type, software, serialize, deserialize, copy, dealloc, userdata) \
-    ASDF_REGISTER_EXTENSION( \
-        gwcs_##extname, tag, type, software, serialize, deserialize, copy, dealloc, userdata); \
+    extname, ttype, type, software, vtab, userdata, ...) \
+    ASDF_REGISTER_EXTENSION(gwcs_##extname, type, software, vtab, userdata, __VA_ARGS__); \
     const asdf_gwcs_transform_type_t ASDF_GWCS_TRANSFORM_##ttype = \
         (asdf_gwcs_transform_type_t)&ASDF_EXT_STATIC_NAME(gwcs_##extname); \
     static ASDF_CONSTRUCTOR void asdf_gwcs_transform_register_##extname(void) { \
@@ -143,14 +142,13 @@ ASDF_EXPORT const asdf_extension_t *asdf_gwcs_transform_get(asdf_file_t *file, c
     }
 
 
-#define ASDF_GWCS_REGISTER_TRANSFORM_WITH_CTYPE( \
-    extname, ttype, tag, type, software, serialize, deserialize, copy, dealloc, _ctype) \
+#define ASDF_GWCS_REGISTER_TRANSFORM_WITH_CTYPE(extname, ttype, type, software, vtab, _ctype, ...) \
     static const asdf_gwcs_transform_data_t asdf_gwcs_##extname##_transform_data = { \
         .ctype = (#_ctype) \
     }; \
     ASDF_GWCS_REGISTER_TRANSFORM( \
-        extname, ttype, tag, type, software, serialize, deserialize, copy, dealloc, \
-        (void *)&asdf_gwcs_##extname##_transform_data);
+        extname, ttype, type, software, vtab, (void *)&asdf_gwcs_##extname##_transform_data, \
+        __VA_ARGS__);
 
 
 #define ASDF_GWCS_DECLARE_TRANSFORM(extname, ttype, type) \

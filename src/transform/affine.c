@@ -188,14 +188,20 @@ static void asdf_gwcs_affine_dealloc(void *value) {
 }
 
 
+static const asdf_extension_vtab_t asdf_gwcs_affine_vtab = {
+    .serialize = asdf_gwcs_affine_serialize,
+    .deserialize = asdf_gwcs_affine_deserialize,
+    .copy = NULL, /* TODO */
+    .dealloc = asdf_gwcs_affine_dealloc,
+};
+
+
 ASDF_GWCS_REGISTER_TRANSFORM(
     affine,
     AFFINE,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "affine-1.4.0",
     asdf_gwcs_affine_t,
     &libasdf_gwcs_software,
-    asdf_gwcs_affine_serialize,
-    asdf_gwcs_affine_deserialize,
+    &asdf_gwcs_affine_vtab,
     NULL,
-    asdf_gwcs_affine_dealloc,
-    NULL);
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "affine-1.4.0"
+);

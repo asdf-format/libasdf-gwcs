@@ -80,13 +80,19 @@ static void asdf_gwcs_frame2d_dealloc(void *value) {
 }
 
 
+static const asdf_extension_vtab_t asdf_gwcs_frame2d_vtab = {
+    .serialize = asdf_gwcs_frame2d_serialize,
+    .deserialize = asdf_gwcs_frame2d_deserialize,
+    .copy = NULL, /* TODO */
+    .dealloc = asdf_gwcs_frame2d_dealloc,
+};
+
+
 ASDF_REGISTER_EXTENSION(
     gwcs_frame2d,
-    ASDF_GWCS_TAG_PREFIX "frame2d-1.2.0",
     asdf_gwcs_frame2d_t,
     &libasdf_software,
-    asdf_gwcs_frame2d_serialize,
-    asdf_gwcs_frame2d_deserialize,
-    NULL, /* TODO: copy */
-    asdf_gwcs_frame2d_dealloc,
-    NULL);
+    &asdf_gwcs_frame2d_vtab,
+    NULL,
+    ASDF_GWCS_TAG_PREFIX "frame2d-1.2.0"
+);

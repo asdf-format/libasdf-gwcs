@@ -107,14 +107,20 @@ static void asdf_gwcs_constant_dealloc(void *value) {
 }
 
 
+static const asdf_extension_vtab_t asdf_gwcs_constant_vtab = {
+    .serialize = asdf_gwcs_constant_serialize,
+    .deserialize = asdf_gwcs_constant_deserialize,
+    .copy = NULL, /* TODO */
+    .dealloc = asdf_gwcs_constant_dealloc,
+};
+
+
 ASDF_GWCS_REGISTER_TRANSFORM(
     constant,
     CONSTANT,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "constant-1.5.0",
     asdf_gwcs_constant_t,
     &libasdf_gwcs_software,
-    asdf_gwcs_constant_serialize,
-    asdf_gwcs_constant_deserialize,
+    &asdf_gwcs_constant_vtab,
     NULL,
-    asdf_gwcs_constant_dealloc,
-    NULL);
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "constant-1.5.0"
+);

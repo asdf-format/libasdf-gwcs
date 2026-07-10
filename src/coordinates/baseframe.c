@@ -33,17 +33,20 @@ ASDF_DESTRUCTOR static void coordinate_frame_map_destroy(void) {
 
 void asdf_gwcs_coordinate_frame_register(asdf_gwcs_coordinate_frame_type_t type) {
     coordinate_frame_map_ensure_init();
-    const char *tag = ((asdf_extension_t *)type)->tag;
-    char *full_tag = tag_canonicalize(tag);
-    if (!full_tag) {
-        ASDF_LOG(NULL, ASDF_LOG_FATAL,
-                 "failed to allocate memory for coordinate frame tag %s", tag);
-        return;
+    const char *const *tags = ((asdf_extension_t *)type)->tags;
+
+    for (const char *const *tag = tags; *tag; tag++) {
+        char *full_tag = tag_canonicalize(*tag);
+        if (!full_tag) {
+            ASDF_LOG(NULL, ASDF_LOG_FATAL,
+                     "failed to allocate memory for coordinate frame tag %s", *tag);
+            return;
+        }
+        asdf_gwcs_coordinate_frame_map_result res =
+            asdf_gwcs_coordinate_frame_map_emplace(&g_coordinate_frame_map, full_tag, type);
+        (void)res;
+        free(full_tag);
     }
-    asdf_gwcs_coordinate_frame_map_result res =
-        asdf_gwcs_coordinate_frame_map_emplace(&g_coordinate_frame_map, full_tag, type);
-    (void)res;
-    free(full_tag);
 }
 
 
@@ -92,8 +95,8 @@ void asdf_gwcs_coordinate_frame_destroy(asdf_gwcs_baseframe_t *frame) {
         return;
 
     const asdf_extension_t *ext = (const asdf_extension_t *)frame->type;
-    if (ext && ext->dealloc)
-        ext->dealloc(frame);
+    if (ext && ext->vtab && ext->vtab->dealloc)
+        ext->vtab->dealloc(frame);
     else
         free(frame);
 }
@@ -140,50 +143,50 @@ static void baseframe_dealloc(void *value) {
 }
 
 
+static const asdf_extension_vtab_t empty_frame_vtab = {
+    .serialize = empty_frame_serialize,
+    .deserialize = empty_frame_deserialize,
+    .copy = NULL, /* TODO */
+    .dealloc = baseframe_dealloc,
+};
+
+
 ASDF_GWCS_REGISTER_COORDINATE_FRAME(
     icrs,
     ICRS,
-    ASDF_COORDINATES_TAG_PREFIX "icrs-1.1.0",
     asdf_gwcs_baseframe_t,
     &libasdf_gwcs_software,
-    empty_frame_serialize,
-    empty_frame_deserialize,
+    &empty_frame_vtab,
     NULL,
-    baseframe_dealloc,
-    NULL)
+    ASDF_COORDINATES_TAG_PREFIX "icrs-1.1.0"
+)
 
 ASDF_GWCS_REGISTER_COORDINATE_FRAME(
     galactic,
     GALACTIC,
-    ASDF_COORDINATES_TAG_PREFIX "galactic-1.0.0",
     asdf_gwcs_baseframe_t,
     &libasdf_gwcs_software,
-    empty_frame_serialize,
-    empty_frame_deserialize,
+    &empty_frame_vtab,
     NULL,
-    baseframe_dealloc,
-    NULL)
+    ASDF_COORDINATES_TAG_PREFIX "galactic-1.0.0"
+)
 
 ASDF_GWCS_REGISTER_COORDINATE_FRAME(
     supergalactic,
     SUPERGALACTIC,
-    ASDF_COORDINATES_TAG_PREFIX "supergalactic-1.0.0",
     asdf_gwcs_baseframe_t,
     &libasdf_gwcs_software,
-    empty_frame_serialize,
-    empty_frame_deserialize,
+    &empty_frame_vtab,
     NULL,
-    baseframe_dealloc,
-    NULL)
+    ASDF_COORDINATES_TAG_PREFIX "supergalactic-1.0.0"
+)
 
 ASDF_GWCS_REGISTER_COORDINATE_FRAME(
     barycentricmeanecliptic,
     ECLIPTIC,
-    ASDF_COORDINATES_TAG_PREFIX "barycentricmeanecliptic-1.0.0",
     asdf_gwcs_baseframe_t,
     &libasdf_gwcs_software,
-    empty_frame_serialize,
-    empty_frame_deserialize,
+    &empty_frame_vtab,
     NULL,
-    baseframe_dealloc,
-    NULL)
+    ASDF_COORDINATES_TAG_PREFIX "barycentricmeanecliptic-1.0.0"
+)

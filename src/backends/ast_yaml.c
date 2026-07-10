@@ -258,8 +258,8 @@ done:
 }
 
 
-static const asdf_gwcs_pipeline_vtable_t ast_pipeline_vtable = {
+static const asdf_gwcs_pipeline_vtab_t ast_pipeline_vtab = {
     .create = ast_pipeline_create,
 };
 
-ASDF_GWCS_REGISTER_BACKEND(ast_yaml, &ast_pipeline_vtable, NULL, NULL)
+ASDF_GWCS_REGISTER_BACKEND(ast_yaml, &ast_pipeline_vtab, NULL, NULL)
