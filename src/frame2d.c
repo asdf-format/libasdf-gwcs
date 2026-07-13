@@ -88,11 +88,19 @@ static const asdf_extension_vtab_t asdf_gwcs_frame2d_vtab = {
 };
 
 
+/**
+ * Register frame2d extensions
+ *
+ * NOTE: The only differences so far between frame2d schema versions is in the
+ * base frame schema version; nominally all versions are supported.
+ */
 ASDF_REGISTER_EXTENSION(
     gwcs_frame2d,
     asdf_gwcs_frame2d_t,
     &libasdf_software,
     &asdf_gwcs_frame2d_vtab,
     NULL,
-    ASDF_GWCS_TAG_PREFIX "frame2d-1.2.0"
+    ASDF_GWCS_TAG_PREFIX "frame2d-1.2.0",
+    ASDF_GWCS_TAG_PREFIX "frame2d-1.1.0",
+    ASDF_GWCS_TAG_PREFIX "frame2d-1.0.0"
 );

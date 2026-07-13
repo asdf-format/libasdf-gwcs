@@ -177,11 +177,20 @@ static const asdf_extension_vtab_t asdf_gwcs_step_vtab = {
 };
 
 
+/**
+ * Register wcs step tag extension
+ *
+ * NOTE: The only difference between different versions of this schema are
+ * the versions of the referenced frame and transform schemas.
+ */
 ASDF_REGISTER_EXTENSION(
     gwcs_step,
     asdf_gwcs_step_t,
     &libasdf_software,
     &asdf_gwcs_step_vtab,
     NULL,
-    ASDF_GWCS_TAG_PREFIX "step-1.3.0"
+    ASDF_GWCS_TAG_PREFIX "step-1.3.0",
+    ASDF_GWCS_TAG_PREFIX "step-1.2.0",
+    ASDF_GWCS_TAG_PREFIX "step-1.1.0",
+    ASDF_GWCS_TAG_PREFIX "step-1.0.0"
 );

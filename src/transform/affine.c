@@ -196,6 +196,13 @@ static const asdf_extension_vtab_t asdf_gwcs_affine_vtab = {
 };
 
 
+/**
+ * Register affine transform extensions
+ *
+ * NOTE: The only differences so far between affine schema versions seems
+ * to be how references to ndarray and quantity schemas are handled;
+ * substantively the different versions have the same properties.
+ */
 ASDF_GWCS_REGISTER_TRANSFORM(
     affine,
     AFFINE,
@@ -203,5 +210,10 @@ ASDF_GWCS_REGISTER_TRANSFORM(
     &libasdf_gwcs_software,
     &asdf_gwcs_affine_vtab,
     NULL,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "affine-1.4.0"
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "affine-1.5.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "affine-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "affine-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "affine-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "affine-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "affine-1.0.0"
 );

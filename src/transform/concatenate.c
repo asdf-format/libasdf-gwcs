@@ -175,6 +175,12 @@ static const asdf_extension_vtab_t asdf_gwcs_concatenate_vtab = {
 };
 
 
+/**
+ * Register concatenate transform extensions
+ *
+ * NOTE: The only differences so far between concatenate schema versions is in
+ * the base transform schema version; nominally all versions are supported.
+ */
 ASDF_GWCS_REGISTER_TRANSFORM(
     concatenate,
     CONCATENATE,
@@ -182,5 +188,9 @@ ASDF_GWCS_REGISTER_TRANSFORM(
     &libasdf_gwcs_software,
     &asdf_gwcs_concatenate_vtab,
     NULL,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate-1.3.0"
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate-1.0.0"
 );

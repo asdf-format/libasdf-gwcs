@@ -437,11 +437,19 @@ static const asdf_extension_vtab_t asdf_gwcs_base_frame_vtab = {
 };
 
 
+/**
+ * Register the GWCS frame tag extension
+ *
+ * NOTE: The only differences between the schema versions are the underlying
+ * baseframe schema version.
+ */
 ASDF_REGISTER_EXTENSION(
     gwcs_base_frame,
     asdf_gwcs_frame_t,
     &libasdf_software,
     &asdf_gwcs_base_frame_vtab,
     NULL,
-    ASDF_GWCS_TAG_PREFIX "frame-1.2.0"
+    ASDF_GWCS_TAG_PREFIX "frame-1.2.0",
+    ASDF_GWCS_TAG_PREFIX "frame-1.1.0",
+    ASDF_GWCS_TAG_PREFIX "frame-1.0.0"
 );

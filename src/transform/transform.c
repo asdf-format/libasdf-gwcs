@@ -518,162 +518,312 @@ static const asdf_extension_vtab_t asdf_gwcs_transform_generic_vtab = {
  * Register extension for the base transform type
  *
  * Transform subtypes are registered through ASDF_GWCS_REGISTER_TRANSFORM
+ *
+ * NOTE: The main differences between schema versions are additional (optional)
+ * properties added at different versions.  Not all transform properties are
+ * fully supported yet, though each version is nominally supported.
  */
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC(
     transform_generic,
     GENERIC,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "transform-1.2.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "transform-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "transform-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "transform-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "transform-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "transform-1.0.0"
+);
 
 
 /**
  * Register additional known transforms as generic transforms
+ *
+ * NOTE: Most of these schemas' versions differ primarily in the
+ * base transform schema version.  Nominally all current versions are
+ * supported, but differences between the versions are not fully realized
+ * in the deserializers.
+ *
+ * TODO: Would be useful in libasdf to have a convenience macro to expand
+ * to multiple versions of the same tag...
  */
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     airy,
     AIRY,
     AIR,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "airy-1.3.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "airy-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "airy-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "airy-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "airy-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "airy-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     bonne_equal_area,
     BONNE_EQUAL_AREA,
     BON,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "bonne_equal_area-1.3.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "bonne_equal_area-1.5.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "bonne_equal_area-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "bonne_equal_area-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "bonne_equal_area-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "bonne_equal_area-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "bonne_equal_area-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     cobe_quad_spherical_cube,
     COBE_QUAD_SPHERICAL_CUBE,
     CSC,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cobe_quad_spherical_cube-1.3.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cobe_quad_spherical_cube-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cobe_quad_spherical_cube-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cobe_quad_spherical_cube-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cobe_quad_spherical_cube-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cobe_quad_spherical_cube-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     conic_equal_area,
     CONIC_EQUAL_AREA,
     COE,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_equal_area-1.3.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_equal_area-1.5.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_equal_area-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_equal_area-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_equal_area-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_equal_area-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_equal_area-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     conic_equidistant,
     CONIC_EQUIDISTANT,
     COD,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_equidistant-1.3.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_equidistant-1.5.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_equidistant-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_equidistant-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_equidistant-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_equidistant-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_equidistant-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     conic_orthomorphic,
     CONIC_ORTHOMORPHIC,
     COO,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_orthomorphic-1.3.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_orthomorphic-1.5.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_orthomorphic-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_orthomorphic-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_orthomorphic-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_orthomorphic-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_orthomorphic-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     conic_perspective,
     CONIC_PERSPECTIVE,
     COP,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_perspective-1.3.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_perspective-1.5.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_perspective-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_perspective-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_perspective-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_perspective-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "conic_perspective-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     cylindrical_equal_area,
     CYLINDRICAL_EQUAL_AREA,
     CEA,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cylindrical_equal_area-1.3.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cylindrical_equal_area-1.5.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cylindrical_equal_area-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cylindrical_equal_area-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cylindrical_equal_area-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cylindrical_equal_area-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cylindrical_equal_area-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     cylindrical_perspective,
     CYLINDRICAL_PERSPECTIVE,
     CYP,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cylindrical_perspective-1.3.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cylindrical_perspective-1.5.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cylindrical_perspective-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cylindrical_perspective-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cylindrical_perspective-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cylindrical_perspective-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "cylindrical_perspective-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     gnomonic,
     GNOMONIC,
     TAN,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "gnomonic-1.3.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "gnomonic-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "gnomonic-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "gnomonic-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "gnomonic-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "gnomonic-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     hammer_aitoff,
     HAMMER_AITOFF,
     AIT,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "hammer_aitoff-1.3.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "hammer_aitoff-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "hammer_aitoff-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "hammer_aitoff-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "hammer_aitoff-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "hammer_aitoff-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     healpix_polar,
     HEALPIX_POLAR,
     XPH,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "healpix_polar-1.3.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "healpix_polar-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "healpix_polar-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "healpix_polar-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "healpix_polar-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "healpix_polar-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     molleweide,
     MOLLEWEIDE,
     MOL,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "molleweide-1.3.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "molleweide-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "molleweide-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "molleweide-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "molleweide-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "molleweide-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     parabolic,
     PARABOLIC,
     PAR,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "parabolic-1.2.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "parabolic-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "parabolic-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "parabolic-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "parabolic-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "parabolic-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     plate_carree,
     PLATE_CARREE,
     CAR,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "plate_carree-1.3.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "plate_carree-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "plate_carree-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "plate_carree-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "plate_carree-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "plate_carree-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     polyconic,
     POLYCONIC,
     PCO,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "polyconic-1.2.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "polyconic-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "polyconic-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "polyconic-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "polyconic-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "polyconic-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     quad_spherical_cube,
     QUAD_SPHERICAL_CUBE,
     QSC,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "quad_spherical_cube-1.3.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "quad_spherical_cube-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "quad_spherical_cube-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "quad_spherical_cube-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "quad_spherical_cube-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "quad_spherical_cube-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     sanson_flamsteed,
     SANSON_FLAMSTEED,
     SFL,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "sanson_flamsteed-1.3.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "sanson_flamsteed-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "sanson_flamsteed-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "sanson_flamsteed-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "sanson_flamsteed-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "sanson_flamsteed-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     slant_orthographic,
     SLANT_ORTHOGRAPHIC,
     SIN,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "slant_orthographic-1.3.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "slant_orthographic-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "slant_orthographic-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "slant_orthographic-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "slant_orthographic-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "slant_orthographic-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     slant_zenithal_perspective,
     SLANT_ZENITHAL_PERSPECTIVE,
     SZP,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "slant_zenithal_perspective-1.3.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "slant_zenithal_perspective-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "slant_zenithal_perspective-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "slant_zenithal_perspective-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "slant_zenithal_perspective-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "slant_zenithal_perspective-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     stereographic,
     STEREOGRAPHIC,
     STG,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "stereographic-1.3.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "stereographic-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "stereographic-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "stereographic-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "stereographic-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "stereographic-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     tangential_spherical_cube,
     TANGENTIAL_SPHERICAL_CUBE,
     TSC,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "tangential_spherical_cube-1.3.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "tangential_spherical_cube-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "tangential_spherical_cube-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "tangential_spherical_cube-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "tangential_spherical_cube-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "tangential_spherical_cube-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     zenithal_equal_area,
     ZENITHAL_EQUAL_AREA,
     ZEA,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_equal_area-1.3.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_equal_area-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_equal_area-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_equal_area-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_equal_area-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_equal_area-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     zenithal_equidistant,
     ZENITHAL_EQUIDISTANT,
     ARC,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_equidistant-1.3.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_equidistant-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_equidistant-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_equidistant-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_equidistant-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_equidistant-1.0.0"
+);
 
 ASDF_GWCS_REGISTER_TRANSFORM_GENERIC_WITH_CTYPE(
     zenithal_perspective,
     ZENITHAL_PERSPECTIVE,
     AZP,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_perspective-1.4.0");
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_perspective-1.5.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_perspective-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_perspective-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_perspective-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_perspective-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "zenithal_perspective-1.0.0"
+);

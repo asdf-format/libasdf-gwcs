@@ -11,9 +11,7 @@
 
 ASDF_BEGIN_DECLS
 
-// TODO: The latest version is actually 1.3.0 but the example file I have uses bounding_box-1.1.0
-// Need to implement tag version management :(
-#define ASDF_GWCS_BOUNDING_BOX_TAG ASDF_GWCS_TRANSFORM_TAG_PREFIX "property/bounding_box-1.1.0"
+#define ASDF_GWCS_BOUNDING_BOX_TAG ASDF_GWCS_TRANSFORM_TAG_PREFIX "property/bounding_box-1.2.0"
 /**
  * Enum values for array storage order
  *

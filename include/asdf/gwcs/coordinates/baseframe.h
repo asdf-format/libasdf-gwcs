@@ -80,8 +80,6 @@ typedef struct {
 /* Coordinate frames with empty frame_attributes */
 ASDF_GWCS_DECLARE_COORDINATE_FRAME(icrs, ICRS, asdf_gwcs_baseframe_t);
 ASDF_GWCS_DECLARE_COORDINATE_FRAME(galactic, GALACTIC, asdf_gwcs_baseframe_t);
-ASDF_GWCS_DECLARE_COORDINATE_FRAME(supergalactic, SUPERGALACTIC, asdf_gwcs_baseframe_t);
-ASDF_GWCS_DECLARE_COORDINATE_FRAME(barycentricmeanecliptic, ECLIPTIC, asdf_gwcs_baseframe_t);
 
 /* Coordinate frames with frame_attributes */
 ASDF_GWCS_DECLARE_COORDINATE_FRAME(fk5, FK5, asdf_gwcs_baseframe_t);

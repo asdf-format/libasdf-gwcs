@@ -209,13 +209,25 @@ static const asdf_extension_vtab_t asdf_gwcs_vtab = {
 };
 
 
+/**
+ * Register the wcs tag extension
+ *
+ * NOTE: The main difference between versions for now is the expected version
+ * of step property tag; this is not yet fully accounted for.  The optional
+ * pixel_shape property was only added in version 1.2.0 of the schema and is
+ * not yet handled by this extension.
+ */
 ASDF_REGISTER_EXTENSION(
     gwcs,
     asdf_gwcs_t,
     &libasdf_software,
     &asdf_gwcs_vtab,
     NULL,
-    ASDF_GWCS_TAG_PREFIX "wcs-1.4.0"
+    ASDF_GWCS_TAG_PREFIX "wcs-1.4.0",
+    ASDF_GWCS_TAG_PREFIX "wcs-1.3.0",
+    ASDF_GWCS_TAG_PREFIX "wcs-1.2.0",
+    ASDF_GWCS_TAG_PREFIX "wcs-1.1.0",
+    ASDF_GWCS_TAG_PREFIX "wcs-1.0.0"
 );
 
 

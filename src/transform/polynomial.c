@@ -173,6 +173,14 @@ static const asdf_extension_vtab_t asdf_gwcs_polynomial_vtab = {
 };
 
 
+/**
+ * Register polynomial transform extensions
+ *
+ * NOTE: The only differences so far between polynomial schema versions are
+ * in the base transform schema version and how references to the ndarray and
+ * quantity schemas are handled; substantively the different versions have the
+ * same properties, so all are nominally supported.
+ */
 ASDF_GWCS_REGISTER_TRANSFORM(
     polynomial,
     POLYNOMIAL,
@@ -180,5 +188,8 @@ ASDF_GWCS_REGISTER_TRANSFORM(
     &libasdf_gwcs_software,
     &asdf_gwcs_polynomial_vtab,
     NULL,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "polynomial-1.2.0"
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "polynomial-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "polynomial-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "polynomial-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "polynomial-1.0.0"
 );

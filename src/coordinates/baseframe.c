@@ -151,6 +151,14 @@ static const asdf_extension_vtab_t empty_frame_vtab = {
 };
 
 
+/**
+ * Register icrs frame extensions
+ *
+ * NOTE: The only differences between versions 1.1.0 and 1.3.0 are the
+ * baseframe schema versions.  icrs-1.0.0, however, is a substantively
+ * different schema (appears to predate the baseframe schema) and is not
+ * yet implemented.
+ */
 ASDF_GWCS_REGISTER_COORDINATE_FRAME(
     icrs,
     ICRS,
@@ -158,9 +166,17 @@ ASDF_GWCS_REGISTER_COORDINATE_FRAME(
     &libasdf_gwcs_software,
     &empty_frame_vtab,
     NULL,
+    ASDF_COORDINATES_TAG_PREFIX "icrs-1.3.0",
+    ASDF_COORDINATES_TAG_PREFIX "icrs-1.2.0",
     ASDF_COORDINATES_TAG_PREFIX "icrs-1.1.0"
 )
 
+/**
+ * Register galactic frame extensions
+ *
+ * NOTE: The only differences so far between galactic schema versions are
+ * in the baseframe schema versions.
+ */
 ASDF_GWCS_REGISTER_COORDINATE_FRAME(
     galactic,
     GALACTIC,
@@ -168,25 +184,7 @@ ASDF_GWCS_REGISTER_COORDINATE_FRAME(
     &libasdf_gwcs_software,
     &empty_frame_vtab,
     NULL,
+    ASDF_COORDINATES_TAG_PREFIX "galactic-1.2.0",
+    ASDF_COORDINATES_TAG_PREFIX "galactic-1.1.0",
     ASDF_COORDINATES_TAG_PREFIX "galactic-1.0.0"
-)
-
-ASDF_GWCS_REGISTER_COORDINATE_FRAME(
-    supergalactic,
-    SUPERGALACTIC,
-    asdf_gwcs_baseframe_t,
-    &libasdf_gwcs_software,
-    &empty_frame_vtab,
-    NULL,
-    ASDF_COORDINATES_TAG_PREFIX "supergalactic-1.0.0"
-)
-
-ASDF_GWCS_REGISTER_COORDINATE_FRAME(
-    barycentricmeanecliptic,
-    ECLIPTIC,
-    asdf_gwcs_baseframe_t,
-    &libasdf_gwcs_software,
-    &empty_frame_vtab,
-    NULL,
-    ASDF_COORDINATES_TAG_PREFIX "barycentricmeanecliptic-1.0.0"
 )

@@ -215,11 +215,20 @@ static const asdf_extension_vtab_t asdf_gwcs_bounding_box_vtab = {
 };
 
 
+/**
+ * Register the bounding_box property tag extension
+ *
+ * NOTE: This tag is supported nominally, but not all properties are supported
+ * yet.  The only major difference between versions of this tag is the versions
+ * of referenced quantity schemas.
+ */
 ASDF_REGISTER_EXTENSION(
     gwcs_bounding_box,
     asdf_gwcs_bounding_box_t,
     &libasdf_software,
     &asdf_gwcs_bounding_box_vtab,
     NULL,
-    ASDF_GWCS_BOUNDING_BOX_TAG
+    ASDF_GWCS_BOUNDING_BOX_TAG,
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "property/bounding_box-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "property/bounding_box-1.0.0"
 );

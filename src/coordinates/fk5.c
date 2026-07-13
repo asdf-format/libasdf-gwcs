@@ -61,6 +61,12 @@ static const asdf_extension_vtab_t fk5_vtab = {
 };
 
 
+/**
+ * Register fk5 frame extensions
+ *
+ * NOTE: The only differences so far between fk5 schema versions are
+ * in the baseframe schema versions.
+ */
 ASDF_GWCS_REGISTER_COORDINATE_FRAME(
     fk5,
     FK5,
@@ -68,5 +74,7 @@ ASDF_GWCS_REGISTER_COORDINATE_FRAME(
     &libasdf_gwcs_software,
     &fk5_vtab,
     NULL,
+    ASDF_COORDINATES_TAG_PREFIX "fk5-1.2.0",
+    ASDF_COORDINATES_TAG_PREFIX "fk5-1.1.0",
     ASDF_COORDINATES_TAG_PREFIX "fk5-1.0.0"
 )
