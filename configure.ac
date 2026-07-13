@@ -103,9 +103,6 @@ AS_IF([test "x$enable_ast" = "xyes"], [
          [AC_MSG_WARN([Failed to initialize third_party/ast submodule])])])])
 
   AS_IF([test "x$have_ast_submodule" = "xyes"], [
-    dnl libyaml is required for AST's YAML channel support
-    PKG_CHECK_MODULES([YAML], [yaml-0.1], [],
-      [AC_MSG_ERROR([libyaml (yaml-0.1) is required for the AST backend but was not found])])
     dnl Bootstrap AST's autotools if configure hasn't been generated yet
     AS_IF([test ! -f "$srcdir/third_party/ast/configure"],
       [AC_MSG_NOTICE([Bootstrapping AST submodule...])
@@ -122,8 +119,8 @@ AS_IF([test "x$enable_ast" = "xyes"], [
     dnl it.
     AX_SUBDIRS_CONFIGURE(
       [[third_party/ast]],
-      [[--disable-shared], [--enable-static], [--with-pic]],
-      [[CPPFLAGS=$YAML_CFLAGS], [LDFLAGS=$YAML_LIBS]],
+      [[--disable-shared], [--enable-static], [--with-pic], [--with-simd], [--with-yaml=fyaml]],
+      [[CPPFLAGS=$FYAML_CFLAGS], [LDFLAGS=$FYAML_LIBS]],
       [], [])
     dnl ast.h is generated in the top of the AST build directory
     AST_CFLAGS="-I\$(top_builddir)/third_party/ast"
