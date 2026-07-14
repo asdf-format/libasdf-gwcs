@@ -120,7 +120,7 @@ AS_IF([test "x$enable_ast" = "xyes"], [
     AX_SUBDIRS_CONFIGURE(
       [[third_party/ast]],
       [[--disable-shared], [--enable-static], [--with-pic], [--with-simd], [--with-yaml=fyaml]],
-      [[CPPFLAGS=$FYAML_CFLAGS], [LDFLAGS=$FYAML_LIBS]],
+      [[FYAML_CFLAGS=$FYAML_CFLAGS], [FYAML_LIBS=$FYAML_LIBS]],
       [], [])
     dnl ast.h is generated in the top of the AST build directory
     AST_CFLAGS="-I\$(top_builddir)/third_party/ast"
