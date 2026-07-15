@@ -201,16 +201,34 @@ static void asdf_gwcs_dealloc(void *value) {
 }
 
 
+static const asdf_extension_vtab_t asdf_gwcs_vtab = {
+    .serialize = asdf_gwcs_serialize,
+    .deserialize = asdf_gwcs_deserialize,
+    .copy = NULL, /* TODO */
+    .dealloc = asdf_gwcs_dealloc,
+};
+
+
+/**
+ * Register the wcs tag extension
+ *
+ * NOTE: The main difference between versions for now is the expected version
+ * of step property tag; this is not yet fully accounted for.  The optional
+ * pixel_shape property was only added in version 1.2.0 of the schema and is
+ * not yet handled by this extension.
+ */
 ASDF_REGISTER_EXTENSION(
     gwcs,
-    ASDF_GWCS_TAG_PREFIX "wcs-1.4.0",
     asdf_gwcs_t,
     &libasdf_software,
-    asdf_gwcs_serialize,
-    asdf_gwcs_deserialize,
-    NULL, /* TODO: copy */
-    asdf_gwcs_dealloc,
-    NULL);
+    &asdf_gwcs_vtab,
+    NULL,
+    ASDF_GWCS_TAG_PREFIX "wcs-1.4.0",
+    ASDF_GWCS_TAG_PREFIX "wcs-1.3.0",
+    ASDF_GWCS_TAG_PREFIX "wcs-1.2.0",
+    ASDF_GWCS_TAG_PREFIX "wcs-1.1.0",
+    ASDF_GWCS_TAG_PREFIX "wcs-1.0.0"
+);
 
 
 ASDF_CONSTRUCTOR static void asdf_gwcs_version_init() {

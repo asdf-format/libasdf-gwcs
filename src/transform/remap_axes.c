@@ -175,14 +175,34 @@ static void asdf_gwcs_remap_axes_dealloc(void *value) {
 }
 
 
+static const asdf_extension_vtab_t asdf_gwcs_remap_axes_vtab = {
+    .serialize = asdf_gwcs_remap_axes_serialize,
+    .deserialize = asdf_gwcs_remap_axes_deserialize,
+    .copy = NULL, /* TODO */
+    .dealloc = asdf_gwcs_remap_axes_dealloc,
+};
+
+
+/**
+ * Register remap_axes transform extensions
+ *
+ * NOTE: Substantively there is a slight difference in the 1.1.0 and 1.2.0
+ * versions of this schema that allowed constant-tagged items in the mapping
+ * sequence; this was again removed in 1.3.0.  This case is not yet handled
+ * but we nominally support the 1.1.0 and 1.2.0 tag versions anyways; not
+ * clear if any files exist affected by this.
+ */
 ASDF_GWCS_REGISTER_TRANSFORM(
     remap_axes,
     REMAP_AXES,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes-1.4.0",
     asdf_gwcs_remap_axes_t,
     &libasdf_gwcs_software,
-    asdf_gwcs_remap_axes_serialize,
-    asdf_gwcs_remap_axes_deserialize,
+    &asdf_gwcs_remap_axes_vtab,
     NULL,
-    asdf_gwcs_remap_axes_dealloc,
-    NULL);
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes-1.5.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "remap_axes-1.0.0"
+);

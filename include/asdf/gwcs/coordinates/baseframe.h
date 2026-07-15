@@ -59,11 +59,8 @@ typedef struct {
  * prefixed with ``coordinates_`` internally so there is no collision with
  * other extension namespaces.
  */
-#define ASDF_GWCS_REGISTER_COORDINATE_FRAME( \
-    extname, ttype, tag, ctype, software, serialize, deserialize, copy, dealloc, userdata) \
-    ASDF_REGISTER_EXTENSION( \
-        coordinates_##extname, tag, ctype, software, \
-        serialize, deserialize, copy, dealloc, userdata); \
+#define ASDF_GWCS_REGISTER_COORDINATE_FRAME(extname, ttype, ctype, software, vtab, userdata, ...) \
+    ASDF_REGISTER_EXTENSION(coordinates_##extname, ctype, software, vtab, userdata, __VA_ARGS__); \
     const asdf_gwcs_coordinate_frame_type_t ASDF_GWCS_COORDINATE_FRAME_##ttype = \
         (asdf_gwcs_coordinate_frame_type_t)&ASDF_EXT_STATIC_NAME(coordinates_##extname); \
     static ASDF_CONSTRUCTOR void asdf_gwcs_coordinate_frame_register_##extname(void) { \
@@ -83,8 +80,6 @@ typedef struct {
 /* Coordinate frames with empty frame_attributes */
 ASDF_GWCS_DECLARE_COORDINATE_FRAME(icrs, ICRS, asdf_gwcs_baseframe_t);
 ASDF_GWCS_DECLARE_COORDINATE_FRAME(galactic, GALACTIC, asdf_gwcs_baseframe_t);
-ASDF_GWCS_DECLARE_COORDINATE_FRAME(supergalactic, SUPERGALACTIC, asdf_gwcs_baseframe_t);
-ASDF_GWCS_DECLARE_COORDINATE_FRAME(barycentricmeanecliptic, ECLIPTIC, asdf_gwcs_baseframe_t);
 
 /* Coordinate frames with frame_attributes */
 ASDF_GWCS_DECLARE_COORDINATE_FRAME(fk5, FK5, asdf_gwcs_baseframe_t);

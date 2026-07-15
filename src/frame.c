@@ -429,13 +429,27 @@ void asdf_gwcs_frame_destroy(asdf_gwcs_frame_t *frame) {
 }
 
 
+static const asdf_extension_vtab_t asdf_gwcs_base_frame_vtab = {
+    .serialize = asdf_gwcs_base_frame_serialize,
+    .deserialize = asdf_gwcs_base_frame_deserialize,
+    .copy = NULL, /* TODO */
+    .dealloc = asdf_gwcs_base_frame_dealloc,
+};
+
+
+/**
+ * Register the GWCS frame tag extension
+ *
+ * NOTE: The only differences between the schema versions are the underlying
+ * baseframe schema version.
+ */
 ASDF_REGISTER_EXTENSION(
     gwcs_base_frame,
-    ASDF_GWCS_TAG_PREFIX "frame-1.2.0",
     asdf_gwcs_frame_t,
     &libasdf_software,
-    asdf_gwcs_base_frame_serialize,
-    asdf_gwcs_base_frame_deserialize,
-    NULL, /* TODO: copy */
-    asdf_gwcs_base_frame_dealloc,
-    NULL);
+    &asdf_gwcs_base_frame_vtab,
+    NULL,
+    ASDF_GWCS_TAG_PREFIX "frame-1.2.0",
+    ASDF_GWCS_TAG_PREFIX "frame-1.1.0",
+    ASDF_GWCS_TAG_PREFIX "frame-1.0.0"
+);

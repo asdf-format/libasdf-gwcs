@@ -95,13 +95,27 @@ static void asdf_gwcs_frame_celestial_dealloc(void *value) {
 }
 
 
+static const asdf_extension_vtab_t asdf_gwcs_frame_celestial_vtab = {
+    .serialize = asdf_gwcs_frame_celestial_serialize,
+    .deserialize = asdf_gwcs_frame_celestial_deserialize,
+    .copy = NULL, /* TODO */
+    .dealloc = asdf_gwcs_frame_celestial_dealloc,
+};
+
+
+/**
+ * Register celestial frame extensions
+ *
+ * NOTE: The only differences so far between celestial_frame schema versions
+ * are in the base frame schema versions.
+ */
 ASDF_REGISTER_EXTENSION(
     gwcs_frame_celestial,
-    ASDF_GWCS_TAG_PREFIX "celestial_frame-1.2.0",
     asdf_gwcs_frame_celestial_t,
     &libasdf_software,
-    asdf_gwcs_frame_celestial_serialize,
-    asdf_gwcs_frame_celestial_deserialize,
-    NULL, /* TODO: copy */
-    asdf_gwcs_frame_celestial_dealloc,
-    NULL);
+    &asdf_gwcs_frame_celestial_vtab,
+    NULL,
+    ASDF_GWCS_TAG_PREFIX "celestial_frame-1.2.0",
+    ASDF_GWCS_TAG_PREFIX "celestial_frame-1.1.0",
+    ASDF_GWCS_TAG_PREFIX "celestial_frame-1.0.0"
+);

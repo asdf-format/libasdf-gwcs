@@ -183,14 +183,28 @@ static void asdf_gwcs_rotate_sequence_3d_dealloc(void *value) {
 }
 
 
+static const asdf_extension_vtab_t asdf_gwcs_rotate_sequence_3d_vtab = {
+    .serialize = asdf_gwcs_rotate_sequence_3d_serialize,
+    .deserialize = asdf_gwcs_rotate_sequence_3d_deserialize,
+    .copy = NULL, /* TODO */
+    .dealloc = asdf_gwcs_rotate_sequence_3d_dealloc,
+};
+
+
+/**
+ * Register rotate_sequence_3d transform extensions
+ *
+ * NOTE: The only differences so far between rotate_sequence_3d schema
+ * versions is in the base transform schema version.
+ */
 ASDF_GWCS_REGISTER_TRANSFORM(
     rotate_sequence_3d,
     ROTATE_SEQUENCE_3D,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "rotate_sequence_3d-1.1.0",
     asdf_gwcs_rotate_sequence_3d_t,
     &libasdf_gwcs_software,
-    asdf_gwcs_rotate_sequence_3d_serialize,
-    asdf_gwcs_rotate_sequence_3d_deserialize,
+    &asdf_gwcs_rotate_sequence_3d_vtab,
     NULL,
-    asdf_gwcs_rotate_sequence_3d_dealloc,
-    NULL);
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "rotate_sequence_3d-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "rotate_sequence_3d-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "rotate_sequence_3d-1.0.0"
+);

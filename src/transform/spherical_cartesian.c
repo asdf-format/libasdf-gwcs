@@ -118,14 +118,30 @@ static void asdf_gwcs_spherical_cartesian_dealloc(void *value) {
 }
 
 
+static const asdf_extension_vtab_t asdf_gwcs_spherical_cartesian_vtab = {
+    .serialize = asdf_gwcs_spherical_cartesian_serialize,
+    .deserialize = asdf_gwcs_spherical_cartesian_deserialize,
+    .copy = NULL, /* TODO */
+    .dealloc = asdf_gwcs_spherical_cartesian_dealloc,
+};
+
+
+/**
+ * Register spherical_cartesian transform extensions
+ *
+ * NOTE: The only differences so far between spherical_cartesian schema
+ * versions is in the base transform schema version; nominally all versions
+ * are supported.
+ */
 ASDF_GWCS_REGISTER_TRANSFORM(
     spherical_cartesian,
     SPHERICAL_CARTESIAN,
-    ASDF_GWCS_TAG_PREFIX "spherical_cartesian-1.3.0",
     asdf_gwcs_spherical_cartesian_t,
     &libasdf_gwcs_software,
-    asdf_gwcs_spherical_cartesian_serialize,
-    asdf_gwcs_spherical_cartesian_deserialize,
+    &asdf_gwcs_spherical_cartesian_vtab,
     NULL,
-    asdf_gwcs_spherical_cartesian_dealloc,
-    NULL);
+    ASDF_GWCS_TAG_PREFIX "spherical_cartesian-1.3.0",
+    ASDF_GWCS_TAG_PREFIX "spherical_cartesian-1.2.0",
+    ASDF_GWCS_TAG_PREFIX "spherical_cartesian-1.1.0",
+    ASDF_GWCS_TAG_PREFIX "spherical_cartesian-1.0.0"
+);

@@ -89,14 +89,30 @@ static void asdf_gwcs_scale_dealloc(void *value) {
 }
 
 
+static const asdf_extension_vtab_t asdf_gwcs_scale_vtab = {
+    .serialize = asdf_gwcs_scale_serialize,
+    .deserialize = asdf_gwcs_scale_deserialize,
+    .copy = NULL, /* TODO */
+    .dealloc = asdf_gwcs_scale_dealloc,
+};
+
+
+/**
+ * Register scale transform extensions
+ *
+ * NOTE: The only differences so far between scale schema versions is in the
+ * base transform schema version; nominally all versions are supported.
+ */
 ASDF_GWCS_REGISTER_TRANSFORM(
     scale,
     SCALE,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "scale-1.3.0",
     asdf_gwcs_scale_t,
     &libasdf_gwcs_software,
-    asdf_gwcs_scale_serialize,
-    asdf_gwcs_scale_deserialize,
+    &asdf_gwcs_scale_vtab,
     NULL,
-    asdf_gwcs_scale_dealloc,
-    NULL);
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "scale-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "scale-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "scale-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "scale-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "scale-1.0.0"
+);

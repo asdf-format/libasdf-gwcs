@@ -47,12 +47,34 @@ static asdf_value_err_t asdf_gwcs_constant_deserialize(
      * of Astropy's Const1D and Const2D...*/
     err = asdf_get_optional_property(map, "dimensions", ASDF_VALUE_UINT64, NULL, &dimensions);
 
-    if (ASDF_IS_OPTIONAL_OK(err))
+    if (err == ASDF_VALUE_ERR_NOT_FOUND) {
+        const char *tag_str = asdf_value_tag(value);
+        asdf_tag_t *tag = asdf_tag_parse(tag_str);
+        if (UNLIKELY(!tag)) {
+            // We would not even be on this code path if there was a valid tag
+            // unless OOM occurred
+            err = ASDF_VALUE_ERR_OOM;
+            goto cleanup;
+        }
+
+        // TODO: Might be good to have an explicit helper for this type of
+        // logic, where a certain properties is required but only at or above
+        // a specific tag version...
+        if (tag->version->major >= 1 && tag->version->minor >= 4) {
+            const char *path = asdf_value_path(value);
+            ASDF_LOG(asdf_value_file(value), ASDF_LOG_WARN,
+                     "required property 'dimensions' missing "
+                     "from %s at %s; assuming dimensions=1", tag_str, path);
+        }
+        err = ASDF_VALUE_OK;
+        asdf_tag_destroy(tag);
+    } else if (ASDF_IS_OK(err)) {
         // Maybe should warn if missing since at least in the current version
         // of the schema dimensions is required
         err = ASDF_VALUE_OK;
-    else
+    } else {
         goto cleanup;
+    }
 
     asdf_gwcs_transform_arity_set(&constant->base, asdf_value_file(value), dimensions, 1);
     *out = constant;
@@ -107,14 +129,34 @@ static void asdf_gwcs_constant_dealloc(void *value) {
 }
 
 
+static const asdf_extension_vtab_t asdf_gwcs_constant_vtab = {
+    .serialize = asdf_gwcs_constant_serialize,
+    .deserialize = asdf_gwcs_constant_deserialize,
+    .copy = NULL, /* TODO */
+    .dealloc = asdf_gwcs_constant_dealloc,
+};
+
+
+/**
+ * Register constant transform extensions
+ *
+ * NOTE: The main substantive difference between versions is the 'dimensions'
+ * property (required) was only added in version >=1.4.0; this is accounted
+ * for in the deserialize method.
+ */
+
 ASDF_GWCS_REGISTER_TRANSFORM(
     constant,
     CONSTANT,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "constant-1.5.0",
     asdf_gwcs_constant_t,
     &libasdf_gwcs_software,
-    asdf_gwcs_constant_serialize,
-    asdf_gwcs_constant_deserialize,
+    &asdf_gwcs_constant_vtab,
     NULL,
-    asdf_gwcs_constant_dealloc,
-    NULL);
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "constant-1.6.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "constant-1.5.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "constant-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "constant-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "constant-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "constant-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "constant-1.0.0"
+);

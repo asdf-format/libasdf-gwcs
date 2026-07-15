@@ -54,26 +54,48 @@ static void fk4_dealloc(void *value) {
 }
 
 
+static const asdf_extension_vtab_t fk4_vtab = {
+    .serialize = fk4_serialize,
+    .deserialize = fk4_deserialize,
+    .copy = NULL, /* TODO */
+    .dealloc = fk4_dealloc,
+};
+
+
+/**
+ * Register fk4 frame extensions
+ *
+ * NOTE: The only differences so far between fk4 schema versions are in the
+ * baseframe schema versions.
+ */
 ASDF_GWCS_REGISTER_COORDINATE_FRAME(
     fk4,
     FK4,
-    ASDF_COORDINATES_TAG_PREFIX "fk4-1.0.0",
     asdf_gwcs_baseframe_t,
     &libasdf_gwcs_software,
-    fk4_serialize,
-    fk4_deserialize,
+    &fk4_vtab,
     NULL,
-    fk4_dealloc,
-    NULL)
+    ASDF_COORDINATES_TAG_PREFIX "fk4-1.2.0",
+    ASDF_COORDINATES_TAG_PREFIX "fk4-1.1.0",
+    ASDF_COORDINATES_TAG_PREFIX "fk4-1.0.0"
+)
 
+/**
+ * Register fk4noeterms frame extensions
+ *
+ * NOTE: The only differences so far between fk4noeterms schema versions are
+ * in the baseframe schema versions.  There is also no differences in the
+ * schemas between fk4 and fk4noterms; the different tags are merely identify
+ * different frame identities.
+ */
 ASDF_GWCS_REGISTER_COORDINATE_FRAME(
     fk4noeterms,
     FK4_NO_E,
-    ASDF_COORDINATES_TAG_PREFIX "fk4noeterms-1.0.0",
     asdf_gwcs_baseframe_t,
     &libasdf_gwcs_software,
-    fk4_serialize,
-    fk4_deserialize,
+    &fk4_vtab,
     NULL,
-    fk4_dealloc,
-    NULL)
+    ASDF_COORDINATES_TAG_PREFIX "fk4noeterms-1.2.0",
+    ASDF_COORDINATES_TAG_PREFIX "fk4noeterms-1.1.0",
+    ASDF_COORDINATES_TAG_PREFIX "fk4noeterms-1.0.0"
+)

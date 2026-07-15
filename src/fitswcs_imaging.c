@@ -350,17 +350,23 @@ static void asdf_gwcs_fits_dealloc(void *value) {
 }
 
 
+static const asdf_extension_vtab_t asdf_gwcs_fits_vtab = {
+    .serialize = asdf_gwcs_fits_serialize,
+    .deserialize = asdf_gwcs_fits_deserialize,
+    .copy = NULL, /* TODO */
+    .dealloc = asdf_gwcs_fits_dealloc,
+};
+
+
 ASDF_GWCS_REGISTER_TRANSFORM(
     fits,
     FITSWCS_IMAGING,
-    ASDF_GWCS_TAG_PREFIX "fitswcs_imaging-1.0.0",
     asdf_gwcs_fits_t,
     &libasdf_software,
-    asdf_gwcs_fits_serialize,
-    asdf_gwcs_fits_deserialize,
-    NULL, /* TODO: copy */
-    asdf_gwcs_fits_dealloc,
-    NULL);
+    &asdf_gwcs_fits_vtab,
+    NULL,
+    ASDF_GWCS_TAG_PREFIX "fitswcs_imaging-1.0.0"
+);
 
 
 /**

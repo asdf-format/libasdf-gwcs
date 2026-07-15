@@ -167,14 +167,30 @@ static void asdf_gwcs_concatenate_dealloc(void *value) {
 }
 
 
+static const asdf_extension_vtab_t asdf_gwcs_concatenate_vtab = {
+    .serialize = asdf_gwcs_concatenate_serialize,
+    .deserialize = asdf_gwcs_concatenate_deserialize,
+    .copy = NULL, /* TODO */
+    .dealloc = asdf_gwcs_concatenate_dealloc,
+};
+
+
+/**
+ * Register concatenate transform extensions
+ *
+ * NOTE: The only differences so far between concatenate schema versions is in
+ * the base transform schema version; nominally all versions are supported.
+ */
 ASDF_GWCS_REGISTER_TRANSFORM(
     concatenate,
     CONCATENATE,
-    ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate-1.3.0",
     asdf_gwcs_concatenate_t,
     &libasdf_gwcs_software,
-    asdf_gwcs_concatenate_serialize,
-    asdf_gwcs_concatenate_deserialize,
+    &asdf_gwcs_concatenate_vtab,
     NULL,
-    asdf_gwcs_concatenate_dealloc,
-    NULL);
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate-1.4.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate-1.3.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate-1.2.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate-1.1.0",
+    ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate-1.0.0"
+);

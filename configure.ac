@@ -86,6 +86,20 @@ AC_ARG_ENABLE([ast],
   [enable_ast=yes]
 )
 
+dnl Dependencies 1
+dnl Detect libfyaml early (before AST) so we can pass the results of FYAML_CFLAGS
+dnl and FYAML_LIBS through to AST's configure
+PKG_CHECK_MODULES([FYAML], [libfyaml], [], [
+  AC_MSG_ERROR([libfyaml is required but was not found])
+])
+
+dnl Workaround for https://github.com/pantoniou/libfyaml/pull/275
+dnl This can be deleted if libfyaml is fixed upstream, though system
+dnl packagers are likely to fix this too
+FYAML_LIBS=$(printf '%s\n' "$FYAML_LIBS" | sed 's/none required//g')
+
+
+dnl --- AST configure --------------------------------------------------------
 HAVE_AST=no
 AST_CFLAGS=
 AST_LIBS=
@@ -103,9 +117,6 @@ AS_IF([test "x$enable_ast" = "xyes"], [
          [AC_MSG_WARN([Failed to initialize third_party/ast submodule])])])])
 
   AS_IF([test "x$have_ast_submodule" = "xyes"], [
-    dnl libyaml is required for AST's YAML channel support
-    PKG_CHECK_MODULES([YAML], [yaml-0.1], [],
-      [AC_MSG_ERROR([libyaml (yaml-0.1) is required for the AST backend but was not found])])
     dnl Bootstrap AST's autotools if configure hasn't been generated yet
     AS_IF([test ! -f "$srcdir/third_party/ast/configure"],
       [AC_MSG_NOTICE([Bootstrapping AST submodule...])
@@ -122,8 +133,8 @@ AS_IF([test "x$enable_ast" = "xyes"], [
     dnl it.
     AX_SUBDIRS_CONFIGURE(
       [[third_party/ast]],
-      [[--disable-shared], [--enable-static], [--with-pic]],
-      [[CPPFLAGS=$YAML_CFLAGS], [LDFLAGS=$YAML_LIBS]],
+      [[--disable-shared], [--enable-static], [--with-pic], [--with-simd], [--with-yaml=fyaml]],
+      [[FYAML_CFLAGS=$FYAML_CFLAGS], [FYAML_LIBS=$FYAML_LIBS]],
       [], [])
     dnl ast.h is generated in the top of the AST build directory
     AST_CFLAGS="-I\$(top_builddir)/third_party/ast"
@@ -167,7 +178,9 @@ AM_CONDITIONAL([HAVE_AST], [test "x$HAVE_AST" = "xyes"])
 AC_SUBST([AST_CFLAGS])
 AC_SUBST([AST_LIBS])
 
-# Dependencies
+dnl --- End AST configure -----------------------------------------------------
+
+# Dependencies 2
 PKG_CHECK_MODULES([LIBASDF], [libasdf])
 dnl Workaround for https://github.com/pantoniou/libfyaml/pull/275 leaking
 dnl through libasdf's Requires: libfyaml into LIBASDF_LIBS
@@ -193,6 +206,7 @@ printf "\n============= Configuration Summary =============\n"
 printf "  %22s %s\n" "libasdf-gwcs version:" "$VERSION"
 printf "  %22s %s\n" "compiler:" "$CC"
 printf "  %22s %s\n" "libasdf:" "$(pkg-config --modversion libasdf)"
+printf "  %22s %s\n" "libfyaml:" "$(pkg-config --modversion libfyaml)"
 AS_IF([test "x$ASDF_GWCS_BACKENDS" != "x"],
   [printf "  %22s %s\n" "backends:" "$ASDF_GWCS_BACKENDS"],
   [printf "  %22s %s\n" "backends:" "(none)"])
