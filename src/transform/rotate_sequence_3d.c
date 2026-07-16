@@ -5,6 +5,7 @@
 #include "config.h"
 #endif
 
+#include <asdf/file.h>
 #include <asdf/extension_util.h>
 #include <asdf/log.h>
 
@@ -171,23 +172,54 @@ cleanup:
 }
 
 
-static void asdf_gwcs_rotate_sequence_3d_dealloc(void *value) {
+static bool asdf_gwcs_rotate_sequence_3d_copy_impl(
+    UNUSED(asdf_file_t *file), const void *src, void *dst) {
+
+    const asdf_gwcs_rotate_sequence_3d_t *rotate_sequence_3d = src;
+    asdf_gwcs_rotate_sequence_3d_t *copy = dst;
+
+    copy->n_angles = rotate_sequence_3d->n_angles;
+
+    if (rotate_sequence_3d->angles && rotate_sequence_3d->n_angles) {
+        size_t n = rotate_sequence_3d->n_angles;
+        double *angles = malloc(n * sizeof(*angles));
+
+        if (UNLIKELY(!angles))
+            return false;
+
+        memcpy(angles, rotate_sequence_3d->angles, n * sizeof(*angles));
+        copy->angles = angles;
+    }
+
+    if (rotate_sequence_3d->axes_order) {
+        copy->axes_order = strdup(rotate_sequence_3d->axes_order);
+
+        if (UNLIKELY(!copy->axes_order))
+            return false;
+    }
+
+    copy->rotation_type = rotate_sequence_3d->rotation_type;
+    return true;
+}
+
+
+static void asdf_gwcs_rotate_sequence_3d_deinit_impl(void *value) {
     if (!value)
         return;
 
     asdf_gwcs_rotate_sequence_3d_t *rot = (asdf_gwcs_rotate_sequence_3d_t *)value;
-    asdf_gwcs_transform_clean(&rot->base);
     free((double *)rot->angles);
+    rot->angles = NULL;
     free((char *)rot->axes_order);
-    free(rot);
+    rot->axes_order = NULL;
 }
 
 
 static const asdf_extension_vtab_t asdf_gwcs_rotate_sequence_3d_vtab = {
     .serialize = asdf_gwcs_rotate_sequence_3d_serialize,
     .deserialize = asdf_gwcs_rotate_sequence_3d_deserialize,
-    .copy = NULL, /* TODO */
-    .dealloc = asdf_gwcs_rotate_sequence_3d_dealloc,
+    .copy = asdf_gwcs_rotate_sequence_3d_copy_impl,
+    .deinit = asdf_gwcs_rotate_sequence_3d_deinit_impl,
 };
 
 

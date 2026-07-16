@@ -154,22 +154,46 @@ cleanup:
 }
 
 
-static void asdf_gwcs_polynomial_dealloc(void *value) {
+static bool asdf_gwcs_polynomial_copy_impl(UNUSED(asdf_file_t *file), const void *src, void *dst) {
+    const asdf_gwcs_polynomial_t *polynomial = src;
+    asdf_gwcs_polynomial_t *copy = dst;
+
+    copy->ndim = polynomial->ndim;
+    copy->degree = polynomial->degree;
+    copy->n_coeffs = polynomial->n_coeffs;
+
+    if (polynomial->coefficients && polynomial->n_coeffs) {
+        size_t n = polynomial->n_coeffs;
+        double *coeffs = malloc(n * sizeof(*coeffs));
+
+        if (UNLIKELY(!coeffs))
+            return false;
+
+        memcpy(coeffs, polynomial->coefficients, n * sizeof(*coeffs));
+        copy->coefficients = coeffs;
+    }
+
+    return true;
+}
+
+
+static void asdf_gwcs_polynomial_deinit_impl(void *value) {
     if (!value)
         return;
 
     asdf_gwcs_polynomial_t *poly = (asdf_gwcs_polynomial_t *)value;
-    asdf_gwcs_transform_clean(&poly->base);
     free((double *)poly->coefficients);
-    free(poly);
+    poly->coefficients = NULL;
+    poly->n_coeffs = 0;
+    poly->degree = 0;
 }
 
 
 static const asdf_extension_vtab_t asdf_gwcs_polynomial_vtab = {
     .serialize = asdf_gwcs_polynomial_serialize,
     .deserialize = asdf_gwcs_polynomial_deserialize,
-    .copy = NULL, /* TODO */
-    .dealloc = asdf_gwcs_polynomial_dealloc,
+    .copy = asdf_gwcs_polynomial_copy_impl,
+    .deinit = asdf_gwcs_polynomial_deinit_impl,
 };
 
 

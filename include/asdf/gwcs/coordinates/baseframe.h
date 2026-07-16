@@ -102,7 +102,18 @@ ASDF_EXPORT asdf_value_t *asdf_gwcs_coordinate_frame_value_of(
     asdf_file_t *file, const asdf_gwcs_baseframe_t *frame);
 
 /**
- * Release resources held by a coordinate frame.
+ * Deep-copy any recognized coordinate frame, dispatching on its type.
+ */
+ASDF_EXPORT asdf_gwcs_baseframe_t *asdf_gwcs_coordinate_frame_copy(
+    asdf_file_t *file, const asdf_gwcs_baseframe_t *frame);
+
+/**
+ * Release resources held by a coordinate frame's fields
+ */
+ASDF_EXPORT void asdf_gwcs_coordinate_frame_deinit(asdf_gwcs_baseframe_t *frame);
+
+/**
+ * Release resources held by a coordinate frame and deallocate
  */
 ASDF_EXPORT void asdf_gwcs_coordinate_frame_destroy(asdf_gwcs_baseframe_t *frame);
 

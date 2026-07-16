@@ -125,23 +125,45 @@ cleanup:
 }
 
 
-static void asdf_gwcs_divide_dealloc(void *value) {
+static bool asdf_gwcs_divide_copy_impl(asdf_file_t *file, const void *src, void *dst) {
+    const asdf_gwcs_divide_t *divide = src;
+    asdf_gwcs_divide_t *copy = dst;
+
+    if (divide->numerator) {
+        copy->numerator = asdf_gwcs_transform_copy(file, divide->numerator);
+
+        if (!copy->numerator)
+            return false;
+    }
+
+    if (divide->denominator) {
+        copy->denominator = asdf_gwcs_transform_copy(file, divide->denominator);
+
+        if (!copy->denominator)
+            return false;
+    }
+
+    return true;
+}
+
+
+static void asdf_gwcs_divide_deinit_impl(void *value) {
     if (!value)
         return;
 
     asdf_gwcs_divide_t *divide = (asdf_gwcs_divide_t *)value;
-    asdf_gwcs_transform_clean(&divide->base);
     asdf_gwcs_transform_destroy(divide->numerator);
+    divide->numerator = NULL;
     asdf_gwcs_transform_destroy(divide->denominator);
-    free(divide);
+    divide->denominator = NULL;
 }
 
 
 static const asdf_extension_vtab_t asdf_gwcs_divide_vtab = {
     .serialize = asdf_gwcs_divide_serialize,
     .deserialize = asdf_gwcs_divide_deserialize,
-    .copy = NULL, /* TODO */
-    .dealloc = asdf_gwcs_divide_dealloc,
+    .copy = asdf_gwcs_divide_copy_impl,
+    .deinit = asdf_gwcs_divide_deinit_impl,
 };
 
 

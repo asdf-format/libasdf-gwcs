@@ -56,6 +56,9 @@ static asdf_value_err_t asdf_gwcs_concatenate_deserialize(
         goto cleanup;
     }
 
+    concat->n_forward = (uint32_t)n;
+    concat->forward = forward;
+
     asdf_sequence_iter_t *iter = asdf_sequence_iter_init(forward_seq);
 
     while (asdf_sequence_iter_next(&iter)) {
@@ -67,10 +70,6 @@ static asdf_value_err_t asdf_gwcs_concatenate_deserialize(
         }
     }
 
-    concat->n_forward = (uint32_t)n;
-    concat->forward = forward;
-    forward = NULL;
-
     uint32_t sum_inputs = 0, sum_outputs = 0;
     for (int idx = 0; idx < n; idx++) {
         sum_inputs += concat->forward[idx]->n_inputs;
@@ -81,13 +80,6 @@ static asdf_value_err_t asdf_gwcs_concatenate_deserialize(
     *out = concat;
     err = ASDF_VALUE_OK;
 cleanup:
-    if (forward) {
-        for (int idx = 0; idx < (int)(concat ? concat->n_forward : 0); idx++)
-            asdf_gwcs_transform_destroy(forward[idx]);
-
-        free(forward);
-    }
-
     asdf_sequence_destroy(forward_seq);
 
     if (ASDF_IS_ERR(err))
@@ -149,29 +141,56 @@ cleanup:
 }
 
 
-static void asdf_gwcs_concatenate_dealloc(void *value) {
+static bool asdf_gwcs_concatenate_copy_impl(asdf_file_t *file, const void *src, void *dst) {
+    const asdf_gwcs_concatenate_t *concatenate = src;
+    asdf_gwcs_concatenate_t *copy = dst;
+
+    if (concatenate->n_forward) {
+        copy->forward = calloc(concatenate->n_forward, sizeof(*(concatenate->forward)));
+
+        if (UNLIKELY(!copy->forward))
+            return false;
+
+        copy->n_forward = concatenate->n_forward;
+    }
+
+    for (uint32_t idx = 0; idx < concatenate->n_forward; idx++) {
+        asdf_gwcs_transform_t *forward = concatenate->forward[idx];
+
+        if (UNLIKELY(!forward))
+            continue;
+
+        copy->forward[idx] = asdf_gwcs_transform_copy(file, forward);
+
+        if (UNLIKELY(!copy->forward[idx]))
+            return false;
+    }
+
+    return true;
+}
+
+
+static void asdf_gwcs_concatenate_deinit_impl(void *value) {
     if (!value)
         return;
 
     asdf_gwcs_concatenate_t *concat = (asdf_gwcs_concatenate_t *)value;
-    asdf_gwcs_transform_clean(&concat->base);
 
     if (concat->forward) {
         for (uint32_t idx = 0; idx < concat->n_forward; idx++)
             asdf_gwcs_transform_destroy(concat->forward[idx]);
 
         free(concat->forward);
+        concat->forward = NULL;
     }
-
-    free(concat);
 }
 
 
 static const asdf_extension_vtab_t asdf_gwcs_concatenate_vtab = {
     .serialize = asdf_gwcs_concatenate_serialize,
     .deserialize = asdf_gwcs_concatenate_deserialize,
-    .copy = NULL, /* TODO */
-    .dealloc = asdf_gwcs_concatenate_dealloc,
+    .copy = asdf_gwcs_concatenate_copy_impl,
+    .deinit = asdf_gwcs_concatenate_deinit_impl,
 };
 
 

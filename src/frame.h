@@ -47,9 +47,23 @@ ASDF_LOCAL asdf_value_err_t asdf_gwcs_frame_serialize_common(
     const asdf_gwcs_baseframe_t *reference_frame,
     asdf_mapping_t *map);
 
+
 /**
- * Polymorphic value constructor: dispatches to the appropriate typed
- * asdf_value_of_gwcs_frame* function based on frame->type.
+ * Free the heap-allocated per-axis string arrays owned by a concrete frame.
+ *
+ * Frees up to ``naxes`` elements of each of ``axes_names``, ``unit``, and
+ * ``axis_physical_types`` (any of which may be NULL).  Does not free the
+ * arrays themselves (they are inline members of the frame struct).
  */
-ASDF_LOCAL asdf_value_t *asdf_gwcs_frame_value_of(
-    asdf_file_t *file, const asdf_gwcs_frame_t *frame);
+ASDF_LOCAL void asdf_gwcs_frame_cleanup_axes(
+    uint32_t naxes, char **axes_names, char **unit, char **axis_physical_types);
+
+
+/**
+ * Copy / deinitialize just the base frame fields (name, type).
+ *
+ * Frames have no registry/shim like transforms yet, so concrete frame copy and
+ * deinit methods call these explicitly to handle the embedded base frame.
+ */
+ASDF_LOCAL bool asdf_gwcs_base_frame_copy_impl(asdf_file_t *file, const void *src, void *dst);
+ASDF_LOCAL void asdf_gwcs_base_frame_deinit_impl(void *value);

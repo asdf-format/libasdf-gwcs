@@ -15,16 +15,11 @@
 
 ASDF_BEGIN_DECLS
 
-#ifndef ASDF_GWCS_INTERNAL
-typedef struct _asdf_gwcs_step {
-    asdf_gwcs_frame_t *frame;
+typedef struct  {
+    const asdf_gwcs_frame_t *frame;
     const asdf_gwcs_transform_t *transform;
-    /** Reserved space for internal use */
-    alignas(void *) unsigned char _reserved[sizeof(void *)];
 } asdf_gwcs_step_t;
-#else
-typedef struct _asdf_gwcs_step asdf_gwcs_step_t;
-#endif
+
 
 ASDF_DECLARE_EXTENSION(gwcs_step, asdf_gwcs_step_t);
 

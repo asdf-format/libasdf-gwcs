@@ -79,21 +79,12 @@ cleanup:
 }
 
 
-static void asdf_gwcs_scale_dealloc(void *value) {
-    if (!value)
-        return;
-
-    asdf_gwcs_scale_t *scale = (asdf_gwcs_scale_t *)value;
-    asdf_gwcs_transform_clean(&scale->base);
-    free(scale);
-}
-
-
 static const asdf_extension_vtab_t asdf_gwcs_scale_vtab = {
     .serialize = asdf_gwcs_scale_serialize,
     .deserialize = asdf_gwcs_scale_deserialize,
-    .copy = NULL, /* TODO */
-    .dealloc = asdf_gwcs_scale_dealloc,
+    /* copy and deinit are not needed; scale is a shallow object */
+    .copy = NULL,
+    .deinit = NULL,
 };
 
 

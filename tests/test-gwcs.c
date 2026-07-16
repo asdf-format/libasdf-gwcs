@@ -1,4 +1,8 @@
+#include <string.h>
+
 #include <asdf.h>
+#include <asdf/config.h>
+#include <asdf/emitter.h>
 #include <asdf/gwcs/fitswcs_imaging.h>
 #include <asdf/gwcs/gwcs.h>
 #include <asdf/gwcs/transform.h>
@@ -986,6 +990,80 @@ MU_TEST(test_asdf_set_gwcs_spherical_cartesian) {
 }
 
 
+/* Serialize a GWCS object to a self-contained in-memory ASDF document.
+ * ndarrays are forced inline so the whole document is directly comparable as
+ * bytes.  Returns a heap buffer (caller frees) and sets *len, or NULL. */
+static char *serialize_gwcs_to_mem(const asdf_gwcs_t *gwcs, size_t *len) {
+    asdf_config_t cfg = {
+        .emitter = {
+            .array_storage = ASDF_ARRAY_STORAGE_INLINE,
+            .inline_ndarray_warning_thresh = SIZE_MAX}};
+    asdf_file_t *tmp = asdf_open_mem_ex(NULL, 0, &cfg);
+
+    if (!tmp)
+        return NULL;
+
+    char *buf = NULL;
+
+    if (asdf_set_gwcs(tmp, "wcs", gwcs) != ASDF_VALUE_OK ||
+        asdf_write_to_mem(tmp, (void **)&buf, len) != 0) {
+        asdf_close(tmp);
+        return NULL;
+    }
+
+    asdf_close(tmp);
+    return buf;
+}
+
+
+/* Read a GWCS from a fixture, copy it, then verify the copy serializes
+ * identically to the original.  The original is destroyed and the source file
+ * closed before the copy is serialized: a correct, fully-owning copy must
+ * survive both (and depend on neither), which ASAN also enforces. */
+static void assert_gwcs_copy_roundtrip(const char *fixture, const char *wcs_path) {
+    const char *path = get_fixture_file_path(fixture);
+    asdf_file_t *file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_t *gwcs = NULL;
+    assert_int(asdf_get_gwcs(file, wcs_path, &gwcs), ==, ASDF_VALUE_OK);
+    assert_not_null(gwcs);
+
+    size_t orig_len = 0;
+    char *orig_buf = serialize_gwcs_to_mem(gwcs, &orig_len);
+    assert_not_null(orig_buf);
+
+    asdf_gwcs_t *copy = asdf_gwcs_copy(file, gwcs);
+    assert_not_null(copy);
+
+    asdf_gwcs_destroy(gwcs);
+    asdf_close(file);
+
+    size_t copy_len = 0;
+    char *copy_buf = serialize_gwcs_to_mem(copy, &copy_len);
+    assert_not_null(copy_buf);
+
+    assert_int(copy_len, ==, orig_len);
+    assert_int(memcmp(orig_buf, copy_buf, orig_len), ==, 0);
+
+    free(orig_buf);
+    free(copy_buf);
+    asdf_gwcs_destroy(copy);
+}
+
+
+MU_TEST(test_asdf_gwcs_copy_roman_l2) {
+    assert_gwcs_copy_roundtrip("roman_l2_wcs.asdf", "roman/meta/wcs");
+    return MUNIT_OK;
+}
+
+
+MU_TEST(test_asdf_gwcs_copy_roman_l3) {
+    assert_gwcs_copy_roundtrip("roman_l3_wcs.asdf", "wcs");
+    return MUNIT_OK;
+}
+
+
 MU_TEST_SUITE(
     gwcs,
     MU_RUN_TEST(test_asdf_get_gwcs_fits),
@@ -1011,7 +1089,9 @@ MU_TEST_SUITE(
     MU_RUN_TEST(test_asdf_set_gwcs_divide),
     MU_RUN_TEST(test_asdf_set_gwcs_affine),
     MU_RUN_TEST(test_asdf_set_gwcs_spherical_cartesian),
-    MU_RUN_TEST(test_asdf_get_roman_l2_gwcs)
+    MU_RUN_TEST(test_asdf_get_roman_l2_gwcs),
+    MU_RUN_TEST(test_asdf_gwcs_copy_roman_l2),
+    MU_RUN_TEST(test_asdf_gwcs_copy_roman_l3)
 );
 
 

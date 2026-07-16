@@ -49,16 +49,12 @@ static asdf_value_err_t fk4_deserialize(
 }
 
 
-static void fk4_dealloc(void *value) {
-    free(value);
-}
-
-
 static const asdf_extension_vtab_t fk4_vtab = {
     .serialize = fk4_serialize,
     .deserialize = fk4_deserialize,
-    .copy = NULL, /* TODO */
-    .dealloc = fk4_dealloc,
+    /* .copy and .deinit not needed as fk4 is shallow */
+    .copy = NULL,
+    .deinit = NULL,
 };
 
 

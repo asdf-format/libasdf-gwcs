@@ -1,6 +1,7 @@
 #include <stdatomic.h>
 #include <stdlib.h>
 
+#include <asdf/error.h>
 #include <asdf/extension.h>
 #include <asdf/extension_util.h>
 #include <asdf/log.h>
@@ -13,6 +14,19 @@
 
 static asdf_gwcs_coordinate_frame_map_t g_coordinate_frame_map = {0};
 static atomic_bool g_coordinate_frame_map_initialized = false;
+
+
+/*
+ * TODO: A lot of this is very similar to transform.c: It maintains a registry
+ * of coordinate frames (all of which are "subclasses" of some base coordinate
+ * frame) and provides generic methods for operating on generic coordinate
+ * frames (asdf_gwcs_coordinate_frame_destroy, etc.)
+ *
+ * The same system should also be used for WCS frames but isn't fully implemented
+ * yet.  This is boilerplate-y enough that libasdf could provide helpers for
+ * implementing "extension class hierarchies" like this, but that can wait
+ * for a future version (it is only a convenience).
+ */
 
 
 static void coordinate_frame_map_ensure_init(void) {
@@ -90,15 +104,66 @@ asdf_value_t *asdf_gwcs_coordinate_frame_value_of(
 }
 
 
-void asdf_gwcs_coordinate_frame_destroy(asdf_gwcs_baseframe_t *frame) {
+void asdf_gwcs_coordinate_frame_deinit(asdf_gwcs_baseframe_t *frame) {
     if (!frame)
         return;
 
     const asdf_extension_t *ext = (const asdf_extension_t *)frame->type;
-    if (ext && ext->vtab && ext->vtab->dealloc)
-        ext->vtab->dealloc(frame);
-    else
-        free(frame);
+    if (ext && ext->vtab && ext->vtab->deinit)
+        ext->vtab->deinit(frame);
+}
+
+
+void asdf_gwcs_coordinate_frame_destroy(asdf_gwcs_baseframe_t *frame) {
+    asdf_gwcs_coordinate_frame_deinit(frame);
+    free(frame);
+}
+
+
+bool asdf_gwcs_coordinate_frame_copy_into(
+    asdf_file_t *file, const asdf_gwcs_baseframe_t *frame, asdf_gwcs_baseframe_t *copy) {
+    if (UNLIKELY(!frame || !copy))
+        return false;
+
+    const asdf_extension_t *ext = (const asdf_extension_t *)frame->type;
+
+    if (ext && ext->vtab && ext->vtab->copy) {
+        if (!ext->vtab->copy(file, frame, copy)) {
+            asdf_gwcs_coordinate_frame_deinit(copy);
+            ASDF_ERROR_OOM(file);
+            return false;
+        }
+    }
+
+    /* The type is opaque and not preserved by every copy path; stamp it. */
+    if (copy)
+        copy->type = frame->type;
+
+    return true;
+}
+
+
+asdf_gwcs_baseframe_t *asdf_gwcs_coordinate_frame_copy(
+    asdf_file_t *file, const asdf_gwcs_baseframe_t *frame) {
+    if (UNLIKELY(!frame))
+        return NULL;
+
+    const asdf_extension_t *ext = (const asdf_extension_t *)frame->type;
+
+    if (UNLIKELY(!ext))
+        return NULL;
+
+    asdf_gwcs_baseframe_t *copy = calloc(ext->size, sizeof(uint8_t));
+
+    if (UNLIKELY(!copy))
+        return NULL;
+
+    if (!asdf_gwcs_coordinate_frame_copy_into(file, frame, copy)) {
+        free(copy);
+        return NULL;
+    }
+
+    return copy;
 }
 
 
@@ -138,16 +203,14 @@ static asdf_value_err_t empty_frame_deserialize(
 }
 
 
-static void baseframe_dealloc(void *value) {
-    free(value);
-}
-
-
 static const asdf_extension_vtab_t empty_frame_vtab = {
     .serialize = empty_frame_serialize,
     .deserialize = empty_frame_deserialize,
-    .copy = NULL, /* TODO */
-    .dealloc = baseframe_dealloc,
+    /* The baseframe type is shallow for now (just contains its type),
+     * so .copy and .deinit not strictly needed.
+     */
+    .copy = NULL,
+    .deinit = NULL,
 };
 
 
