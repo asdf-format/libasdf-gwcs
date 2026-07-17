@@ -100,13 +100,44 @@ typedef struct asdf_gwcs_transform {
 
 
 /**
- * .. note::
- *
- *     This duplicates all the fields in the definition of
- *     `asdf_gwcs_transform_t`.  The duplication is a practical matter of
- *     documentation (the documentation extractor won't be able to properly
- *     document `asdf_gwcs_transform_t` otherwise. For that reason this must
- *     be kept in sync with `asdf_gwcs_transform_t`.
+ * Polymorphic value constructor: dispatches to asdf_value_of_<transform> for
+ * known transforms, or uses a temporary extension for generic ones.
+ */
+ASDF_EXPORT asdf_value_t *asdf_value_of_gwcs_transform(
+    asdf_file_t *file, const asdf_gwcs_transform_t *transform);
+
+
+/** Polymorphic transform copy */
+ASDF_EXPORT asdf_gwcs_transform_t *asdf_gwcs_transform_copy(
+    asdf_file_t *file, const asdf_gwcs_transform_t *transform);
+
+/** Polymorphic transform copy into */
+ASDF_EXPORT bool asdf_gwcs_transform_copy_into(
+    asdf_file_t *file, const asdf_gwcs_transform_t *transform, asdf_gwcs_transform_t *copy);
+
+/**
+ * Read an `asdf_value_t *` as any type of GWCS transform
+ */
+ASDF_EXPORT asdf_value_err_t asdf_value_as_gwcs_transform(
+    asdf_value_t *value, asdf_gwcs_transform_t **out);
+
+/**
+ * Polymorphic transform deinit
+ */
+ASDF_EXPORT void asdf_gwcs_transform_deinit(asdf_gwcs_transform_t *transform);
+
+/**
+ * Polymorphic transform destroy
+ */
+ASDF_EXPORT void asdf_gwcs_transform_destroy(asdf_gwcs_transform_t *transform);
+
+
+/*
+ * NOTE: This duplicates all the fields in the definition of
+ * `asdf_gwcs_transform_t`.  The duplication is a practical matter of
+ *  documentation (the documentation extractor won't be able to properly
+ *  document `asdf_gwcs_transform_t` otherwise. For that reason this must
+ *  be kept in sync with `asdf_gwcs_transform_t`.
  */
 #define ASDF_GWCS_TRANSFORM_BASE \
     union { \
@@ -131,14 +162,76 @@ ASDF_EXPORT void asdf_gwcs_transform_register(asdf_gwcs_transform_type_t type);
 ASDF_EXPORT const asdf_extension_t *asdf_gwcs_transform_get(asdf_file_t *file, const char *tag);
 
 
+/*
+ * Per-transform storage for the copy/deinit shim that
+ * `ASDF_GWCS_REGISTER_TRANSFORM` installs.
+ *
+ * NOTE: This is part of the transform registration machinery and needs to
+ * be declared in the public headers, but is not part of the documented API
+ * for users.
+ *
+ * The shim ``vtab`` comes first so the shared shim methods can recover this
+ * struct (and hence ``orig``) from ``ext->vtab``; ``orig`` retains the type's
+ * own vtab (its serialize/deserialize and its own copy/deinit, if any).  This
+ * is public only so third-party transform registrations can declare the
+ * storage; its layout is otherwise opaque.
+ */
+typedef struct {
+    asdf_extension_vtab_t vtab;
+    const asdf_extension_vtab_t *orig;
+} asdf_gwcs_transform_shim_vtab_t;
+
+/*
+ * Point ``ext`` at a shim vtab (stored in ``shim``) whose copy/deinit run the
+ * base transform copy/deinit together with the type's own methods, so that both
+ * the polymorphic entry points and the per-type accessors libasdf generates
+ * produce a complete object.  Called once per transform at registration
+ * (normally via `ASDF_GWCS_REGISTER_TRANSFORM`).
+ *
+ * NOTE: This is part of the transform registration machinery and needs to
+ * be declared in the public headers, but is not part of the documented API
+ * for users.
+ *
+ */
+ASDF_EXPORT void asdf_gwcs_transform_install_shim(
+    asdf_extension_t *ext, asdf_gwcs_transform_shim_vtab_t *shim);
+
+
+/*
+ * Install the copy/deinit shim for a registered transform.
+ *
+ * A transform's own vtab ``copy``/``deinit`` methods handle only the concrete
+ * type's own fields; the base transform fields are handled centrally.  To make
+ * this work for BOTH the polymorphic entry points (asdf_gwcs_transform_copy /
+ * _deinit) AND the per-type accessors that libasdf generates
+ * (asdf_gwcs_<extname>_copy / _destroy, which know nothing of the base class),
+ * the extension's copy/deinit are replaced by shared shims (see
+ * asdf_gwcs_transform_install_shim) that run the base copy/deinit together with
+ * the type's original method.  Each type only needs its own shim-vtab storage,
+ * which is what this declares (function-local static, so it lives for the
+ * program's lifetime).
+ *
+ * TODO: this is a stopgap until libasdf formalizes extension hierarchies and
+ * can generate this itself.
+ */
+#define ASDF_GWCS_TRANSFORM_INSTALL_SHIM(extname) \
+    static asdf_gwcs_transform_shim_vtab_t asdf_gwcs_##extname##_shim_vtab; \
+    asdf_gwcs_transform_install_shim( \
+        &ASDF_EXT_STATIC_NAME(gwcs_##extname), &asdf_gwcs_##extname##_shim_vtab)
+
+
+/**
+ * Register a transform "subclass".
+ */
 #define ASDF_GWCS_REGISTER_TRANSFORM( \
     extname, ttype, type, software, vtab, userdata, ...) \
     ASDF_REGISTER_EXTENSION(gwcs_##extname, type, software, vtab, userdata, __VA_ARGS__); \
     const asdf_gwcs_transform_type_t ASDF_GWCS_TRANSFORM_##ttype = \
         (asdf_gwcs_transform_type_t)&ASDF_EXT_STATIC_NAME(gwcs_##extname); \
     static ASDF_CONSTRUCTOR void asdf_gwcs_transform_register_##extname(void) { \
-            asdf_gwcs_transform_register( \
-                (asdf_gwcs_transform_type_t)&ASDF_EXT_STATIC_NAME(gwcs_##extname)); \
+        ASDF_GWCS_TRANSFORM_INSTALL_SHIM(extname); \
+        asdf_gwcs_transform_register( \
+            (asdf_gwcs_transform_type_t)&ASDF_EXT_STATIC_NAME(gwcs_##extname)); \
     }
 
 

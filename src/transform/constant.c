@@ -119,21 +119,12 @@ cleanup:
 }
 
 
-static void asdf_gwcs_constant_dealloc(void *value) {
-    if (!value)
-        return;
-
-    asdf_gwcs_constant_t *constant = (asdf_gwcs_constant_t *)value;
-    asdf_gwcs_transform_clean(&constant->base);
-    free(constant);
-}
-
-
 static const asdf_extension_vtab_t asdf_gwcs_constant_vtab = {
     .serialize = asdf_gwcs_constant_serialize,
     .deserialize = asdf_gwcs_constant_deserialize,
-    .copy = NULL, /* TODO */
-    .dealloc = asdf_gwcs_constant_dealloc,
+    /* .copy and .deinit not needed as constant is shallow */
+    .copy = NULL,
+    .deinit = NULL,
 };
 
 

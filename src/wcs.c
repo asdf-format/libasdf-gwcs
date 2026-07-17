@@ -4,7 +4,10 @@
 #include "config.h"
 #endif
 
+#include <asdf/error.h>
+#include <asdf/extension.h>
 #include <asdf/extension_util.h>
+#include <asdf/file.h>
 #include <asdf/log.h>
 #include <asdf/value.h>
 
@@ -97,6 +100,7 @@ static asdf_value_err_t asdf_gwcs_deserialize(
     asdf_value_err_t err = ASDF_VALUE_ERR_PARSE_FAILURE;
     asdf_mapping_t *gwcs_map = NULL;
     asdf_sequence_t *steps_seq = NULL;
+    char *name = NULL;
     const asdf_file_t *file = asdf_value_file(value);
 
     if (asdf_value_as_mapping(value, &gwcs_map) != ASDF_VALUE_OK)
@@ -110,11 +114,12 @@ static asdf_value_err_t asdf_gwcs_deserialize(
     }
 
     // The name property is required
-    err = asdf_get_required_property(
-        gwcs_map, "name", ASDF_VALUE_STRING, NULL, (void *)&gwcs->name);
+    err = asdf_get_required_property(gwcs_map, "name", ASDF_VALUE_STRING, NULL, (void *)&name);
 
     if (ASDF_IS_ERR(err))
         goto cleanup;
+
+    gwcs->name = strdup(name);
 
     // TODO: Implement pixel_shape parsing
 
@@ -183,29 +188,63 @@ cleanup:
 }
 
 
-static void asdf_gwcs_dealloc(void *value) {
+static bool asdf_gwcs_copy_impl(asdf_file_t *file, const void *src, void *dst) {
+    const asdf_gwcs_t *gwcs = src;
+    asdf_gwcs_t *copy = dst;
+
+    if (gwcs->name) {
+        copy->name = strdup(gwcs->name);
+        if (!copy->name)
+            return false;
+    }
+
+    if (gwcs->steps) {
+        asdf_gwcs_step_t *steps = calloc(gwcs->n_steps, sizeof(asdf_gwcs_step_t));
+
+        if (UNLIKELY(!steps))
+            return false;
+
+        copy->steps = steps;
+        copy->n_steps = gwcs->n_steps;
+
+        for (uint32_t idx = 0; idx < gwcs->n_steps; idx++) {
+            if (!asdf_gwcs_step_copy_into(file, &gwcs->steps[idx], &steps[idx]))
+                return false;
+        }
+    }
+
+    return copy;
+}
+
+
+static void asdf_gwcs_deinit_impl(void *value) {
     if (!value)
         return;
 
     asdf_gwcs_t *gwcs = (asdf_gwcs_t *)value;
 
+    if (gwcs->name)
+        free((char *)gwcs->name);
+
     if (gwcs->steps) {
+        /* steps is a contiguous array: deinit each element, then free the
+         * array once (asdf_gwcs_step_destroy would free each interior pointer). */
         for (uint32_t idx = 0; idx < gwcs->n_steps; idx++) {
             asdf_gwcs_step_t *step = (asdf_gwcs_step_t *)&gwcs->steps[idx];
-            asdf_gwcs_step_destroy(step);
+            asdf_gwcs_step_deinit(step);
         }
         free((asdf_gwcs_step_t *)gwcs->steps);
     }
 
-    free(gwcs);
+    ZERO_MEMORY(gwcs, sizeof(asdf_gwcs_t));
 }
 
 
 static const asdf_extension_vtab_t asdf_gwcs_vtab = {
     .serialize = asdf_gwcs_serialize,
     .deserialize = asdf_gwcs_deserialize,
-    .copy = NULL, /* TODO */
-    .dealloc = asdf_gwcs_dealloc,
+    .copy = asdf_gwcs_copy_impl,
+    .deinit = asdf_gwcs_deinit_impl,
 };
 
 

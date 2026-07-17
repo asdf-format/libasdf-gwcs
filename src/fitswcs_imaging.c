@@ -1,11 +1,13 @@
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include <asdf/core/ndarray.h>
+#include <asdf/error.h>
 #include <asdf/extension_util.h>
 #include <asdf/log.h>
 
@@ -337,24 +339,52 @@ cleanup:
 }
 
 
-static void asdf_gwcs_fits_dealloc(void *value) {
+static void asdf_gwcs_fits_deinit_impl(void *value) {
     if (!value)
         return;
 
     asdf_gwcs_fits_t *fits = (asdf_gwcs_fits_t *)value;
-    asdf_gwcs_transform_clean(&fits->base);
-    asdf_gwcs_transform_clean(&fits->projection);
+    asdf_gwcs_transform_deinit(&fits->projection);
     free((char *)fits->ctype[0]);
     free((char *)fits->ctype[1]);
-    free(fits);
+    fits->ctype[0] = NULL;
+    fits->ctype[1] = NULL;
+}
+
+
+static bool asdf_gwcs_fits_copy_impl(asdf_file_t *file, const void *src, void *dst) {
+    const asdf_gwcs_fits_t *fits = src;
+    asdf_gwcs_fits_t *copy = dst;
+
+    memcpy((double *)copy->crpix, fits->crpix, sizeof(copy->crpix));
+    memcpy((double *)copy->crval, fits->crval, sizeof(copy->crval));
+    memcpy((double *)copy->cdelt, fits->cdelt, sizeof(copy->cdelt));
+    memcpy((double *)copy->pc, fits->pc, sizeof(copy->pc));
+
+    for (int idx = 0; idx < 2; idx++) {
+        if (fits->ctype[idx]) {
+            copy->ctype[idx] = strdup(fits->ctype[idx]);
+
+            if (UNLIKELY(!copy->ctype[idx]))
+                return false;
+        }
+    }
+
+    /* projection is an embedded, base-only transform */
+    if (fits->projection.type) {
+        if (!asdf_gwcs_transform_copy_into(file, &fits->projection, &copy->projection))
+            return false;
+    }
+
+    return true;
 }
 
 
 static const asdf_extension_vtab_t asdf_gwcs_fits_vtab = {
     .serialize = asdf_gwcs_fits_serialize,
     .deserialize = asdf_gwcs_fits_deserialize,
-    .copy = NULL, /* TODO */
-    .dealloc = asdf_gwcs_fits_dealloc,
+    .copy = asdf_gwcs_fits_copy_impl,
+    .deinit = asdf_gwcs_fits_deinit_impl,
 };
 
 

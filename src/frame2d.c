@@ -71,20 +71,61 @@ static asdf_value_t *asdf_gwcs_frame2d_serialize(
 }
 
 
-static void asdf_gwcs_frame2d_dealloc(void *value) {
+static bool asdf_gwcs_frame2d_copy_impl(asdf_file_t *file, const void *src, void *dst) {
+    const asdf_gwcs_frame2d_t *frame2d = src;
+    asdf_gwcs_frame2d_t *copy = dst;
+
+    if (!asdf_gwcs_base_frame_copy_impl(file, src, dst))
+        return false;
+
+    for (int idx = 0; idx < 2; idx++) {
+        if (frame2d->axes_names[idx]) {
+            copy->axes_names[idx] = strdup(frame2d->axes_names[idx]);
+
+            if (UNLIKELY(!copy->axes_names[idx]))
+                return false;
+        }
+
+        if (frame2d->unit[idx]) {
+            copy->unit[idx] = strdup(frame2d->unit[idx]);
+
+            if (UNLIKELY(!copy->unit[idx]))
+                return false;
+        }
+
+        if (frame2d->axis_physical_types[idx]) {
+            copy->axis_physical_types[idx] = strdup(frame2d->axis_physical_types[idx]);
+
+            if (UNLIKELY(!copy->axis_physical_types[idx]))
+                return false;
+        }
+
+        copy->axes_order[idx] = frame2d->axes_order[idx];
+    }
+
+    return true;
+}
+
+
+static void asdf_gwcs_frame2d_deinit_impl(void *value) {
     if (!value)
         return;
 
-    asdf_gwcs_frame_t *frame = (asdf_gwcs_frame_t *)value;
-    asdf_gwcs_base_frame_destroy(frame);
+    asdf_gwcs_frame2d_t *frame2d = (asdf_gwcs_frame2d_t *)value;
+    asdf_gwcs_frame_cleanup_axes(
+        2,
+        (char **)frame2d->axes_names,
+        (char **)frame2d->unit,
+        (char **)frame2d->axis_physical_types);
+    asdf_gwcs_base_frame_deinit_impl(value);
 }
 
 
 static const asdf_extension_vtab_t asdf_gwcs_frame2d_vtab = {
     .serialize = asdf_gwcs_frame2d_serialize,
     .deserialize = asdf_gwcs_frame2d_deserialize,
-    .copy = NULL, /* TODO */
-    .dealloc = asdf_gwcs_frame2d_dealloc,
+    .copy = asdf_gwcs_frame2d_copy_impl,
+    .deinit = asdf_gwcs_frame2d_deinit_impl,
 };
 
 

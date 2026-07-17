@@ -40,25 +40,3 @@ ASDF_LOCAL const char *asdf_gwcs_transform_type_to_tag(asdf_gwcs_transform_type_
  */
 ASDF_LOCAL asdf_value_err_t asdf_gwcs_transform_serialize_base(
     asdf_file_t *file, const asdf_gwcs_transform_t *transform, asdf_mapping_t *map);
-
-/**
- * Polymorphic value constructor: dispatches to asdf_value_of_<transform> for
- * known transforms, or uses a temporary extension for generic ones.
- */
-ASDF_LOCAL asdf_value_t *asdf_value_of_gwcs_transform(
-    asdf_file_t *file, const asdf_gwcs_transform_t *transform);
-
-/**
- * Release memory held by fields in an `asdf_gwcs_transform_t` and clear it in preparation
- * for releasing the transform's memory
- *
- * Does not free the transform struct's own memory.
- */
-ASDF_LOCAL void asdf_gwcs_transform_clean(asdf_gwcs_transform_t *transform);
-
-/**
- * Read an `asdf_value_t *` as any type of GWCS transform
- */
-ASDF_EXPORT asdf_value_err_t
-asdf_value_as_gwcs_transform(asdf_value_t *value, asdf_gwcs_transform_t **out);
-ASDF_EXPORT void asdf_gwcs_transform_destroy(asdf_gwcs_transform_t *transform);

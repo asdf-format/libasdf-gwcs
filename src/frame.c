@@ -82,9 +82,16 @@ static asdf_value_err_t get_frame_axes_string_param(
     asdf_sequence_iter_t *iter = asdf_sequence_iter_init(frames_seq);
     char **str_tmp = strings;
     while (asdf_sequence_iter_next(&iter)) {
-        if (!ASDF_IS_OK(asdf_value_as_string0(iter->value, (const char **)str_tmp))) {
+        const char *s = NULL;
+        if (!ASDF_IS_OK(asdf_value_as_string0(iter->value, &s))) {
             warn_invalid_frame_axes_param(
                 mapping_val, propname, ASDF_VALUE_STRING, min_axes, max_axes);
+            asdf_sequence_iter_destroy(iter);
+            goto cleanup;
+        }
+        *str_tmp = strdup(s);
+        if (!*str_tmp) {
+            err = ASDF_VALUE_ERR_OOM;
             asdf_sequence_iter_destroy(iter);
             goto cleanup;
         }
@@ -158,16 +165,25 @@ asdf_value_err_t asdf_gwcs_frame_parse(
     assert(frame);
     assert(params);
     asdf_mapping_t *frame_map = NULL;
+    const char *name = NULL;
     asdf_value_err_t err = ASDF_VALUE_ERR_PARSE_FAILURE;
 
     if (asdf_value_as_mapping(value, &frame_map) != ASDF_VALUE_OK)
         goto failure;
 
-    err = asdf_get_required_property(
-        frame_map, "name", ASDF_VALUE_STRING, NULL, (void *)&frame->name);
+    err = asdf_get_required_property(frame_map, "name", ASDF_VALUE_STRING, NULL, (void *)&name);
 
     if (ASDF_IS_ERR(err))
         goto failure;
+
+    if (name) {
+        frame->name = strdup(name);
+
+        if (UNLIKELY(!frame->name)) {
+            err = ASDF_VALUE_ERR_OOM;
+            goto failure;
+        }
+    }
 
     if (!ASDF_IS_OPTIONAL_OK(get_frame_axes_string_param(
             frame_map, "axes_names", params->axes_names, params->min_axes, params->max_axes)))
@@ -345,12 +361,42 @@ static asdf_value_t *asdf_gwcs_base_frame_serialize(
 }
 
 
-static void asdf_gwcs_base_frame_dealloc(void *value) {
+void asdf_gwcs_base_frame_deinit_impl(void *value) {
     if (!value)
         return;
 
     asdf_gwcs_frame_t *frame = (asdf_gwcs_frame_t *)value;
-    free(frame);
+    free((char *)frame->name);
+    frame->name = NULL;
+}
+
+
+bool asdf_gwcs_base_frame_copy_impl(UNUSED(asdf_file_t *file), const void *src, void *dst) {
+    const asdf_gwcs_frame_t *frame = (const asdf_gwcs_frame_t *)src;
+    asdf_gwcs_frame_t *copy = dst;
+
+    if (frame->name) {
+        copy->name = strdup(frame->name);
+
+        if (UNLIKELY(!copy->name))
+            return false;
+    }
+
+    copy->type = frame->type;
+    return true;
+}
+
+
+void asdf_gwcs_frame_cleanup_axes(
+    uint32_t naxes, char **axes_names, char **unit, char **axis_physical_types) {
+    for (uint32_t idx = 0; idx < naxes; idx++) {
+        if (axes_names)
+            free(axes_names[idx]);
+        if (unit)
+            free(unit[idx]);
+        if (axis_physical_types)
+            free(axis_physical_types[idx]);
+    }
 }
 
 
@@ -365,7 +411,7 @@ static void asdf_gwcs_base_frame_dealloc(void *value) {
  *   use celestial frame so that is deferred for later.
  */
 asdf_value_err_t asdf_value_as_gwcs_frame(asdf_value_t *value, asdf_gwcs_frame_t **out) {
-    // TODO: It will be useful in the future to have some registery of known frame
+    // TODO: It will be useful in the future to have some registry of known frame
     // extension types.  Because there are only two currently it's hard-coded for now,
     // but this is a bit ugly...
     asdf_gwcs_frame_t *frame = NULL;
@@ -407,33 +453,83 @@ asdf_value_t *asdf_gwcs_frame_value_of(asdf_file_t *file, const asdf_gwcs_frame_
 }
 
 
+bool asdf_gwcs_frame_copy_into(asdf_file_t *file, const asdf_gwcs_frame_t *frame,
+                               asdf_gwcs_frame_t *copy) {
+    if (UNLIKELY(!frame || !copy))
+        return false;
+
+    /* The per-type copy_into methods copy the base fields themselves (via
+     * asdf_gwcs_base_frame_copy_impl), so dispatch straight to them. */
+    switch (frame->type) {
+    case ASDF_GWCS_FRAME_2D:
+        return asdf_gwcs_frame2d_copy_into(
+            file, (const asdf_gwcs_frame2d_t *)frame, (asdf_gwcs_frame2d_t *)copy);
+    case ASDF_GWCS_FRAME_CELESTIAL:
+        return asdf_gwcs_frame_celestial_copy_into(
+            file, (const asdf_gwcs_frame_celestial_t *)frame, (asdf_gwcs_frame_celestial_t *)copy);
+    case ASDF_GWCS_FRAME_GENERIC:
+    default:
+        return asdf_gwcs_base_frame_copy_into(file, frame, copy);
+    }
+}
+
+
+/**
+ * Generic copy for frames of different types from a value, depending on the tag
+ */
+asdf_gwcs_frame_t *asdf_gwcs_frame_copy(asdf_file_t *file, const asdf_gwcs_frame_t *frame) {
+    if (!frame)
+        return NULL;
+
+    switch (frame->type) {
+    case ASDF_GWCS_FRAME_2D:
+        return (asdf_gwcs_frame_t *)asdf_gwcs_frame2d_copy(
+            file, (const asdf_gwcs_frame2d_t *)frame);
+    case ASDF_GWCS_FRAME_CELESTIAL:
+        return (asdf_gwcs_frame_t *)asdf_gwcs_frame_celestial_copy(
+            file, (const asdf_gwcs_frame_celestial_t *)frame);
+    case ASDF_GWCS_FRAME_GENERIC:
+    default:
+        return asdf_gwcs_base_frame_copy(file, frame);
+    }
+}
+
+
+
+
 /**
  * Generic destructor for frames of different types from a value,
  * depending on the tag
  */
-void asdf_gwcs_frame_destroy(asdf_gwcs_frame_t *frame) {
+void asdf_gwcs_frame_deinit(asdf_gwcs_frame_t *frame) {
     if (!frame)
         return;
 
     switch (frame->type) {
     case ASDF_GWCS_FRAME_2D:
-        asdf_gwcs_frame2d_destroy((asdf_gwcs_frame2d_t *)frame);
+        asdf_gwcs_frame2d_deinit((asdf_gwcs_frame2d_t *)frame);
         break;
     case ASDF_GWCS_FRAME_CELESTIAL:
-        asdf_gwcs_frame_celestial_destroy((asdf_gwcs_frame_celestial_t *)frame);
+        asdf_gwcs_frame_celestial_deinit((asdf_gwcs_frame_celestial_t *)frame);
         break;
     case ASDF_GWCS_FRAME_GENERIC:
-        asdf_gwcs_base_frame_destroy(frame);
+        asdf_gwcs_base_frame_deinit(frame);
         break;
     }
+}
+
+
+void asdf_gwcs_frame_destroy(asdf_gwcs_frame_t *frame) {
+    asdf_gwcs_frame_deinit(frame);
+    free(frame);
 }
 
 
 static const asdf_extension_vtab_t asdf_gwcs_base_frame_vtab = {
     .serialize = asdf_gwcs_base_frame_serialize,
     .deserialize = asdf_gwcs_base_frame_deserialize,
-    .copy = NULL, /* TODO */
-    .dealloc = asdf_gwcs_base_frame_dealloc,
+    .copy = asdf_gwcs_base_frame_copy_impl,
+    .deinit = asdf_gwcs_base_frame_deinit_impl,
 };
 
 

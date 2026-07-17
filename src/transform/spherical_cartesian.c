@@ -108,21 +108,12 @@ cleanup:
 }
 
 
-static void asdf_gwcs_spherical_cartesian_dealloc(void *value) {
-    if (!value)
-        return;
-
-    asdf_gwcs_spherical_cartesian_t *sc = (asdf_gwcs_spherical_cartesian_t *)value;
-    asdf_gwcs_transform_clean(&sc->base);
-    free(sc);
-}
-
-
 static const asdf_extension_vtab_t asdf_gwcs_spherical_cartesian_vtab = {
     .serialize = asdf_gwcs_spherical_cartesian_serialize,
     .deserialize = asdf_gwcs_spherical_cartesian_deserialize,
-    .copy = NULL, /* TODO */
-    .dealloc = asdf_gwcs_spherical_cartesian_dealloc,
+    /* .copy and .deinit not needed as spherical_cartesian is shallow */
+    .copy = NULL,
+    .deinit = NULL,
 };
 
 

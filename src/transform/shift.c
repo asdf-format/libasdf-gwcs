@@ -79,21 +79,12 @@ cleanup:
 }
 
 
-static void asdf_gwcs_shift_dealloc(void *value) {
-    if (!value)
-        return;
-
-    asdf_gwcs_shift_t *shift = (asdf_gwcs_shift_t *)value;
-    asdf_gwcs_transform_clean(&shift->base);
-    free(shift);
-}
-
-
 static const asdf_extension_vtab_t asdf_gwcs_shift_vtab = {
     .serialize = asdf_gwcs_shift_serialize,
     .deserialize = asdf_gwcs_shift_deserialize,
-    .copy = NULL, /* TODO */
-    .dealloc = asdf_gwcs_shift_dealloc,
+    /* .copy and .deinit not needed as shift is shallow */
+    .copy = NULL,
+    .deinit = NULL,
 };
 
 

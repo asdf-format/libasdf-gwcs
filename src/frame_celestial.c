@@ -1,5 +1,7 @@
 #include <stdlib.h>
+#include <string.h>
 
+#include <asdf/error.h>
 #include <asdf/extension.h>
 #include <asdf/extension_util.h>
 #include <asdf/value.h>
@@ -84,22 +86,67 @@ cleanup:
 }
 
 
-static void asdf_gwcs_frame_celestial_dealloc(void *value) {
+static bool asdf_gwcs_frame_celestial_copy_impl(asdf_file_t *file, const void *src, void *dst) {
+    const asdf_gwcs_frame_celestial_t *frame = src;
+    asdf_gwcs_frame_celestial_t *copy = dst;
+
+    if (!asdf_gwcs_base_frame_copy_impl(file, src, dst))
+        return false;
+
+    for (int idx = 0; idx < 3; idx++) {
+        copy->axes_order[idx] = frame->axes_order[idx];
+
+        if (frame->axes_names[idx]) {
+            copy->axes_names[idx] = strdup(frame->axes_names[idx]);
+            if (UNLIKELY(!copy->axes_names[idx]))
+                return false;
+        }
+
+        if (frame->unit[idx]) {
+            copy->unit[idx] = strdup(frame->unit[idx]);
+            if (UNLIKELY(!copy->unit[idx]))
+                return false;
+        }
+
+        if (frame->axis_physical_types[idx]) {
+            copy->axis_physical_types[idx] = strdup(frame->axis_physical_types[idx]);
+            if (UNLIKELY(!copy->axis_physical_types[idx]))
+                return false;
+        }
+    }
+
+    if (frame->reference_frame) {
+        copy->reference_frame = asdf_gwcs_coordinate_frame_copy(file, frame->reference_frame);
+
+        if (UNLIKELY(!copy->reference_frame))
+            return false;
+    }
+
+    return true;
+}
+
+
+static void asdf_gwcs_frame_celestial_deinit_impl(void *value) {
     if (!value)
         return;
 
     asdf_gwcs_frame_celestial_t *frame = value;
     asdf_gwcs_coordinate_frame_destroy(frame->reference_frame);
     frame->reference_frame = NULL;
-    asdf_gwcs_base_frame_destroy((asdf_gwcs_frame_t *)frame);
+    asdf_gwcs_frame_cleanup_axes(
+        3,
+        (char **)frame->axes_names,
+        (char **)frame->unit,
+        (char **)frame->axis_physical_types);
+    asdf_gwcs_base_frame_deinit_impl(value);
 }
 
 
 static const asdf_extension_vtab_t asdf_gwcs_frame_celestial_vtab = {
     .serialize = asdf_gwcs_frame_celestial_serialize,
     .deserialize = asdf_gwcs_frame_celestial_deserialize,
-    .copy = NULL, /* TODO */
-    .dealloc = asdf_gwcs_frame_celestial_dealloc,
+    .copy = asdf_gwcs_frame_celestial_copy_impl,
+    .deinit = asdf_gwcs_frame_celestial_deinit_impl,
 };
 
 

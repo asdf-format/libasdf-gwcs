@@ -5,6 +5,7 @@
 #include "config.h"
 #endif
 
+#include <asdf/file.h>
 #include <asdf/extension_util.h>
 #include <asdf/log.h>
 #include <asdf/value.h>
@@ -33,10 +34,8 @@ static asdf_value_err_t asdf_gwcs_step_deserialize(
     // If *out is non-null then don't allocate
     if (*out) {
         step = (asdf_gwcs_step_t *)*out;
-        step->free = false;
     } else {
         step = calloc(1, sizeof(asdf_gwcs_step_t));
-        step->free = true;
     }
 
     if (!step) {
@@ -88,7 +87,7 @@ static asdf_value_err_t asdf_gwcs_step_deserialize(
     return ASDF_VALUE_OK;
 failure:
     asdf_gwcs_transform_destroy(transform);
-    if (step && step->free)
+    if (step && !*out)
         free(step);
 
     return err;
@@ -152,28 +151,52 @@ cleanup:
 }
 
 
-static void asdf_gwcs_step_dealloc(void *value) {
+static bool asdf_gwcs_step_copy_impl(asdf_file_t *file, const void *src, void *dst) {
+    const asdf_gwcs_step_t *step = src;
+    asdf_gwcs_step_t *copy = dst;
+
+    /* Frame should always exist; transform may be NULL (last step). */
+    if (step->frame) {
+        copy->frame = asdf_gwcs_frame_copy(file, step->frame);
+
+        if (UNLIKELY(!copy->frame))
+            return false;
+    }
+
+    if (step->transform) {
+        copy->transform = asdf_gwcs_transform_copy(file, step->transform);
+
+        if (UNLIKELY(!copy->transform))
+            return false;
+    }
+
+    return true;
+}
+
+
+static void asdf_gwcs_step_deinit_impl(void *value) {
     if (!value)
         return;
 
     asdf_gwcs_step_t *step = (asdf_gwcs_step_t *)value;
 
-    if (step->frame)
-        asdf_gwcs_frame_destroy(step->frame);
+    if (step->frame) {
+        asdf_gwcs_frame_destroy((asdf_gwcs_frame_t *)step->frame);
+        step->frame = NULL;
+    }
 
-    if (step->transform)
+    if (step->transform) {
         asdf_gwcs_transform_destroy((asdf_gwcs_transform_t *)step->transform);
-
-    if (step->free)
-        free(step);
+        step->transform = NULL;
+    }
 }
 
 
 static const asdf_extension_vtab_t asdf_gwcs_step_vtab = {
     .serialize = asdf_gwcs_step_serialize,
     .deserialize = asdf_gwcs_step_deserialize,
-    .copy = NULL, /* TODO */
-    .dealloc = asdf_gwcs_step_dealloc,
+    .copy = asdf_gwcs_step_copy_impl,
+    .deinit = asdf_gwcs_step_deinit_impl,
 };
 
 

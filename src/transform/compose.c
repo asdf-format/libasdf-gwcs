@@ -149,29 +149,56 @@ cleanup:
 }
 
 
-static void asdf_gwcs_compose_dealloc(void *value) {
+static bool asdf_gwcs_compose_copy_impl(asdf_file_t *file, const void *src, void *dst) {
+    const asdf_gwcs_compose_t *compose = src;
+    asdf_gwcs_compose_t *copy = dst;
+
+    if (compose->n_forward) {
+        copy->forward = calloc(compose->n_forward, sizeof(*(compose->forward)));
+
+        if (UNLIKELY(!copy->forward))
+            return false;
+
+        copy->n_forward = compose->n_forward;
+    }
+
+    for (uint32_t idx = 0; idx < compose->n_forward; idx++) {
+        asdf_gwcs_transform_t *forward = compose->forward[idx];
+
+        if (UNLIKELY(!forward))
+            continue;
+
+        copy->forward[idx] = asdf_gwcs_transform_copy(file, forward);
+
+        if (UNLIKELY(!copy->forward[idx]))
+            return false;
+    }
+
+    return true;
+}
+
+
+static void asdf_gwcs_compose_deinit_impl(void *value) {
     if (!value)
         return;
 
     asdf_gwcs_compose_t *compose = (asdf_gwcs_compose_t *)value;
-    asdf_gwcs_transform_clean(&compose->base);
 
     if (compose->forward) {
         for (uint32_t idx = 0; idx < compose->n_forward; idx++)
             asdf_gwcs_transform_destroy(compose->forward[idx]);
 
         free(compose->forward);
+        compose->forward = NULL;
     }
-
-    free(compose);
 }
 
 
 static const asdf_extension_vtab_t asdf_gwcs_compose_vtab = {
     .serialize = asdf_gwcs_compose_serialize,
     .deserialize = asdf_gwcs_compose_deserialize,
-    .copy = NULL, /* TODO */
-    .dealloc = asdf_gwcs_compose_dealloc,
+    .copy = asdf_gwcs_compose_copy_impl,
+    .deinit = asdf_gwcs_compose_deinit_impl,
 };
 
 

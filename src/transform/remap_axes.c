@@ -1,10 +1,12 @@
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include <asdf/extension_util.h>
+#include <asdf/file.h>
 #include <asdf/log.h>
 
 #include "../gwcs.h"
@@ -164,22 +166,40 @@ cleanup:
 }
 
 
-static void asdf_gwcs_remap_axes_dealloc(void *value) {
+static bool asdf_gwcs_remap_axes_copy_impl(UNUSED(asdf_file_t *file), const void *src, void *dst) {
+    const asdf_gwcs_remap_axes_t *remap_axes = src;
+    asdf_gwcs_remap_axes_t *copy = dst;
+
+    if (remap_axes->mapping && remap_axes->n_outputs) {
+        size_t n = remap_axes->n_outputs;
+        uint32_t *mapping = malloc(n * sizeof(*mapping));
+
+        if (UNLIKELY(!mapping))
+            return false;
+
+        memcpy(mapping, remap_axes->mapping, n * sizeof(*mapping));
+        copy->mapping = mapping;
+    }
+
+    return true;
+}
+
+
+static void asdf_gwcs_remap_axes_deinit_impl(void *value) {
     if (!value)
         return;
 
     asdf_gwcs_remap_axes_t *remap = (asdf_gwcs_remap_axes_t *)value;
-    asdf_gwcs_transform_clean(&remap->base);
     free((uint32_t *)remap->mapping);
-    free(remap);
+    remap->mapping = NULL;
 }
 
 
 static const asdf_extension_vtab_t asdf_gwcs_remap_axes_vtab = {
     .serialize = asdf_gwcs_remap_axes_serialize,
     .deserialize = asdf_gwcs_remap_axes_deserialize,
-    .copy = NULL, /* TODO */
-    .dealloc = asdf_gwcs_remap_axes_dealloc,
+    .copy = asdf_gwcs_remap_axes_copy_impl,
+    .deinit = asdf_gwcs_remap_axes_deinit_impl,
 };
 
 

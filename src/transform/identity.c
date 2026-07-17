@@ -82,21 +82,12 @@ cleanup:
 }
 
 
-static void asdf_gwcs_identity_dealloc(void *value) {
-    if (!value)
-        return;
-
-    asdf_gwcs_identity_t *identity = (asdf_gwcs_identity_t *)value;
-    asdf_gwcs_transform_clean(&identity->base);
-    free(identity);
-}
-
-
 static const asdf_extension_vtab_t asdf_gwcs_identity_vtab = {
     .serialize = asdf_gwcs_identity_serialize,
     .deserialize = asdf_gwcs_identity_deserialize,
-    .copy = NULL, /* TODO */
-    .dealloc = asdf_gwcs_identity_dealloc,
+    /* Deliberately left NULL--no internal fields to copy/deinit */
+    .copy = NULL,
+    .deinit = NULL,
 };
 
 

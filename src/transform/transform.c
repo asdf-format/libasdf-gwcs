@@ -15,6 +15,7 @@
 #include <asdf/value.h>
 
 #include "gwcs.h"
+#include "transform.h"
 #include "types/asdf_gwcs_transform_map.h"
 #include "util.h"
 
@@ -61,11 +62,21 @@ asdf_value_err_t asdf_gwcs_transform_parse(asdf_value_t *value, asdf_gwcs_transf
 
     transform->type = type;
 
+    const char *name = NULL;
     err = asdf_get_optional_property(
-        transform_map, "name", ASDF_VALUE_STRING, NULL, (void *)&transform->name);
+        transform_map, "name", ASDF_VALUE_STRING, NULL, (void *)&name);
 
     if (!ASDF_IS_OPTIONAL_OK(err))
         goto failure;
+
+    if (name) {
+        transform->name = strdup(name);
+
+        if (!transform->name) {
+            err = ASDF_VALUE_ERR_OOM;
+            goto failure;
+        }
+    }
 
     err = asdf_get_optional_property(
         transform_map,
@@ -141,7 +152,7 @@ failure:
 
 
 
-asdf_value_err_t asdf_gwcs_transform_generic_deserialize(
+static asdf_value_err_t asdf_gwcs_transform_generic_deserialize(
     asdf_value_t *value, UNUSED(const void *userdata), void **out) {
     asdf_gwcs_transform_t *transform = calloc(1, sizeof(asdf_gwcs_transform_t));
 
@@ -157,7 +168,7 @@ asdf_value_err_t asdf_gwcs_transform_generic_deserialize(
 }
 
 
-void asdf_gwcs_transform_clean(asdf_gwcs_transform_t *transform) {
+static void asdf_gwcs_transform_deinit_base(asdf_gwcs_transform_t *transform) {
     if (!transform)
         return;
 
@@ -173,8 +184,188 @@ void asdf_gwcs_transform_clean(asdf_gwcs_transform_t *transform) {
         free((void *)transform->outputs);
     }
 
+    free((char *)transform->name);
     asdf_gwcs_bounding_box_destroy((asdf_gwcs_bounding_box_t *)transform->bounding_box);
+    asdf_gwcs_transform_destroy((asdf_gwcs_transform_t *)transform->inverse);
     ZERO_MEMORY(transform, sizeof(asdf_gwcs_transform_t));
+}
+
+
+/* Copy the base transform fields into dst.  Invoked (together with the
+ * subclass's own copy method) by the copy shim that ASDF_GWCS_REGISTER_TRANSFORM
+ * installs as each transform extension's vtab copy method, so that both the
+ * generated per-type copy and the polymorphic asdf_gwcs_transform_copy fill in
+ * the base fields. */
+static bool asdf_gwcs_transform_copy_base(
+    asdf_file_t *file, const asdf_gwcs_transform_t *src, asdf_gwcs_transform_t *dst) {
+    dst->type = src->type;
+    dst->n_inputs = src->n_inputs;
+    dst->n_outputs = src->n_outputs;
+
+    /* dst may have been shallow-copied from src (see the copy shim for shallow
+     * transforms), so clear the base heap pointers before taking deep copies;
+     * this keeps the deinit-on-failure path free of shared (double-freed)
+     * pointers. */
+    dst->name = NULL;
+    dst->inputs = NULL;
+    dst->outputs = NULL;
+    dst->bounding_box = NULL;
+    dst->inverse = NULL;
+
+    if (src->name) {
+        dst->name = strdup(src->name);
+
+        if (UNLIKELY(!dst->name))
+            return false;
+    }
+
+    const char **src_io[2] = {src->inputs, src->outputs};
+    const char ***dst_io[2] = {&dst->inputs, &dst->outputs};
+    uint32_t io_counts[2] = {src->n_inputs, src->n_outputs};
+
+    for (int kdx = 0; kdx < 2; kdx++) {
+        if (!src_io[kdx] || io_counts[kdx] == 0)
+            continue;
+
+        const char **arr = calloc(io_counts[kdx], sizeof(char *));
+
+        if (UNLIKELY(!arr))
+            return false;
+
+        *dst_io[kdx] = arr;
+
+        for (uint32_t idx = 0; idx < io_counts[kdx]; idx++) {
+            if (src_io[kdx][idx]) {
+                arr[idx] = strdup(src_io[kdx][idx]);
+
+                if (UNLIKELY(!arr[idx]))
+                    return false;
+            }
+        }
+    }
+
+    if (src->bounding_box) {
+        dst->bounding_box = asdf_gwcs_bounding_box_copy(file, src->bounding_box);
+
+        if (UNLIKELY(!dst->bounding_box))
+            return false;
+    }
+
+    if (src->inverse) {
+        dst->inverse = asdf_gwcs_transform_copy(file, src->inverse);
+
+        if (UNLIKELY(!dst->inverse))
+            return false;
+    }
+
+    return true;
+}
+
+
+/* Shallow-copy the whole (POD) transform struct, then deep-copy the base
+ * fields.  Used by the copy shim for transforms with no type-specific copy
+ * method: their concrete type is shallow apart from the embedded base and
+ * plain-old-data fields, which the memcpy copies directly. */
+static bool asdf_gwcs_transform_copy_shallow(
+    asdf_file_t *file, const void *src, void *dst, size_t size) {
+    memcpy(dst, src, size);
+    return asdf_gwcs_transform_copy_base(file, src, dst);
+}
+
+
+/* Recover the shim vtab (and hence the type's original vtab) from an object's
+ * extension.  The shim vtab is the first member of asdf_gwcs_transform_shim_vtab_t,
+ * so ext->vtab points straight at it. */
+static const asdf_gwcs_transform_shim_vtab_t *transform_shim_of(const void *obj) {
+    const asdf_extension_t *ext = (const asdf_extension_t *)((const asdf_gwcs_transform_t *)obj)->type;
+    return (const asdf_gwcs_transform_shim_vtab_t *)ext->vtab;
+}
+
+
+/* Shared copy method installed for every transform: copy the base fields plus
+ * the type's own fields.  Types with no own copy method are shallow apart from
+ * the base and POD fields, so the whole struct is shallow-copied. */
+static bool asdf_gwcs_transform_copy_shim(asdf_file_t *file, const void *src, void *dst) {
+    const asdf_gwcs_transform_shim_vtab_t *shim = transform_shim_of(src);
+
+    if (shim->orig->copy) {
+        if (!asdf_gwcs_transform_copy_base(file, src, dst))
+            return false;
+        return shim->orig->copy(file, src, dst);
+    }
+
+    const asdf_extension_t *ext = (const asdf_extension_t *)((const asdf_gwcs_transform_t *)src)->type;
+    return asdf_gwcs_transform_copy_shallow(file, src, dst, ext->size);
+}
+
+
+/* Shared deinit method installed for every transform: the type's own deinit
+ * (if any) followed by the base deinit. */
+static void asdf_gwcs_transform_deinit_shim(void *obj) {
+    const asdf_gwcs_transform_shim_vtab_t *shim = transform_shim_of(obj);
+
+    if (shim->orig->deinit)
+        shim->orig->deinit(obj);
+    asdf_gwcs_transform_deinit_base((asdf_gwcs_transform_t *)obj);
+}
+
+
+void asdf_gwcs_transform_install_shim(
+    asdf_extension_t *ext, asdf_gwcs_transform_shim_vtab_t *shim) {
+    shim->orig = ext->vtab;
+    shim->vtab = *ext->vtab;
+    shim->vtab.copy = asdf_gwcs_transform_copy_shim;
+    shim->vtab.deinit = asdf_gwcs_transform_deinit_shim;
+    ext->vtab = &shim->vtab;
+}
+
+
+bool asdf_gwcs_transform_copy_into(
+    asdf_file_t *file, const asdf_gwcs_transform_t *transform, asdf_gwcs_transform_t *copy) {
+    if (!transform || !copy)
+        return false;
+
+    const asdf_extension_t *ext = (const asdf_extension_t *)transform->type;
+
+    /* The registered vtab copy method is a shim that copies the base fields
+     * and then the concrete type's own fields (see ASDF_GWCS_REGISTER_TRANSFORM).
+     * A transform with no registered copy is a bare base transform. */
+    if (ext && ext->vtab && ext->vtab->copy) {
+        if (!ext->vtab->copy(file, transform, copy))
+            goto failure;
+    } else if (!asdf_gwcs_transform_copy_base(file, transform, copy)) {
+        goto failure;
+    }
+
+    return true;
+failure:
+    asdf_gwcs_transform_deinit(copy);
+    return false;
+}
+
+
+asdf_gwcs_transform_t *asdf_gwcs_transform_copy(
+    asdf_file_t *file, const asdf_gwcs_transform_t *transform) {
+
+    if (!transform)
+        return NULL;
+
+    const asdf_extension_t *ext = (const asdf_extension_t *)transform->type;
+
+    if (UNLIKELY(!ext))
+        return NULL;
+
+    asdf_gwcs_transform_t *copy = calloc(ext->size, sizeof(uint8_t));
+
+    if (UNLIKELY(!copy))
+        return NULL;
+
+    if (!asdf_gwcs_transform_copy_into(file, transform, copy)) {
+        free(copy);
+        return NULL;
+    }
+
+    return copy;
 }
 
 
@@ -211,28 +402,23 @@ void asdf_gwcs_transform_arity_set(
 }
 
 
-void asdf_gwcs_transform_destroy(asdf_gwcs_transform_t *transform) {
+void asdf_gwcs_transform_deinit(asdf_gwcs_transform_t *transform) {
     if (!transform)
         return;
 
     const asdf_extension_t *ext = (const asdf_extension_t *)transform->type;
 
-    if (ext && ext->vtab && ext->vtab->dealloc) {
-        ext->vtab->dealloc(transform);
+    if (ext && ext->vtab && ext->vtab->deinit) {
+        ext->vtab->deinit(transform);
         return;
     }
 
-    asdf_gwcs_transform_clean(transform);
-    free(transform);
+    asdf_gwcs_transform_deinit_base(transform);
 }
 
 
-void asdf_gwcs_transform_generic_dealloc(void *value) {
-    if (!value)
-        return;
-
-    asdf_gwcs_transform_t *transform = (asdf_gwcs_transform_t *)value;
-    asdf_gwcs_transform_clean(transform);
+void asdf_gwcs_transform_destroy(asdf_gwcs_transform_t *transform) {
+    asdf_gwcs_transform_deinit(transform);
     free(transform);
 }
 
@@ -479,11 +665,13 @@ const asdf_extension_t *asdf_gwcs_transform_get(UNUSED(asdf_file_t *file), const
 }
 
 
+/* A bare/generic transform has only base fields, so it needs no type-specific
+ * copy or deinit; the registration shim supplies base copy/deinit. */
 static const asdf_extension_vtab_t asdf_gwcs_transform_generic_vtab = {
     .serialize = asdf_gwcs_transform_generic_serialize,
     .deserialize = asdf_gwcs_transform_generic_deserialize,
-    .copy = NULL, /* TODO */
-    .dealloc = asdf_gwcs_transform_generic_dealloc,
+    .copy = NULL,
+    .deinit = NULL,
 };
 
 

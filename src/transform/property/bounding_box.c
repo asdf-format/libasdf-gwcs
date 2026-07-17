@@ -4,6 +4,7 @@
 #include "config.h"
 #endif
 
+#include <asdf/error.h>
 #include <asdf/extension_util.h>
 #include <asdf/log.h>
 #include <asdf/value.h>
@@ -190,28 +191,90 @@ cleanup:
 }
 
 
-static void asdf_gwcs_bounding_box_dealloc(void *value) {
+static bool asdf_gwcs_bounding_box_copy_impl(
+    UNUSED(asdf_file_t *file), const void *src, void *dst) {
+
+    const asdf_gwcs_bounding_box_t *bounding_box = src;
+    asdf_gwcs_bounding_box_t *copy = dst;
+
+    copy->order = bounding_box->order;
+
+    if (bounding_box->n_intervals && bounding_box->intervals) {
+        asdf_gwcs_interval_t *intervals = calloc(
+            bounding_box->n_intervals, sizeof(asdf_gwcs_interval_t));
+
+        if (UNLIKELY(!intervals))
+            return false;
+
+        copy->intervals = intervals;
+        copy->n_intervals = bounding_box->n_intervals;
+
+        for (uint32_t idx = 0; idx < bounding_box->n_intervals; idx++) {
+            intervals[idx].bounds[0] = bounding_box->intervals[idx].bounds[0];
+            intervals[idx].bounds[1] = bounding_box->intervals[idx].bounds[1];
+
+            if (bounding_box->intervals[idx].input_name) {
+                intervals[idx].input_name = strdup(bounding_box->intervals[idx].input_name);
+
+                if (UNLIKELY(!intervals[idx].input_name))
+                    return false;
+            }
+        }
+    }
+
+    if (bounding_box->ignore) {
+        size_t n = 0;
+        while (bounding_box->ignore[n])
+            n++;
+
+        const char **ignore = calloc(n + 1, sizeof(char *));
+
+        if (UNLIKELY(!ignore))
+            return false;
+
+        copy->ignore = ignore;
+
+        for (size_t idx = 0; idx < n; idx++) {
+            ignore[idx] = strdup(bounding_box->ignore[idx]);
+
+            if (UNLIKELY(!ignore[idx]))
+                return false;
+        }
+    }
+
+    return true;
+}
+
+
+static void asdf_gwcs_bounding_box_deinit_impl(void *value) {
     if (!value)
         return;
 
     asdf_gwcs_bounding_box_t *bounding_box = (asdf_gwcs_bounding_box_t *)value;
+
+    if (bounding_box->ignore) {
+        for (uint32_t idx = 0; bounding_box->ignore[idx]; idx++)
+            free((void *)bounding_box->ignore[idx]);
+
+        free((void *)bounding_box->ignore);
+        bounding_box->ignore = NULL;
+    }
 
     if (bounding_box->intervals) {
         for (uint32_t idx = 0; idx < bounding_box->n_intervals; idx++)
             asdf_gwcs_interval_cleanup((asdf_gwcs_interval_t *)&bounding_box->intervals[idx]);
 
         free((void *)bounding_box->intervals);
+        bounding_box->intervals = NULL;
     }
-
-    free(bounding_box);
 }
 
 
 static const asdf_extension_vtab_t asdf_gwcs_bounding_box_vtab = {
     .serialize = asdf_gwcs_bounding_box_serialize,
     .deserialize = asdf_gwcs_bounding_box_deserialize,
-    .copy = NULL, /* TODO */
-    .dealloc = asdf_gwcs_bounding_box_dealloc,
+    .copy = asdf_gwcs_bounding_box_copy_impl,
+    .deinit = asdf_gwcs_bounding_box_deinit_impl,
 };
 
 

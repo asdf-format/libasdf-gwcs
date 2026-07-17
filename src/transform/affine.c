@@ -176,23 +176,51 @@ cleanup:
 }
 
 
-static void asdf_gwcs_affine_dealloc(void *value) {
+static bool asdf_gwcs_affine_copy_impl(UNUSED(asdf_file_t *file), const void *src, void *dst) {
+    const asdf_gwcs_affine_t *affine = src;
+    asdf_gwcs_affine_t *copy = dst;
+
+    if (affine->matrix) {
+        size_t n = (size_t)affine->n_inputs * affine->n_inputs;
+        copy->matrix = malloc(n * sizeof(*affine->matrix));
+
+        if (UNLIKELY(!copy->matrix))
+            return false;
+
+        memcpy(copy->matrix, affine->matrix, n * sizeof(*affine->matrix));
+    }
+
+    if (affine->translation) {
+        size_t n = (size_t)affine->n_inputs;
+        copy->translation = malloc(n * sizeof(*affine->translation));
+
+        if (UNLIKELY(!copy->translation))
+            return false;
+
+        memcpy(copy->translation, affine->translation, n * sizeof(*affine->translation));
+    }
+
+    return true;
+}
+
+
+static void asdf_gwcs_affine_deinit_impl(void *value) {
     if (!value)
         return;
 
     asdf_gwcs_affine_t *affine = (asdf_gwcs_affine_t *)value;
-    asdf_gwcs_transform_clean(&affine->base);
     free(affine->matrix);
+    affine->matrix = NULL;
     free(affine->translation);
-    free(affine);
+    affine->translation = NULL;
 }
 
 
 static const asdf_extension_vtab_t asdf_gwcs_affine_vtab = {
     .serialize = asdf_gwcs_affine_serialize,
     .deserialize = asdf_gwcs_affine_deserialize,
-    .copy = NULL, /* TODO */
-    .dealloc = asdf_gwcs_affine_dealloc,
+    .copy = asdf_gwcs_affine_copy_impl,
+    .deinit = asdf_gwcs_affine_deinit_impl,
 };
 
 
