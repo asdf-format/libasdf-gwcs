@@ -50,7 +50,8 @@ typedef struct {
      */
     const char *ctype[2];
 
-    asdf_gwcs_transform_t projection;
+    /** The projection transform (e.g. gnomonic/``TAN``), owned by this object. */
+    asdf_gwcs_transform_t *projection;
 } asdf_gwcs_fits_t;
 
 

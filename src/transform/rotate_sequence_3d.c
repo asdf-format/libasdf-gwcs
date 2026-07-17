@@ -17,7 +17,7 @@
 
 static asdf_value_err_t asdf_gwcs_rotate_sequence_3d_deserialize(
     asdf_value_t *value, UNUSED(const void *userdata), void **out) {
-    asdf_gwcs_rotate_sequence_3d_t *rot = NULL;
+    asdf_gwcs_rotate_sequence_3d_t *rot = *out;
     asdf_value_err_t err = ASDF_VALUE_ERR_PARSE_FAILURE;
     asdf_mapping_t *map = NULL;
     asdf_sequence_t *angles_seq = NULL;
@@ -28,18 +28,6 @@ static asdf_value_err_t asdf_gwcs_rotate_sequence_3d_deserialize(
     asdf_gwcs_rotation_type_t rotation_type = ASDF_GWCS_ROTATION_TYPE_CARTESIAN;
 
     if (asdf_value_as_mapping(value, &map) != ASDF_VALUE_OK)
-        goto cleanup;
-
-    rot = calloc(1, sizeof(asdf_gwcs_rotate_sequence_3d_t));
-
-    if (!rot) {
-        err = ASDF_VALUE_ERR_OOM;
-        goto cleanup;
-    }
-
-    err = asdf_gwcs_transform_parse(value, &rot->base);
-
-    if (ASDF_IS_ERR(err))
         goto cleanup;
 
     err = asdf_get_required_property(map, "angles", ASDF_VALUE_SEQUENCE, NULL, (void *)&angles_seq);
@@ -110,16 +98,11 @@ static asdf_value_err_t asdf_gwcs_rotate_sequence_3d_deserialize(
 
     asdf_gwcs_transform_arity_set(&rot->base, asdf_value_file(value), 3, 3);
 
-    *out = rot;
     err = ASDF_VALUE_OK;
 cleanup:
     free(angles);
     free(axes_order_copy);
     asdf_sequence_destroy(angles_seq);
-
-    if (ASDF_IS_ERR(err))
-        asdf_gwcs_rotate_sequence_3d_destroy(rot);
-
     return err;
 }
 

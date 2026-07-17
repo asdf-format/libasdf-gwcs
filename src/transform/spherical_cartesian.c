@@ -16,32 +16,19 @@
 
 static asdf_value_err_t asdf_gwcs_spherical_cartesian_deserialize(
     asdf_value_t *value, UNUSED(const void *userdata), void **out) {
-    asdf_gwcs_spherical_cartesian_t *sc = NULL;
-    asdf_value_err_t err = ASDF_VALUE_ERR_PARSE_FAILURE;
+    asdf_gwcs_spherical_cartesian_t *sc = *out;
     asdf_mapping_t *map = NULL;
     const char *transform_type = NULL;
     uint64_t wrap_lon_at = 180;
 
     if (asdf_value_as_mapping(value, &map) != ASDF_VALUE_OK)
-        goto cleanup;
+        return ASDF_VALUE_ERR_PARSE_FAILURE;
 
-    sc = calloc(1, sizeof(asdf_gwcs_spherical_cartesian_t));
-
-    if (!sc) {
-        err = ASDF_VALUE_ERR_OOM;
-        goto cleanup;
-    }
-
-    err = asdf_gwcs_transform_parse(value, &sc->base);
-
-    if (ASDF_IS_ERR(err))
-        goto cleanup;
-
-    err = asdf_get_required_property(
+    asdf_value_err_t err = asdf_get_required_property(
         map, "transform_type", ASDF_VALUE_STRING, NULL, (void *)&transform_type);
 
     if (ASDF_IS_ERR(err))
-        goto cleanup;
+        return err;
 
     if (strcmp(transform_type, "spherical_to_cartesian") == 0) {
         sc->direction = ASDF_GWCS_SPHERICAL_TO_CARTESIAN;
@@ -50,8 +37,7 @@ static asdf_value_err_t asdf_gwcs_spherical_cartesian_deserialize(
         sc->direction = ASDF_GWCS_CARTESIAN_TO_SPHERICAL;
         asdf_gwcs_transform_arity_set(&sc->base, asdf_value_file(value), 3, 2);
     } else {
-        err = ASDF_VALUE_ERR_PARSE_FAILURE;
-        goto cleanup;
+        return ASDF_VALUE_ERR_PARSE_FAILURE;
     }
 
     err = asdf_get_optional_property(map, "wrap_lon_at", ASDF_VALUE_UINT64, NULL, &wrap_lon_at);
@@ -61,13 +47,7 @@ static asdf_value_err_t asdf_gwcs_spherical_cartesian_deserialize(
     else
         sc->wrap_lon_at = 180.0;
 
-    *out = sc;
-    err = ASDF_VALUE_OK;
-cleanup:
-    if (ASDF_IS_ERR(err))
-        asdf_gwcs_spherical_cartesian_destroy(sc);
-
-    return err;
+    return ASDF_VALUE_OK;
 }
 
 

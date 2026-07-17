@@ -16,30 +16,18 @@
 
 static asdf_value_err_t asdf_gwcs_constant_deserialize(
     asdf_value_t *value, UNUSED(const void *userdata), void **out) {
-    asdf_gwcs_constant_t *constant = NULL;
+    asdf_gwcs_constant_t *constant = *out;
     asdf_value_err_t err = ASDF_VALUE_ERR_PARSE_FAILURE;
     asdf_mapping_t *map = NULL;
     uint64_t dimensions = 1;
 
     if (asdf_value_as_mapping(value, &map) != ASDF_VALUE_OK)
-        goto cleanup;
-
-    constant = calloc(1, sizeof(asdf_gwcs_constant_t));
-
-    if (!constant) {
-        err = ASDF_VALUE_ERR_OOM;
-        goto cleanup;
-    }
-
-    err = asdf_gwcs_transform_parse(value, &constant->base);
-
-    if (ASDF_IS_ERR(err))
-        goto cleanup;
+        return err;
 
     err = asdf_get_required_property(map, "value", ASDF_VALUE_DOUBLE, NULL, &constant->value);
 
     if (ASDF_IS_ERR(err))
-        goto cleanup;
+        return err;
 
     /* NOTE: In constant "dimensions" is a required property and is said to be "one or two" in
      * the description, though the schema seems to allow for any value (nor practically speaking
@@ -53,8 +41,7 @@ static asdf_value_err_t asdf_gwcs_constant_deserialize(
         if (UNLIKELY(!tag)) {
             // We would not even be on this code path if there was a valid tag
             // unless OOM occurred
-            err = ASDF_VALUE_ERR_OOM;
-            goto cleanup;
+            return ASDF_VALUE_ERR_OOM;
         }
 
         // TODO: Might be good to have an explicit helper for this type of
@@ -66,23 +53,13 @@ static asdf_value_err_t asdf_gwcs_constant_deserialize(
                      "required property 'dimensions' missing "
                      "from %s at %s; assuming dimensions=1", tag_str, path);
         }
-        err = ASDF_VALUE_OK;
         asdf_tag_destroy(tag);
-    } else if (ASDF_IS_OK(err)) {
-        // Maybe should warn if missing since at least in the current version
-        // of the schema dimensions is required
-        err = ASDF_VALUE_OK;
-    } else {
-        goto cleanup;
+    } else if (!ASDF_IS_OK(err)) {
+        return err;
     }
 
     asdf_gwcs_transform_arity_set(&constant->base, asdf_value_file(value), dimensions, 1);
-    *out = constant;
-cleanup:
-    if (ASDF_IS_ERR(err))
-        asdf_gwcs_constant_destroy(constant);
-
-    return err;
+    return ASDF_VALUE_OK;
 }
 
 

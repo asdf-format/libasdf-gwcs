@@ -15,25 +15,13 @@
 
 static asdf_value_err_t asdf_gwcs_concatenate_deserialize(
     asdf_value_t *value, UNUSED(const void *userdata), void **out) {
-    asdf_gwcs_concatenate_t *concat = NULL;
+    asdf_gwcs_concatenate_t *concat = *out;
     asdf_value_err_t err = ASDF_VALUE_ERR_PARSE_FAILURE;
     asdf_mapping_t *map = NULL;
     asdf_sequence_t *forward_seq = NULL;
     asdf_gwcs_transform_t **forward = NULL;
 
     if (asdf_value_as_mapping(value, &map) != ASDF_VALUE_OK)
-        goto cleanup;
-
-    concat = calloc(1, sizeof(asdf_gwcs_concatenate_t));
-
-    if (!concat) {
-        err = ASDF_VALUE_ERR_OOM;
-        goto cleanup;
-    }
-
-    err = asdf_gwcs_transform_parse(value, &concat->base);
-
-    if (ASDF_IS_ERR(err))
         goto cleanup;
 
     err = asdf_get_required_property(
@@ -77,14 +65,9 @@ static asdf_value_err_t asdf_gwcs_concatenate_deserialize(
     }
     asdf_gwcs_transform_arity_set(&concat->base, asdf_value_file(value), sum_inputs, sum_outputs);
 
-    *out = concat;
     err = ASDF_VALUE_OK;
 cleanup:
     asdf_sequence_destroy(forward_seq);
-
-    if (ASDF_IS_ERR(err))
-        asdf_gwcs_concatenate_destroy(concat);
-
     return err;
 }
 

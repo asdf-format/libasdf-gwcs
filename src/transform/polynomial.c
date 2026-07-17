@@ -17,25 +17,13 @@
 
 static asdf_value_err_t asdf_gwcs_polynomial_deserialize(
     asdf_value_t *value, UNUSED(const void *userdata), void **out) {
-    asdf_gwcs_polynomial_t *poly = NULL;
+    asdf_gwcs_polynomial_t *poly = *out;
     asdf_value_err_t err = ASDF_VALUE_ERR_PARSE_FAILURE;
     asdf_mapping_t *map = NULL;
     asdf_ndarray_t *ndarray = NULL;
     double *coefficients = NULL;
 
     if (asdf_value_as_mapping(value, &map) != ASDF_VALUE_OK)
-        goto cleanup;
-
-    poly = calloc(1, sizeof(asdf_gwcs_polynomial_t));
-
-    if (!poly) {
-        err = ASDF_VALUE_ERR_OOM;
-        goto cleanup;
-    }
-
-    err = asdf_gwcs_transform_parse(value, &poly->base);
-
-    if (ASDF_IS_ERR(err))
         goto cleanup;
 
     err = asdf_get_required_property(
@@ -75,15 +63,10 @@ static asdf_value_err_t asdf_gwcs_polynomial_deserialize(
 
     asdf_gwcs_transform_arity_set(&poly->base, asdf_value_file(value), ndim, 1);
 
-    *out = poly;
     err = ASDF_VALUE_OK;
 cleanup:
     free(coefficients);
     asdf_ndarray_destroy(ndarray);
-
-    if (ASDF_IS_ERR(err))
-        asdf_gwcs_polynomial_destroy(poly);
-
     return err;
 }
 

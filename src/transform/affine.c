@@ -17,25 +17,13 @@
 
 static asdf_value_err_t asdf_gwcs_affine_deserialize(
     asdf_value_t *value, UNUSED(const void *userdata), void **out) {
-    asdf_gwcs_affine_t *affine = NULL;
+    asdf_gwcs_affine_t *affine = *out;
     asdf_value_err_t err = ASDF_VALUE_ERR_PARSE_FAILURE;
     asdf_mapping_t *map = NULL;
     asdf_ndarray_t *mat_arr = NULL;
     asdf_ndarray_t *tr_arr = NULL;
 
     if (asdf_value_as_mapping(value, &map) != ASDF_VALUE_OK)
-        goto cleanup;
-
-    affine = calloc(1, sizeof(asdf_gwcs_affine_t));
-
-    if (!affine) {
-        err = ASDF_VALUE_ERR_OOM;
-        goto cleanup;
-    }
-
-    err = asdf_gwcs_transform_parse(value, &affine->base);
-
-    if (ASDF_IS_ERR(err))
         goto cleanup;
 
     err = asdf_get_required_property(
@@ -80,15 +68,10 @@ static asdf_value_err_t asdf_gwcs_affine_deserialize(
 
     asdf_gwcs_transform_arity_set(&affine->base, asdf_value_file(value), n_dims, n_dims);
 
-    *out = affine;
     err = ASDF_VALUE_OK;
 cleanup:
     asdf_ndarray_destroy(mat_arr);
     asdf_ndarray_destroy(tr_arr);
-
-    if (ASDF_IS_ERR(err))
-        asdf_gwcs_affine_destroy(affine);
-
     return err;
 }
 

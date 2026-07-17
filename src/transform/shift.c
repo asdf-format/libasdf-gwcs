@@ -15,39 +15,20 @@
 
 static asdf_value_err_t asdf_gwcs_shift_deserialize(
     asdf_value_t *value, UNUSED(const void *userdata), void **out) {
-    asdf_gwcs_shift_t *shift = NULL;
-    asdf_value_err_t err = ASDF_VALUE_ERR_PARSE_FAILURE;
+    asdf_gwcs_shift_t *shift = *out;
     asdf_mapping_t *map = NULL;
 
     if (asdf_value_as_mapping(value, &map) != ASDF_VALUE_OK)
-        goto cleanup;
+        return ASDF_VALUE_ERR_PARSE_FAILURE;
 
-    shift = calloc(1, sizeof(asdf_gwcs_shift_t));
-
-    if (!shift) {
-        err = ASDF_VALUE_ERR_OOM;
-        goto cleanup;
-    }
-
-    err = asdf_gwcs_transform_parse(value, &shift->base);
+    asdf_value_err_t err =
+        asdf_get_required_property(map, "offset", ASDF_VALUE_DOUBLE, NULL, &shift->offset);
 
     if (ASDF_IS_ERR(err))
-        goto cleanup;
-
-    err = asdf_get_required_property(map, "offset", ASDF_VALUE_DOUBLE, NULL, &shift->offset);
-
-    if (ASDF_IS_ERR(err))
-        goto cleanup;
+        return err;
 
     asdf_gwcs_transform_arity_set(&shift->base, asdf_value_file(value), 1, 1);
-
-    *out = shift;
-    err = ASDF_VALUE_OK;
-cleanup:
-    if (ASDF_IS_ERR(err))
-        asdf_gwcs_shift_destroy(shift);
-
-    return err;
+    return ASDF_VALUE_OK;
 }
 
 

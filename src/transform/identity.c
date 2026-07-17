@@ -16,39 +16,21 @@
 
 static asdf_value_err_t asdf_gwcs_identity_deserialize(
     asdf_value_t *value, UNUSED(const void *userdata), void **out) {
-    asdf_gwcs_identity_t *identity = NULL;
-    asdf_value_err_t err = ASDF_VALUE_ERR_PARSE_FAILURE;
+    asdf_gwcs_identity_t *identity = *out;
     asdf_mapping_t *map = NULL;
 
     if (asdf_value_as_mapping(value, &map) != ASDF_VALUE_OK)
-        goto cleanup;
-
-    identity = calloc(1, sizeof(asdf_gwcs_identity_t));
-
-    if (!identity) {
-        err = ASDF_VALUE_ERR_OOM;
-        goto cleanup;
-    }
-
-    err = asdf_gwcs_transform_parse(value, &identity->base);
-
-    if (ASDF_IS_ERR(err))
-        goto cleanup;
+        return ASDF_VALUE_ERR_PARSE_FAILURE;
 
     uint64_t n_dims = 0;
-    err = asdf_get_optional_property(map, "n_dims", ASDF_VALUE_UINT64, NULL, &n_dims);
+    asdf_value_err_t err = asdf_get_optional_property(
+        map, "n_dims", ASDF_VALUE_UINT64, NULL, &n_dims);
 
-    if (ASDF_IS_OPTIONAL_OK(err))
+    if (ASDF_IS_OPTIONAL_OK(err) && n_dims)
         asdf_gwcs_transform_arity_set(
             &identity->base, asdf_value_file(value), (uint32_t)n_dims, (uint32_t)n_dims);
 
-    *out = identity;
-    err = ASDF_VALUE_OK;
-cleanup:
-    if (ASDF_IS_ERR(err))
-        asdf_gwcs_identity_destroy(identity);
-
-    return err;
+    return ASDF_VALUE_OK;
 }
 
 

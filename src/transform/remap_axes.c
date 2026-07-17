@@ -17,25 +17,13 @@
 
 static asdf_value_err_t asdf_gwcs_remap_axes_deserialize(
     asdf_value_t *value, UNUSED(const void *userdata), void **out) {
-    asdf_gwcs_remap_axes_t *remap = NULL;
+    asdf_gwcs_remap_axes_t *remap = *out;
     asdf_value_err_t err = ASDF_VALUE_ERR_PARSE_FAILURE;
     asdf_mapping_t *map = NULL;
     asdf_sequence_t *mapping_seq = NULL;
     uint32_t *mapping = NULL;
 
     if (asdf_value_as_mapping(value, &map) != ASDF_VALUE_OK)
-        goto cleanup;
-
-    remap = calloc(1, sizeof(asdf_gwcs_remap_axes_t));
-
-    if (!remap) {
-        err = ASDF_VALUE_ERR_OOM;
-        goto cleanup;
-    }
-
-    err = asdf_gwcs_transform_parse(value, &remap->base);
-
-    if (ASDF_IS_ERR(err))
         goto cleanup;
 
     err = asdf_get_required_property(
@@ -90,15 +78,10 @@ static asdf_value_err_t asdf_gwcs_remap_axes_deserialize(
         n_inputs = (uint32_t)explicit_n_inputs;
     asdf_gwcs_transform_arity_set(&remap->base, asdf_value_file(value), n_inputs, (uint32_t)n);
 
-    *out = remap;
     err = ASDF_VALUE_OK;
 cleanup:
     free(mapping);
     asdf_sequence_destroy(mapping_seq);
-
-    if (ASDF_IS_ERR(err))
-        asdf_gwcs_remap_axes_destroy(remap);
-
     return err;
 }
 

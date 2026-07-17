@@ -11,9 +11,6 @@
 #include "util.h"
 
 
-ASDF_LOCAL asdf_value_err_t
-asdf_gwcs_transform_parse(asdf_value_t *value, asdf_gwcs_transform_t *transform);
-
 /**
  * Cross-check YAML-derived n_inputs / n_outputs against implicit values
  * computed from a transform's own properties, then set the fields.
