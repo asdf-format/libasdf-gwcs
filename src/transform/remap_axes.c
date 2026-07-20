@@ -88,19 +88,11 @@ cleanup:
 
 static asdf_value_t *asdf_gwcs_remap_axes_serialize(
     asdf_file_t *file, const void *obj, UNUSED(const void *userdata)) {
-    if (UNLIKELY(!file || !obj))
-        return NULL;
-
     const asdf_gwcs_remap_axes_t *remap = obj;
     asdf_mapping_t *map = asdf_mapping_create(file);
 
     if (!map)
         return NULL;
-
-    asdf_value_err_t err = asdf_gwcs_transform_serialize_base(file, &remap->base, map);
-
-    if (ASDF_IS_ERR(err))
-        goto cleanup;
 
     asdf_sequence_t *seq = asdf_sequence_create(file);
 
@@ -110,17 +102,13 @@ static asdf_value_t *asdf_gwcs_remap_axes_serialize(
     asdf_sequence_set_style(seq, ASDF_YAML_NODE_STYLE_FLOW);
 
     for (uint32_t idx = 0; idx < remap->n_outputs; idx++) {
-        err = asdf_sequence_append_uint32(seq, remap->mapping[idx]);
-
-        if (ASDF_IS_ERR(err)) {
+        if (ASDF_IS_ERR(asdf_sequence_append_uint32(seq, remap->mapping[idx]))) {
             asdf_sequence_destroy(seq);
             goto cleanup;
         }
     }
 
-    err = asdf_mapping_set_sequence(map, "mapping", seq);
-
-    if (ASDF_IS_ERR(err)) {
+    if (ASDF_IS_ERR(asdf_mapping_set_sequence(map, "mapping", seq))) {
         asdf_sequence_destroy(seq);
         goto cleanup;
     }
@@ -135,12 +123,9 @@ static asdf_value_t *asdf_gwcs_remap_axes_serialize(
             max_mapping = remap->mapping[idx];
     }
 
-    if (remap->base.n_inputs > max_mapping + 1) {
-        err = asdf_mapping_set_uint64(map, "n_inputs", remap->n_inputs);
-
-        if (ASDF_IS_ERR(err))
-            goto cleanup;
-    }
+    if (remap->base.n_inputs > max_mapping + 1 &&
+        ASDF_IS_ERR(asdf_mapping_set_uint64(map, "n_inputs", remap->n_inputs)))
+        goto cleanup;
 
     return asdf_value_of_mapping(map);
 cleanup:

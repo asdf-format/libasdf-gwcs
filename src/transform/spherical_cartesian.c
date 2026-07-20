@@ -53,38 +53,27 @@ static asdf_value_err_t asdf_gwcs_spherical_cartesian_deserialize(
 
 static asdf_value_t *asdf_gwcs_spherical_cartesian_serialize(
     asdf_file_t *file, const void *obj, UNUSED(const void *userdata)) {
-    if (UNLIKELY(!file || !obj))
-        return NULL;
-
     const asdf_gwcs_spherical_cartesian_t *sc = obj;
     asdf_mapping_t *map = asdf_mapping_create(file);
 
     if (!map)
         return NULL;
 
-    asdf_value_err_t err = asdf_gwcs_transform_serialize_base(file, &sc->base, map);
-
-    if (ASDF_IS_ERR(err))
-        goto cleanup;
-
     const char *type_str = sc->direction == ASDF_GWCS_SPHERICAL_TO_CARTESIAN
                                ? "spherical_to_cartesian"
                                : "cartesian_to_spherical";
 
-    err = asdf_mapping_set_string0(map, "transform_type", type_str);
+    asdf_value_err_t err = asdf_mapping_set_string0(map, "transform_type", type_str);
 
-    if (ASDF_IS_ERR(err))
-        goto cleanup;
+    if (!ASDF_IS_ERR(err))
+        err = asdf_mapping_set_uint64(map, "wrap_lon_at", (uint64_t)sc->wrap_lon_at);
 
-    err = asdf_mapping_set_uint64(map, "wrap_lon_at", (uint64_t)sc->wrap_lon_at);
-
-    if (ASDF_IS_ERR(err))
-        goto cleanup;
+    if (ASDF_IS_ERR(err)) {
+        asdf_mapping_destroy(map);
+        return NULL;
+    }
 
     return asdf_value_of_mapping(map);
-cleanup:
-    asdf_mapping_destroy(map);
-    return NULL;
 }
 
 

@@ -56,19 +56,11 @@ cleanup:
 
 static asdf_value_t *asdf_gwcs_divide_serialize(
     asdf_file_t *file, const void *obj, UNUSED(const void *userdata)) {
-    if (UNLIKELY(!file || !obj))
-        return NULL;
-
     const asdf_gwcs_divide_t *divide = obj;
     asdf_mapping_t *map = asdf_mapping_create(file);
 
     if (!map)
         return NULL;
-
-    asdf_value_err_t err = asdf_gwcs_transform_serialize_base(file, &divide->base, map);
-
-    if (ASDF_IS_ERR(err))
-        goto cleanup;
 
     asdf_sequence_t *seq = asdf_sequence_create(file);
 
@@ -85,18 +77,14 @@ static asdf_value_t *asdf_gwcs_divide_serialize(
             goto cleanup;
         }
 
-        err = asdf_sequence_append(seq, t_val);
-
-        if (ASDF_IS_ERR(err)) {
+        if (ASDF_IS_ERR(asdf_sequence_append(seq, t_val))) {
             asdf_value_destroy(t_val);
             asdf_sequence_destroy(seq);
             goto cleanup;
         }
     }
 
-    err = asdf_mapping_set_sequence(map, "forward", seq);
-
-    if (ASDF_IS_ERR(err)) {
+    if (ASDF_IS_ERR(asdf_mapping_set_sequence(map, "forward", seq))) {
         asdf_sequence_destroy(seq);
         goto cleanup;
     }

@@ -141,9 +141,9 @@ static bool asdf_gwcs_transform_copy_shallow(
 }
 
 
-/* Recover the shim vtab (and hence the type's original vtab) from an object's
- * extension.  The shim vtab is the first member of asdf_gwcs_transform_shim_vtab_t,
- * so ext->vtab points straight at it. */
+/* Recover the shim vtab (and hence the type's own methods) from an object's
+ * extension.  The libasdf vtab is the first member of
+ * asdf_gwcs_transform_shim_vtab_t, so ext->vtab points straight at it. */
 static const asdf_gwcs_transform_shim_vtab_t *transform_shim_of(const void *obj) {
     const asdf_extension_t *ext = (const asdf_extension_t *)((const asdf_gwcs_transform_t *)obj)->type;
     return (const asdf_gwcs_transform_shim_vtab_t *)ext->vtab;
@@ -175,6 +175,53 @@ static void asdf_gwcs_transform_deinit_shim(void *obj) {
     if (shim->orig->deinit)
         shim->orig->deinit(obj);
     asdf_gwcs_transform_deinit_base((asdf_gwcs_transform_t *)obj);
+}
+
+
+static asdf_value_err_t asdf_gwcs_transform_serialize_base(
+    asdf_file_t *file, const asdf_gwcs_transform_t *transform, asdf_mapping_t *map);
+
+
+/* Shared serialize method installed for every transform: create the mapping,
+ * write the base fields, then merge in the type's own fields.  The type's own
+ * serializer (a plain libasdf serializer) returns a mapping of just its own
+ * fields, which is merged onto the base mapping. */
+static asdf_value_t *asdf_gwcs_transform_serialize_shim(
+    asdf_file_t *file, const void *obj, const void *userdata) {
+    if (UNLIKELY(!file || !obj))
+        return NULL;
+
+    const asdf_gwcs_transform_shim_vtab_t *shim = transform_shim_of(obj);
+    asdf_mapping_t *map = asdf_mapping_create(file);
+
+    if (!map)
+        return NULL;
+
+    if (ASDF_IS_ERR(asdf_gwcs_transform_serialize_base(file, obj, map)))
+        goto failure;
+
+    if (shim->orig->serialize) {
+        asdf_value_t *own = shim->orig->serialize(file, obj, userdata);
+
+        if (!own)
+            goto failure;
+
+        asdf_mapping_t *own_map = NULL;
+        asdf_value_err_t err = asdf_value_as_mapping(own, &own_map);
+
+        if (!ASDF_IS_ERR(err))
+            err = asdf_mapping_update(map, own_map);
+
+        asdf_value_destroy(own);
+
+        if (ASDF_IS_ERR(err))
+            goto failure;
+    }
+
+    return asdf_value_of_mapping(map);
+failure:
+    asdf_mapping_destroy(map);
+    return NULL;
 }
 
 
@@ -330,8 +377,7 @@ static asdf_value_err_t asdf_gwcs_transform_deserialize_shim(
 
 void asdf_gwcs_transform_install_shim(
     asdf_extension_t *ext, asdf_gwcs_transform_shim_vtab_t *shim) {
-    shim->orig = ext->vtab;
-    shim->vtab = *ext->vtab;
+    shim->vtab.serialize = asdf_gwcs_transform_serialize_shim;
     shim->vtab.deserialize = asdf_gwcs_transform_deserialize_shim;
     shim->vtab.copy = asdf_gwcs_transform_copy_shim;
     shim->vtab.deinit = asdf_gwcs_transform_deinit_shim;
@@ -506,7 +552,7 @@ static asdf_value_err_t serialize_string_sequence(
 }
 
 
-asdf_value_err_t asdf_gwcs_transform_serialize_base(
+static asdf_value_err_t asdf_gwcs_transform_serialize_base(
     asdf_file_t *file, const asdf_gwcs_transform_t *transform, asdf_mapping_t *map) {
     asdf_value_err_t err = ASDF_VALUE_OK;
 
@@ -548,28 +594,6 @@ asdf_value_err_t asdf_gwcs_transform_serialize_base(
     }
 
     return ASDF_VALUE_OK;
-}
-
-
-static asdf_value_t *asdf_gwcs_transform_generic_serialize(
-    asdf_file_t *file, const void *obj, UNUSED(const void *userdata)) {
-    if (UNLIKELY(!file || !obj))
-        return NULL;
-
-    const asdf_gwcs_transform_t *transform = obj;
-    asdf_mapping_t *map = asdf_mapping_create(file);
-
-    if (!map)
-        return NULL;
-
-    asdf_value_err_t err = asdf_gwcs_transform_serialize_base(file, transform, map);
-
-    if (ASDF_IS_ERR(err)) {
-        asdf_mapping_destroy(map);
-        return NULL;
-    }
-
-    return asdf_value_of_mapping(map);
 }
 
 
@@ -671,12 +695,10 @@ const asdf_extension_t *asdf_gwcs_transform_get(UNUSED(asdf_file_t *file), const
 }
 
 
-/* A bare/generic transform has only base fields, so it needs no type-specific
- * copy or deinit; the registration shim supplies base copy/deinit. */
-/* A bare/generic transform has only base fields, so it needs no type-specific
- * deserialize/copy/deinit; the registration shim supplies the base ones. */
+/* A bare/generic transform has only base fields, so all methods are NULL; the
+ * registration shim supplies the base serialize/deserialize/copy/deinit. */
 static const asdf_extension_vtab_t asdf_gwcs_transform_generic_vtab = {
-    .serialize = asdf_gwcs_transform_generic_serialize,
+    .serialize = NULL,
     .deserialize = NULL,
     .copy = NULL,
     .deinit = NULL,

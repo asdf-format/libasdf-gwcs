@@ -73,23 +73,15 @@ cleanup:
 
 static asdf_value_t *asdf_gwcs_polynomial_serialize(
     asdf_file_t *file, const void *obj, UNUSED(const void *userdata)) {
-    if (UNLIKELY(!file || !obj))
+    const asdf_gwcs_polynomial_t *poly = obj;
+
+    if (poly->ndim == 0 || poly->n_coeffs == 0)
         return NULL;
 
-    const asdf_gwcs_polynomial_t *poly = obj;
     asdf_mapping_t *map = asdf_mapping_create(file);
 
     if (!map)
         return NULL;
-
-    asdf_value_err_t err = asdf_gwcs_transform_serialize_base(file, &poly->base, map);
-
-    if (ASDF_IS_ERR(err))
-        goto cleanup;
-
-    /* Build ndarray for coefficients */
-    if (poly->ndim == 0 || poly->n_coeffs == 0)
-        goto cleanup;
 
     uint64_t *shape = calloc(poly->ndim, sizeof(uint64_t));
 
@@ -118,14 +110,11 @@ static asdf_value_t *asdf_gwcs_polynomial_serialize(
 
     asdf_value_t *coeff_val = asdf_value_of_ndarray(file, &ndarray);
     free(shape);
-    ndarray.shape = NULL;
 
     if (!coeff_val)
         goto cleanup;
 
-    err = asdf_mapping_set(map, "coefficients", coeff_val);
-
-    if (ASDF_IS_ERR(err)) {
+    if (ASDF_IS_ERR(asdf_mapping_set(map, "coefficients", coeff_val))) {
         asdf_value_destroy(coeff_val);
         goto cleanup;
     }

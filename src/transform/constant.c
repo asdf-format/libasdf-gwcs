@@ -65,34 +65,23 @@ static asdf_value_err_t asdf_gwcs_constant_deserialize(
 
 static asdf_value_t *asdf_gwcs_constant_serialize(
     asdf_file_t *file, const void *obj, UNUSED(const void *userdata)) {
-    if (UNLIKELY(!file || !obj))
-        return NULL;
-
     const asdf_gwcs_constant_t *constant = obj;
     asdf_mapping_t *map = asdf_mapping_create(file);
 
     if (!map)
         return NULL;
 
-    asdf_value_err_t err = asdf_gwcs_transform_serialize_base(file, &constant->base, map);
+    asdf_value_err_t err = asdf_mapping_set_double(map, "value", constant->value);
 
-    if (ASDF_IS_ERR(err))
-        goto cleanup;
+    if (!ASDF_IS_ERR(err))
+        err = asdf_mapping_set_uint64(map, "dimensions", constant->n_inputs);
 
-    err = asdf_mapping_set_double(map, "value", constant->value);
-
-    if (ASDF_IS_ERR(err))
-        goto cleanup;
-
-    err = asdf_mapping_set_uint64(map, "dimensions", constant->n_inputs);
-
-    if (ASDF_IS_ERR(err))
-        goto cleanup;
+    if (ASDF_IS_ERR(err)) {
+        asdf_mapping_destroy(map);
+        return NULL;
+    }
 
     return asdf_value_of_mapping(map);
-cleanup:
-    asdf_mapping_destroy(map);
-    return NULL;
 }
 
 

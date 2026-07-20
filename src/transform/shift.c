@@ -34,29 +34,18 @@ static asdf_value_err_t asdf_gwcs_shift_deserialize(
 
 static asdf_value_t *asdf_gwcs_shift_serialize(
     asdf_file_t *file, const void *obj, UNUSED(const void *userdata)) {
-    if (UNLIKELY(!file || !obj))
-        return NULL;
-
     const asdf_gwcs_shift_t *shift = obj;
     asdf_mapping_t *map = asdf_mapping_create(file);
 
     if (!map)
         return NULL;
 
-    asdf_value_err_t err = asdf_gwcs_transform_serialize_base(file, &shift->base, map);
-
-    if (ASDF_IS_ERR(err))
-        goto cleanup;
-
-    err = asdf_mapping_set_double(map, "offset", shift->offset);
-
-    if (ASDF_IS_ERR(err))
-        goto cleanup;
+    if (ASDF_IS_ERR(asdf_mapping_set_double(map, "offset", shift->offset))) {
+        asdf_mapping_destroy(map);
+        return NULL;
+    }
 
     return asdf_value_of_mapping(map);
-cleanup:
-    asdf_mapping_destroy(map);
-    return NULL;
 }
 
 

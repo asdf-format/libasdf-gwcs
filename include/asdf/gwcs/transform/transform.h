@@ -163,18 +163,16 @@ ASDF_EXPORT const asdf_extension_t *asdf_gwcs_transform_get(asdf_file_t *file, c
 
 
 /*
- * Per-transform storage for the copy/deinit shim that
- * `ASDF_GWCS_REGISTER_TRANSFORM` installs.
+ * Storage for the shim `ASDF_GWCS_REGISTER_TRANSFORM` installs over a transform
+ * extension.  ``vtab``--the libasdf-facing table ``ext->vtab`` points at--is
+ * filled with shims that run the base transform handling
+ * (serialize/deserialize/copy/deinit) together with the transform's own
+ * ``orig`` methods, so both the polymorphic entry points and the per-type
+ * accessors libasdf generates produce a complete object.  ``vtab`` must be the
+ * first member so the shims can recover this struct from ``ext->vtab``.
  *
- * NOTE: This is part of the transform registration machinery and needs to
- * be declared in the public headers, but is not part of the documented API
- * for users.
- *
- * The shim ``vtab`` comes first so the shared shim methods can recover this
- * struct (and hence ``orig``) from ``ext->vtab``; ``orig`` retains the type's
- * own vtab (its serialize/deserialize and its own copy/deinit, if any).  This
- * is public only so third-party transform registrations can declare the
- * storage; its layout is otherwise opaque.
+ * NOTE: This is an internal implementation detail of the transform
+ * polymorphiism support.
  */
 typedef struct {
     asdf_extension_vtab_t vtab;
@@ -182,54 +180,51 @@ typedef struct {
 } asdf_gwcs_transform_shim_vtab_t;
 
 /*
- * Point ``ext`` at a shim vtab (stored in ``shim``) whose copy/deinit run the
- * base transform copy/deinit together with the type's own methods, so that both
- * the polymorphic entry points and the per-type accessors libasdf generates
- * produce a complete object.  Called once per transform at registration
- * (normally via `ASDF_GWCS_REGISTER_TRANSFORM`).
- *
- * NOTE: This is part of the transform registration machinery and needs to
- * be declared in the public headers, but is not part of the documented API
- * for users.
- *
+ * Point ``ext`` at ``shim``'s ``vtab``, whose serialize/deserialize/copy/deinit
+ * run the base transform handling together with ``shim``'s own methods, so that
+ * both the polymorphic entry points and the per-type accessors libasdf
+ * generates produce a complete object.  Called once per transform at
+ * registration (normally via `ASDF_GWCS_REGISTER_TRANSFORM`).
  */
 ASDF_EXPORT void asdf_gwcs_transform_install_shim(
     asdf_extension_t *ext, asdf_gwcs_transform_shim_vtab_t *shim);
 
 
 /*
- * Install the copy/deinit shim for a registered transform.
+ * Declare the shim storage for a transform from its own `asdf_extension_vtab_t`.
  *
- * A transform's own vtab ``copy``/``deinit`` methods handle only the concrete
- * type's own fields; the base transform fields are handled centrally.  To make
- * this work for BOTH the polymorphic entry points (asdf_gwcs_transform_copy /
- * _deinit) AND the per-type accessors that libasdf generates
- * (asdf_gwcs_<extname>_copy / _destroy, which know nothing of the base class),
- * the extension's copy/deinit are replaced by shared shims (see
- * asdf_gwcs_transform_install_shim) that run the base copy/deinit together with
- * the type's original method.  Each type only needs its own shim-vtab storage,
- * which is what this declares (function-local static, so it lives for the
- * program's lifetime).
+ * Declares a static `asdf_gwcs_transform_shim_vtab_t` whose ``orig`` points at
+ * the transform's own vtab; `ASDF_GWCS_REGISTER_TRANSFORM` registers its
+ * ``vtab`` member and `asdf_gwcs_transform_install_shim` fills that in.
+ */
+#define ASDF_GWCS_TRANSFORM_SHIM_VTAB(extname, ext_vtab) \
+    static asdf_gwcs_transform_shim_vtab_t asdf_gwcs_##extname##_shim_vtab = { \
+        .orig = (ext_vtab), \
+    }
+
+
+/*
+ * Register a transform "subclass".
+ *
+ * ``ext_vtab`` is a pointer to the transform's own `asdf_extension_vtab_t`; its
+ * methods handle only the type's own fields (a serializer returns a mapping of
+ * just those fields), and the base transform handling is supplied centrally by
+ * the installed shim (see `asdf_gwcs_transform_install_shim`).
  *
  * TODO: this is a stopgap until libasdf formalizes extension hierarchies and
  * can generate this itself.
  */
-#define ASDF_GWCS_TRANSFORM_INSTALL_SHIM(extname) \
-    static asdf_gwcs_transform_shim_vtab_t asdf_gwcs_##extname##_shim_vtab; \
-    asdf_gwcs_transform_install_shim( \
-        &ASDF_EXT_STATIC_NAME(gwcs_##extname), &asdf_gwcs_##extname##_shim_vtab)
-
-
-/**
- * Register a transform "subclass".
- */
 #define ASDF_GWCS_REGISTER_TRANSFORM( \
-    extname, ttype, type, software, vtab, userdata, ...) \
-    ASDF_REGISTER_EXTENSION(gwcs_##extname, type, software, vtab, userdata, __VA_ARGS__); \
+    extname, ttype, type, software, ext_vtab, userdata, ...) \
+    ASDF_GWCS_TRANSFORM_SHIM_VTAB(extname, ext_vtab); \
+    ASDF_REGISTER_EXTENSION(gwcs_##extname, type, software, \
+        &asdf_gwcs_##extname##_shim_vtab.vtab, userdata, __VA_ARGS__); \
     const asdf_gwcs_transform_type_t ASDF_GWCS_TRANSFORM_##ttype = \
         (asdf_gwcs_transform_type_t)&ASDF_EXT_STATIC_NAME(gwcs_##extname); \
     static ASDF_CONSTRUCTOR void asdf_gwcs_transform_register_##extname(void) { \
-        ASDF_GWCS_TRANSFORM_INSTALL_SHIM(extname); \
+        asdf_gwcs_transform_install_shim( \
+            &ASDF_EXT_STATIC_NAME(gwcs_##extname), \
+            &asdf_gwcs_##extname##_shim_vtab); \
         asdf_gwcs_transform_register( \
             (asdf_gwcs_transform_type_t)&ASDF_EXT_STATIC_NAME(gwcs_##extname)); \
     }
