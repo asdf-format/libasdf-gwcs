@@ -182,45 +182,48 @@ static asdf_value_err_t asdf_gwcs_transform_serialize_base(
     asdf_file_t *file, const asdf_gwcs_transform_t *transform, asdf_mapping_t *map);
 
 
-/* Shared serialize method installed for every transform: create the mapping,
- * write the base fields, then merge in the type's own fields.  The type's own
- * serializer (a plain libasdf serializer) returns a mapping of just its own
- * fields, which is merged onto the base mapping. */
+/* Shared serialize method installed for every transform: let the type's own
+ * serializer (a plain libasdf serializer) build a mapping of just its own
+ * fields, then write the base fields into that same mapping.  The base fields
+ * are written in place rather than merged from a separate mapping so nested
+ * transforms (e.g. a compose's `forward` sub-pipeline) are never deep-copied. */
 static asdf_value_t *asdf_gwcs_transform_serialize_shim(
     asdf_file_t *file, const void *obj, const void *userdata) {
     if (UNLIKELY(!file || !obj))
         return NULL;
 
     const asdf_gwcs_transform_shim_vtab_t *shim = transform_shim_of(obj);
-    asdf_mapping_t *map = asdf_mapping_create(file);
+    asdf_value_t *value = NULL;
+    asdf_mapping_t *map = NULL;
 
-    if (!map)
-        return NULL;
+    if (shim->orig->serialize) {
+        value = shim->orig->serialize(file, obj, userdata);
+
+        if (!value)
+            return NULL;
+
+        if (asdf_value_as_mapping(value, &map) != ASDF_VALUE_OK)
+            goto failure;
+    } else {
+        map = asdf_mapping_create(file);
+
+        if (!map)
+            return NULL;
+
+        value = asdf_value_of_mapping(map);
+
+        if (!value) {
+            asdf_mapping_destroy(map);
+            return NULL;
+        }
+    }
 
     if (ASDF_IS_ERR(asdf_gwcs_transform_serialize_base(file, obj, map)))
         goto failure;
 
-    if (shim->orig->serialize) {
-        asdf_value_t *own = shim->orig->serialize(file, obj, userdata);
-
-        if (!own)
-            goto failure;
-
-        asdf_mapping_t *own_map = NULL;
-        asdf_value_err_t err = asdf_value_as_mapping(own, &own_map);
-
-        if (!ASDF_IS_ERR(err))
-            err = asdf_mapping_update(map, own_map);
-
-        asdf_value_destroy(own);
-
-        if (ASDF_IS_ERR(err))
-            goto failure;
-    }
-
-    return asdf_value_of_mapping(map);
+    return value;
 failure:
-    asdf_mapping_destroy(map);
+    asdf_value_destroy(value);
     return NULL;
 }
 
