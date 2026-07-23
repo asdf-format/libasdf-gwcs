@@ -36,138 +36,6 @@ static asdf_gwcs_transform_type_t asdf_gwcs_transform_type_get(const char *tagst
 }
 
 
-asdf_value_err_t asdf_gwcs_transform_parse(asdf_value_t *value, asdf_gwcs_transform_t *transform) {
-
-    asdf_value_err_t err = ASDF_VALUE_ERR_PARSE_FAILURE;
-    asdf_mapping_t *transform_map = NULL;
-
-    if (asdf_value_as_mapping(value, &transform_map) != ASDF_VALUE_OK)
-        goto failure;
-
-    const char *tag = asdf_value_tag(value);
-
-    if (!tag) {
-        // Not a transform as far as we know
-        err = ASDF_VALUE_ERR_TYPE_MISMATCH;
-        goto failure;
-    }
-
-    asdf_gwcs_transform_type_t type = asdf_gwcs_transform_type_get(tag);
-
-    /** TODO: Allow unknown tags to be handled? */
-    if (ASDF_GWCS_TRANSFORM_INVALID == type) {
-        err = ASDF_VALUE_ERR_TYPE_MISMATCH;
-        goto failure;
-    }
-
-    transform->type = type;
-
-    const char *name = NULL;
-    err = asdf_get_optional_property(
-        transform_map, "name", ASDF_VALUE_STRING, NULL, (void *)&name);
-
-    if (!ASDF_IS_OPTIONAL_OK(err))
-        goto failure;
-
-    if (name) {
-        transform->name = strdup(name);
-
-        if (!transform->name) {
-            err = ASDF_VALUE_ERR_OOM;
-            goto failure;
-        }
-    }
-
-    err = asdf_get_optional_property(
-        transform_map,
-        "bounding_box",
-        ASDF_VALUE_EXTENSION,
-        ASDF_GWCS_BOUNDING_BOX_TAG,
-        (void *)&transform->bounding_box);
-
-    if (!ASDF_IS_OPTIONAL_OK(err))
-        goto failure;
-
-    /* Parse optional inputs/outputs name sequences */
-    const char *io_keys[2] = {"inputs", "outputs"};
-    uint32_t *io_counts[2] = {&transform->n_inputs, &transform->n_outputs};
-    const char ***io_arrays[2] = {&transform->inputs, &transform->outputs};
-
-    for (int kdx = 0; kdx < 2; kdx++) {
-        asdf_sequence_t *seq = NULL;
-        err = asdf_get_optional_property(
-            transform_map, io_keys[kdx], ASDF_VALUE_SEQUENCE, NULL, (void *)&seq);
-
-        if (!ASDF_IS_OPTIONAL_OK(err))
-            goto failure;
-
-        if (!seq)
-            continue;
-
-        int n = asdf_sequence_size(seq);
-
-        if (n > 0) {
-            char **arr = calloc((size_t)n, sizeof(char *));
-
-            if (!arr) {
-                asdf_sequence_destroy(seq);
-                err = ASDF_VALUE_ERR_OOM;
-                goto failure;
-            }
-
-            *io_counts[kdx] = (uint32_t)n;
-            *io_arrays[kdx] = (const char **)arr;
-
-            asdf_sequence_iter_t *iter = asdf_sequence_iter_init(seq);
-
-            while (asdf_sequence_iter_next(&iter)) {
-                const char *s = NULL;
-                err = asdf_value_as_string0(iter->value, &s);
-
-                if (!ASDF_IS_OK(err)) {
-                    asdf_sequence_iter_destroy(iter);
-                    asdf_sequence_destroy(seq);
-                    goto failure;
-                }
-
-                arr[iter->index] = strdup(s);
-
-                if (!arr[iter->index]) {
-                    err = ASDF_VALUE_ERR_OOM;
-                    asdf_sequence_iter_destroy(iter);
-                    asdf_sequence_destroy(seq);
-                    goto failure;
-                }
-            }
-        }
-
-        asdf_sequence_destroy(seq);
-    }
-
-    err = ASDF_VALUE_OK;
-
-failure:
-    return err;
-}
-
-
-
-static asdf_value_err_t asdf_gwcs_transform_generic_deserialize(
-    asdf_value_t *value, UNUSED(const void *userdata), void **out) {
-    asdf_gwcs_transform_t *transform = calloc(1, sizeof(asdf_gwcs_transform_t));
-
-    if (!transform)
-        return ASDF_VALUE_ERR_OOM;
-
-    asdf_value_err_t err = asdf_gwcs_transform_parse(value, transform);
-
-    if (ASDF_IS_OK(err))
-        *out = transform;
-
-    return err;
-}
-
-
 static void asdf_gwcs_transform_deinit_base(asdf_gwcs_transform_t *transform) {
     if (!transform)
         return;
@@ -273,9 +141,9 @@ static bool asdf_gwcs_transform_copy_shallow(
 }
 
 
-/* Recover the shim vtab (and hence the type's original vtab) from an object's
- * extension.  The shim vtab is the first member of asdf_gwcs_transform_shim_vtab_t,
- * so ext->vtab points straight at it. */
+/* Recover the shim vtab (and hence the type's own methods) from an object's
+ * extension.  The libasdf vtab is the first member of
+ * asdf_gwcs_transform_shim_vtab_t, so ext->vtab points straight at it. */
 static const asdf_gwcs_transform_shim_vtab_t *transform_shim_of(const void *obj) {
     const asdf_extension_t *ext = (const asdf_extension_t *)((const asdf_gwcs_transform_t *)obj)->type;
     return (const asdf_gwcs_transform_shim_vtab_t *)ext->vtab;
@@ -310,10 +178,210 @@ static void asdf_gwcs_transform_deinit_shim(void *obj) {
 }
 
 
+static asdf_value_err_t asdf_gwcs_transform_serialize_base(
+    asdf_file_t *file, const asdf_gwcs_transform_t *transform, asdf_mapping_t *map);
+
+
+/* Shared serialize method installed for every transform: let the type's own
+ * serializer (a plain libasdf serializer) build a mapping of just its own
+ * fields, then write the base fields into that same mapping.  The base fields
+ * are written in place rather than merged from a separate mapping so nested
+ * transforms (e.g. a compose's `forward` sub-pipeline) are never deep-copied. */
+static asdf_value_t *asdf_gwcs_transform_serialize_shim(
+    asdf_file_t *file, const void *obj, const void *userdata) {
+    if (UNLIKELY(!file || !obj))
+        return NULL;
+
+    const asdf_gwcs_transform_shim_vtab_t *shim = transform_shim_of(obj);
+    asdf_value_t *value = NULL;
+    asdf_mapping_t *map = NULL;
+
+    if (shim->orig->serialize) {
+        value = shim->orig->serialize(file, obj, userdata);
+
+        if (!value)
+            return NULL;
+
+        if (asdf_value_as_mapping(value, &map) != ASDF_VALUE_OK)
+            goto failure;
+    } else {
+        map = asdf_mapping_create(file);
+
+        if (!map)
+            return NULL;
+
+        value = asdf_value_of_mapping(map);
+
+        if (!value) {
+            asdf_mapping_destroy(map);
+            return NULL;
+        }
+    }
+
+    if (ASDF_IS_ERR(asdf_gwcs_transform_serialize_base(file, obj, map)))
+        goto failure;
+
+    return value;
+failure:
+    asdf_value_destroy(value);
+    return NULL;
+}
+
+
+/* Base deserialize: allocate an object of the concrete type's size and parse
+ * the base transform fields into it. */
+static asdf_value_err_t asdf_gwcs_transform_deserialize_base(
+    asdf_value_t *value, asdf_gwcs_transform_type_t type, void **out) {
+    const asdf_extension_t *ext = (const asdf_extension_t *)type;
+    asdf_gwcs_transform_t *transform = calloc(1, ext->size);
+
+    if (!transform)
+        return ASDF_VALUE_ERR_OOM;
+
+    transform->type = type;
+
+    asdf_value_err_t err = ASDF_VALUE_ERR_PARSE_FAILURE;
+    asdf_mapping_t *transform_map = NULL;
+
+    if (asdf_value_as_mapping(value, &transform_map) != ASDF_VALUE_OK)
+        goto failure;
+
+    const char *name = NULL;
+    err = asdf_get_optional_property(
+        transform_map, "name", ASDF_VALUE_STRING, NULL, (void *)&name);
+
+    if (!ASDF_IS_OPTIONAL_OK(err))
+        goto failure;
+
+    if (name) {
+        transform->name = strdup(name);
+
+        if (!transform->name) {
+            err = ASDF_VALUE_ERR_OOM;
+            goto failure;
+        }
+    }
+
+    err = asdf_get_optional_property(
+        transform_map,
+        "bounding_box",
+        ASDF_VALUE_EXTENSION,
+        ASDF_GWCS_BOUNDING_BOX_TAG,
+        (void *)&transform->bounding_box);
+
+    if (!ASDF_IS_OPTIONAL_OK(err))
+        goto failure;
+
+    /* Parse optional inputs/outputs name sequences */
+    const char *io_keys[2] = {"inputs", "outputs"};
+    uint32_t *io_counts[2] = {&transform->n_inputs, &transform->n_outputs};
+    const char ***io_arrays[2] = {&transform->inputs, &transform->outputs};
+
+    for (int kdx = 0; kdx < 2; kdx++) {
+        asdf_sequence_t *seq = NULL;
+        err = asdf_get_optional_property(
+            transform_map, io_keys[kdx], ASDF_VALUE_SEQUENCE, NULL, (void *)&seq);
+
+        if (!ASDF_IS_OPTIONAL_OK(err))
+            goto failure;
+
+        if (!seq)
+            continue;
+
+        int n = asdf_sequence_size(seq);
+
+        if (n > 0) {
+            char **arr = calloc((size_t)n, sizeof(char *));
+
+            if (!arr) {
+                asdf_sequence_destroy(seq);
+                err = ASDF_VALUE_ERR_OOM;
+                goto failure;
+            }
+
+            *io_counts[kdx] = (uint32_t)n;
+            *io_arrays[kdx] = (const char **)arr;
+
+            asdf_sequence_iter_t *iter = asdf_sequence_iter_init(seq);
+
+            while (asdf_sequence_iter_next(&iter)) {
+                const char *s = NULL;
+                err = asdf_value_as_string0(iter->value, &s);
+
+                if (!ASDF_IS_OK(err)) {
+                    asdf_sequence_iter_destroy(iter);
+                    asdf_sequence_destroy(seq);
+                    goto failure;
+                }
+
+                arr[iter->index] = strdup(s);
+
+                if (!arr[iter->index]) {
+                    err = ASDF_VALUE_ERR_OOM;
+                    asdf_sequence_iter_destroy(iter);
+                    asdf_sequence_destroy(seq);
+                    goto failure;
+                }
+            }
+        }
+
+        asdf_sequence_destroy(seq);
+    }
+
+    *out = transform;
+    return ASDF_VALUE_OK;
+failure:
+    asdf_gwcs_transform_deinit(transform);
+    free(transform);
+    return err;
+}
+
+
+/* Shared deserialize method installed for every transform: allocate + parse the
+ * base fields, then let the type's own deserialize fill its fields into the
+ * (pre-allocated) object at *out.  Types that add no fields of their own leave
+ * their vtab deserialize NULL. */
+static asdf_value_err_t asdf_gwcs_transform_deserialize_shim(
+    asdf_value_t *value, const void *userdata, void **out) {
+    const char *tag = asdf_value_tag(value);
+
+    if (!tag)
+        return ASDF_VALUE_ERR_TYPE_MISMATCH;
+
+    asdf_gwcs_transform_type_t type = asdf_gwcs_transform_type_get(tag);
+
+    if (type == ASDF_GWCS_TRANSFORM_INVALID)
+        return ASDF_VALUE_ERR_TYPE_MISMATCH;
+
+    const asdf_extension_t *ext = (const asdf_extension_t *)type;
+
+    asdf_value_err_t err = asdf_gwcs_transform_deserialize_base(value, type, out);
+
+    if (ASDF_IS_ERR(err))
+        return err;
+
+    const asdf_gwcs_transform_shim_vtab_t *shim =
+        (const asdf_gwcs_transform_shim_vtab_t *)ext->vtab;
+
+    if (shim->orig->deserialize) {
+        err = shim->orig->deserialize(value, userdata, out);
+
+        if (ASDF_IS_ERR(err)) {
+            asdf_gwcs_transform_deinit(*out);
+            free(*out);
+            *out = NULL;
+            return err;
+        }
+    }
+
+    return ASDF_VALUE_OK;
+}
+
+
 void asdf_gwcs_transform_install_shim(
     asdf_extension_t *ext, asdf_gwcs_transform_shim_vtab_t *shim) {
-    shim->orig = ext->vtab;
-    shim->vtab = *ext->vtab;
+    shim->vtab.serialize = asdf_gwcs_transform_serialize_shim;
+    shim->vtab.deserialize = asdf_gwcs_transform_deserialize_shim;
     shim->vtab.copy = asdf_gwcs_transform_copy_shim;
     shim->vtab.deinit = asdf_gwcs_transform_deinit_shim;
     ext->vtab = &shim->vtab;
@@ -434,20 +502,7 @@ asdf_value_err_t asdf_value_as_gwcs_transform(asdf_value_t *value, asdf_gwcs_tra
     if (ext)
         return asdf_value_as_extension_type(value, ext, (void **)out);
 
-    // Generic / unknown transform: parse only the base fields
-    asdf_gwcs_transform_t *transform = calloc(1, sizeof(asdf_gwcs_transform_t));
-
-    if (!transform)
-        return ASDF_VALUE_ERR_OOM;
-
-    asdf_value_err_t err = asdf_gwcs_transform_parse(value, transform);
-
-    if (ASDF_IS_OK(err))
-        *out = transform;
-    else
-        asdf_gwcs_transform_destroy(transform);
-
-    return err;
+    return ASDF_VALUE_ERR_TYPE_MISMATCH;
 }
 
 
@@ -500,7 +555,7 @@ static asdf_value_err_t serialize_string_sequence(
 }
 
 
-asdf_value_err_t asdf_gwcs_transform_serialize_base(
+static asdf_value_err_t asdf_gwcs_transform_serialize_base(
     asdf_file_t *file, const asdf_gwcs_transform_t *transform, asdf_mapping_t *map) {
     asdf_value_err_t err = ASDF_VALUE_OK;
 
@@ -542,28 +597,6 @@ asdf_value_err_t asdf_gwcs_transform_serialize_base(
     }
 
     return ASDF_VALUE_OK;
-}
-
-
-static asdf_value_t *asdf_gwcs_transform_generic_serialize(
-    asdf_file_t *file, const void *obj, UNUSED(const void *userdata)) {
-    if (UNLIKELY(!file || !obj))
-        return NULL;
-
-    const asdf_gwcs_transform_t *transform = obj;
-    asdf_mapping_t *map = asdf_mapping_create(file);
-
-    if (!map)
-        return NULL;
-
-    asdf_value_err_t err = asdf_gwcs_transform_serialize_base(file, transform, map);
-
-    if (ASDF_IS_ERR(err)) {
-        asdf_mapping_destroy(map);
-        return NULL;
-    }
-
-    return asdf_value_of_mapping(map);
 }
 
 
@@ -665,11 +698,11 @@ const asdf_extension_t *asdf_gwcs_transform_get(UNUSED(asdf_file_t *file), const
 }
 
 
-/* A bare/generic transform has only base fields, so it needs no type-specific
- * copy or deinit; the registration shim supplies base copy/deinit. */
+/* A bare/generic transform has only base fields, so all methods are NULL; the
+ * registration shim supplies the base serialize/deserialize/copy/deinit. */
 static const asdf_extension_vtab_t asdf_gwcs_transform_generic_vtab = {
-    .serialize = asdf_gwcs_transform_generic_serialize,
-    .deserialize = asdf_gwcs_transform_generic_deserialize,
+    .serialize = NULL,
+    .deserialize = NULL,
     .copy = NULL,
     .deinit = NULL,
 };

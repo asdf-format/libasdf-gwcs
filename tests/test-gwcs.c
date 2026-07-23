@@ -30,7 +30,7 @@ static void check_fits_values(const asdf_gwcs_fits_t *fits_out) {
         }
     }
 
-    assert_ptr(fits_out->projection.type, ==, ASDF_GWCS_TRANSFORM_GNOMONIC);
+    assert_ptr(fits_out->projection->type, ==, ASDF_GWCS_TRANSFORM_GNOMONIC);
 }
 
 
@@ -39,13 +39,14 @@ MU_TEST(test_asdf_set_gwcs_fits) {
     asdf_file_t *file = asdf_open(NULL);
     assert_not_null(file);
 
+    asdf_gwcs_transform_t projection = {.type = ASDF_GWCS_TRANSFORM_GNOMONIC};
     asdf_gwcs_fits_t fits = {
         .base = {.type = ASDF_GWCS_TRANSFORM_FITSWCS_IMAGING},
         .crpix = {12099.5, -88700.5},
         .crval = {270.0, 64.60237301},
         .cdelt = {1.52777778e-05, 1.52777778e-05},
         .pc = {{1.0, 0.0}, {-0.0, 1.0}},
-        .projection = {.type = ASDF_GWCS_TRANSFORM_GNOMONIC},
+        .projection = &projection,
     };
 
     assert_int(asdf_set_gwcs_fits(file, "transform", &fits), ==, ASDF_VALUE_OK);
@@ -90,13 +91,14 @@ MU_TEST(test_asdf_set_gwcs) {
         .axis_physical_types = {"custom:x", "custom:y"},
     };
 
+    asdf_gwcs_transform_t projection = {.type = ASDF_GWCS_TRANSFORM_GNOMONIC};
     asdf_gwcs_fits_t fits = {
         .base = {.type = ASDF_GWCS_TRANSFORM_FITSWCS_IMAGING},
         .crpix = {12099.5, -88700.5},
         .crval = {270.0, 64.60237301},
         .cdelt = {1.52777778e-05, 1.52777778e-05},
         .pc = {{1.0, 0.0}, {-0.0, 1.0}},
-        .projection = {.type = ASDF_GWCS_TRANSFORM_GNOMONIC},
+        .projection = &projection,
     };
 
     asdf_gwcs_frame_celestial_t icrs_frame = {
@@ -217,7 +219,7 @@ MU_TEST(test_asdf_get_gwcs_fits) {
         }
     }
 
-    assert_ptr(fits->projection.type, ==, ASDF_GWCS_TRANSFORM_GNOMONIC);
+    assert_ptr(fits->projection->type, ==, ASDF_GWCS_TRANSFORM_GNOMONIC);
     asdf_gwcs_fits_destroy(fits);
     asdf_close(file);
     return MUNIT_OK;

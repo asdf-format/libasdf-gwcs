@@ -109,7 +109,7 @@ failure:
 
 static asdf_value_err_t asdf_gwcs_fits_deserialize(
     asdf_value_t *value, UNUSED(const void *userdata), void **out) {
-    asdf_gwcs_fits_t *fits = NULL;
+    asdf_gwcs_fits_t *fits = *out;
     asdf_value_err_t err = ASDF_VALUE_ERR_PARSE_FAILURE;
     asdf_mapping_t *transform_map = NULL;
     asdf_value_t *projection = NULL;
@@ -117,18 +117,6 @@ static asdf_value_err_t asdf_gwcs_fits_deserialize(
     asdf_ndarray_t *crval = NULL;
 
     if (asdf_value_as_mapping(value, &transform_map) != ASDF_VALUE_OK)
-        goto cleanup;
-
-    fits = calloc(1, sizeof(asdf_gwcs_fits_t));
-
-    if (!fits) {
-        err = ASDF_VALUE_ERR_OOM;
-        goto cleanup;
-    }
-
-    err = asdf_gwcs_transform_parse(value, &fits->base);
-
-    if (ASDF_IS_ERR(err))
         goto cleanup;
 
     asdf_gwcs_transform_arity_set(&fits->base, asdf_value_file(value), 2, 2);
@@ -176,21 +164,16 @@ static asdf_value_err_t asdf_gwcs_fits_deserialize(
     if (ASDF_IS_ERR(err))
         goto cleanup;
 
-    err = asdf_gwcs_transform_parse(projection, &fits->projection);
+    err = asdf_value_as_gwcs_transform(projection, &fits->projection);
 
     if (ASDF_IS_ERR(err))
         goto cleanup;
 
-    *out = fits;
     err = ASDF_VALUE_OK;
 cleanup:
     asdf_ndarray_destroy(crpix);
     asdf_ndarray_destroy(crval);
     asdf_value_destroy(projection);
-
-    if (err != ASDF_VALUE_OK)
-        asdf_gwcs_fits_destroy(fits);
-
     return err;
 }
 
@@ -221,36 +204,21 @@ static asdf_value_t *serialize_double2_ndarray(asdf_file_t *file, const double s
 
 static asdf_value_t *asdf_gwcs_fits_serialize(
     asdf_file_t *file, const void *obj, UNUSED(const void *userdata)) {
-    if (UNLIKELY(!file || !obj))
-        return NULL;
-
     const asdf_gwcs_fits_t *fits = obj;
-    asdf_mapping_t *map = NULL;
-    asdf_value_t *value = NULL;
-    asdf_value_t *val = NULL;
-    asdf_value_err_t err = ASDF_VALUE_ERR_EMIT_FAILURE;
-
-    map = asdf_mapping_create(file);
+    asdf_mapping_t *map = asdf_mapping_create(file);
 
     if (!map)
-        goto cleanup;
+        return NULL;
 
-    err = asdf_gwcs_transform_serialize_base(file, &fits->base, map);
-
-    if (ASDF_IS_ERR(err))
-        goto cleanup;
+    asdf_value_t *val = NULL;
 
     // crpix -- 1D float64 ndarray shape [2]
     val = serialize_double2_ndarray(file, fits->crpix);
 
-    if (!val) {
-        err = ASDF_VALUE_ERR_OOM;
+    if (!val)
         goto cleanup;
-    }
 
-    err = asdf_mapping_set(map, "crpix", val);
-
-    if (ASDF_IS_ERR(err)) {
+    if (ASDF_IS_ERR(asdf_mapping_set(map, "crpix", val))) {
         asdf_value_destroy(val);
         goto cleanup;
     }
@@ -258,14 +226,10 @@ static asdf_value_t *asdf_gwcs_fits_serialize(
     // crval -- 1D float64 ndarray shape [2]
     val = serialize_double2_ndarray(file, fits->crval);
 
-    if (!val) {
-        err = ASDF_VALUE_ERR_OOM;
+    if (!val)
         goto cleanup;
-    }
 
-    err = asdf_mapping_set(map, "crval", val);
-
-    if (ASDF_IS_ERR(err)) {
+    if (ASDF_IS_ERR(asdf_mapping_set(map, "crval", val))) {
         asdf_value_destroy(val);
         goto cleanup;
     }
@@ -273,14 +237,10 @@ static asdf_value_t *asdf_gwcs_fits_serialize(
     // cdelt -- 1D float64 ndarray shape [2]
     val = serialize_double2_ndarray(file, fits->cdelt);
 
-    if (!val) {
-        err = ASDF_VALUE_ERR_OOM;
+    if (!val)
         goto cleanup;
-    }
 
-    err = asdf_mapping_set(map, "cdelt", val);
-
-    if (ASDF_IS_ERR(err)) {
+    if (ASDF_IS_ERR(asdf_mapping_set(map, "cdelt", val))) {
         asdf_value_destroy(val);
         goto cleanup;
     }
@@ -295,47 +255,35 @@ static asdf_value_t *asdf_gwcs_fits_serialize(
     };
     void *pc_data = asdf_ndarray_data_alloc_temp(file, &pc_ndarray);
 
-    if (!pc_data) {
-        err = ASDF_VALUE_ERR_OOM;
+    if (!pc_data)
         goto cleanup;
-    }
 
     memcpy(pc_data, fits->pc, 4 * sizeof(double));
     val = asdf_value_of_ndarray(file, &pc_ndarray);
 
-    if (!val) {
-        err = ASDF_VALUE_ERR_EMIT_FAILURE;
+    if (!val)
         goto cleanup;
-    }
 
-    err = asdf_mapping_set(map, "pc", val);
-
-    if (ASDF_IS_ERR(err)) {
+    if (ASDF_IS_ERR(asdf_mapping_set(map, "pc", val))) {
         asdf_value_destroy(val);
         goto cleanup;
     }
 
     // projection -- generic transform tagged with its projection type
-    val = asdf_value_of_gwcs_transform(file, &fits->projection);
+    val = asdf_value_of_gwcs_transform(file, fits->projection);
 
-    if (!val) {
-        err = ASDF_VALUE_ERR_EMIT_FAILURE;
+    if (!val)
         goto cleanup;
-    }
 
-    err = asdf_mapping_set(map, "projection", val);
-
-    if (ASDF_IS_ERR(err)) {
+    if (ASDF_IS_ERR(asdf_mapping_set(map, "projection", val))) {
         asdf_value_destroy(val);
         goto cleanup;
     }
 
-    value = asdf_value_of_mapping(map);
-    map = NULL; // owned by value
-
+    return asdf_value_of_mapping(map);
 cleanup:
     asdf_mapping_destroy(map);
-    return value;
+    return NULL;
 }
 
 
@@ -344,7 +292,8 @@ static void asdf_gwcs_fits_deinit_impl(void *value) {
         return;
 
     asdf_gwcs_fits_t *fits = (asdf_gwcs_fits_t *)value;
-    asdf_gwcs_transform_deinit(&fits->projection);
+    asdf_gwcs_transform_destroy(fits->projection);
+    fits->projection = NULL;
     free((char *)fits->ctype[0]);
     free((char *)fits->ctype[1]);
     fits->ctype[0] = NULL;
@@ -370,9 +319,10 @@ static bool asdf_gwcs_fits_copy_impl(asdf_file_t *file, const void *src, void *d
         }
     }
 
-    /* projection is an embedded, base-only transform */
-    if (fits->projection.type) {
-        if (!asdf_gwcs_transform_copy_into(file, &fits->projection, &copy->projection))
+    if (fits->projection) {
+        copy->projection = asdf_gwcs_transform_copy(file, fits->projection);
+
+        if (UNLIKELY(!copy->projection))
             return false;
     }
 
@@ -564,7 +514,8 @@ asdf_gwcs_err_t asdf_gwcs_fits_get_ctype(
         assert(axis_type_len <= CTYPE_SIZE);
         memcpy(ctype, axis_type, axis_type_len);
 
-        asdf_gwcs_transform_type_t projection_type = fits->projection.type;
+        asdf_gwcs_transform_type_t projection_type =
+            fits->projection ? fits->projection->type : NULL;
         const char *proj_str = transform_type_to_ctype(projection_type);
 
         if (!proj_str)

@@ -17,25 +17,13 @@
 
 static asdf_value_err_t asdf_gwcs_affine_deserialize(
     asdf_value_t *value, UNUSED(const void *userdata), void **out) {
-    asdf_gwcs_affine_t *affine = NULL;
+    asdf_gwcs_affine_t *affine = *out;
     asdf_value_err_t err = ASDF_VALUE_ERR_PARSE_FAILURE;
     asdf_mapping_t *map = NULL;
     asdf_ndarray_t *mat_arr = NULL;
     asdf_ndarray_t *tr_arr = NULL;
 
     if (asdf_value_as_mapping(value, &map) != ASDF_VALUE_OK)
-        goto cleanup;
-
-    affine = calloc(1, sizeof(asdf_gwcs_affine_t));
-
-    if (!affine) {
-        err = ASDF_VALUE_ERR_OOM;
-        goto cleanup;
-    }
-
-    err = asdf_gwcs_transform_parse(value, &affine->base);
-
-    if (ASDF_IS_ERR(err))
         goto cleanup;
 
     err = asdf_get_required_property(
@@ -80,24 +68,16 @@ static asdf_value_err_t asdf_gwcs_affine_deserialize(
 
     asdf_gwcs_transform_arity_set(&affine->base, asdf_value_file(value), n_dims, n_dims);
 
-    *out = affine;
     err = ASDF_VALUE_OK;
 cleanup:
     asdf_ndarray_destroy(mat_arr);
     asdf_ndarray_destroy(tr_arr);
-
-    if (ASDF_IS_ERR(err))
-        asdf_gwcs_affine_destroy(affine);
-
     return err;
 }
 
 
 static asdf_value_t *asdf_gwcs_affine_serialize(
     asdf_file_t *file, const void *obj, UNUSED(const void *userdata)) {
-    if (UNLIKELY(!file || !obj))
-        return NULL;
-
     const asdf_gwcs_affine_t *affine = obj;
 
     if (!affine->matrix || !affine->translation || affine->n_inputs == 0)
@@ -107,11 +87,6 @@ static asdf_value_t *asdf_gwcs_affine_serialize(
 
     if (!map)
         return NULL;
-
-    asdf_value_err_t err = asdf_gwcs_transform_serialize_base(file, &affine->base, map);
-
-    if (ASDF_IS_ERR(err))
-        goto cleanup;
 
     uint64_t mat_shape[2] = {affine->n_inputs, affine->n_inputs};
     asdf_ndarray_t mat_arr = {
@@ -134,9 +109,7 @@ static asdf_value_t *asdf_gwcs_affine_serialize(
     if (!mat_val)
         goto cleanup;
 
-    err = asdf_mapping_set(map, "matrix", mat_val);
-
-    if (ASDF_IS_ERR(err)) {
+    if (ASDF_IS_ERR(asdf_mapping_set(map, "matrix", mat_val))) {
         asdf_value_destroy(mat_val);
         goto cleanup;
     }
@@ -162,9 +135,7 @@ static asdf_value_t *asdf_gwcs_affine_serialize(
     if (!tr_val)
         goto cleanup;
 
-    err = asdf_mapping_set(map, "translation", tr_val);
-
-    if (ASDF_IS_ERR(err)) {
+    if (ASDF_IS_ERR(asdf_mapping_set(map, "translation", tr_val))) {
         asdf_value_destroy(tr_val);
         goto cleanup;
     }

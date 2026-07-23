@@ -15,24 +15,12 @@
 
 static asdf_value_err_t asdf_gwcs_divide_deserialize(
     asdf_value_t *value, UNUSED(const void *userdata), void **out) {
-    asdf_gwcs_divide_t *divide = NULL;
+    asdf_gwcs_divide_t *divide = *out;
     asdf_value_err_t err = ASDF_VALUE_ERR_PARSE_FAILURE;
     asdf_mapping_t *map = NULL;
     asdf_sequence_t *forward_seq = NULL;
 
     if (asdf_value_as_mapping(value, &map) != ASDF_VALUE_OK)
-        goto cleanup;
-
-    divide = calloc(1, sizeof(asdf_gwcs_divide_t));
-
-    if (!divide) {
-        err = ASDF_VALUE_ERR_OOM;
-        goto cleanup;
-    }
-
-    err = asdf_gwcs_transform_parse(value, &divide->base);
-
-    if (ASDF_IS_ERR(err))
         goto cleanup;
 
     err = asdf_get_required_property(
@@ -59,33 +47,20 @@ static asdf_value_err_t asdf_gwcs_divide_deserialize(
         }
     }
 
-    *out = divide;
     err = ASDF_VALUE_OK;
 cleanup:
     asdf_sequence_destroy(forward_seq);
-
-    if (ASDF_IS_ERR(err))
-        asdf_gwcs_divide_destroy(divide);
-
     return err;
 }
 
 
 static asdf_value_t *asdf_gwcs_divide_serialize(
     asdf_file_t *file, const void *obj, UNUSED(const void *userdata)) {
-    if (UNLIKELY(!file || !obj))
-        return NULL;
-
     const asdf_gwcs_divide_t *divide = obj;
     asdf_mapping_t *map = asdf_mapping_create(file);
 
     if (!map)
         return NULL;
-
-    asdf_value_err_t err = asdf_gwcs_transform_serialize_base(file, &divide->base, map);
-
-    if (ASDF_IS_ERR(err))
-        goto cleanup;
 
     asdf_sequence_t *seq = asdf_sequence_create(file);
 
@@ -102,18 +77,14 @@ static asdf_value_t *asdf_gwcs_divide_serialize(
             goto cleanup;
         }
 
-        err = asdf_sequence_append(seq, t_val);
-
-        if (ASDF_IS_ERR(err)) {
+        if (ASDF_IS_ERR(asdf_sequence_append(seq, t_val))) {
             asdf_value_destroy(t_val);
             asdf_sequence_destroy(seq);
             goto cleanup;
         }
     }
 
-    err = asdf_mapping_set_sequence(map, "forward", seq);
-
-    if (ASDF_IS_ERR(err)) {
+    if (ASDF_IS_ERR(asdf_mapping_set_sequence(map, "forward", seq))) {
         asdf_sequence_destroy(seq);
         goto cleanup;
     }

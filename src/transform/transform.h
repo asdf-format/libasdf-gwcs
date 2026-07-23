@@ -11,9 +11,6 @@
 #include "util.h"
 
 
-ASDF_LOCAL asdf_value_err_t
-asdf_gwcs_transform_parse(asdf_value_t *value, asdf_gwcs_transform_t *transform);
-
 /**
  * Cross-check YAML-derived n_inputs / n_outputs against implicit values
  * computed from a transform's own properties, then set the fields.
@@ -33,10 +30,3 @@ ASDF_LOCAL void asdf_gwcs_transform_arity_set(
  * NULL if the type is unknown.
  */
 ASDF_LOCAL const char *asdf_gwcs_transform_type_to_tag(asdf_gwcs_transform_type_t type);
-
-/**
- * Serialize the base transform fields (name, bounding_box) into an existing
- * mapping.  Called by type-specific serializers.
- */
-ASDF_LOCAL asdf_value_err_t asdf_gwcs_transform_serialize_base(
-    asdf_file_t *file, const asdf_gwcs_transform_t *transform, asdf_mapping_t *map);
