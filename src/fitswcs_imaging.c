@@ -192,12 +192,11 @@ static asdf_value_t *serialize_double2_ndarray(asdf_file_t *file, const double s
         .byteorder = ASDF_BYTEORDER_LITTLE,
     };
 
-    void *data = asdf_ndarray_data_alloc_temp(file, &ndarray);
-
-    if (!data)
+    if (asdf_ndarray_data_copy(&ndarray, src) != ASDF_NDARRAY_OK) {
+        ASDF_ERROR_OOM(file);
         return NULL;
+    }
 
-    memcpy(data, src, 2 * sizeof(double));
     return asdf_value_of_ndarray(file, &ndarray);
 }
 
@@ -253,12 +252,12 @@ static asdf_value_t *asdf_gwcs_fits_serialize(
         .datatype = {.type = ASDF_DATATYPE_FLOAT64},
         .byteorder = ASDF_BYTEORDER_LITTLE,
     };
-    void *pc_data = asdf_ndarray_data_alloc_temp(file, &pc_ndarray);
 
-    if (!pc_data)
+    if (asdf_ndarray_data_copy(&pc_ndarray, fits->pc) != ASDF_NDARRAY_OK) {
+        ASDF_ERROR_OOM(file);
         goto cleanup;
+    }
 
-    memcpy(pc_data, fits->pc, 4 * sizeof(double));
     val = asdf_value_of_ndarray(file, &pc_ndarray);
 
     if (!val)
