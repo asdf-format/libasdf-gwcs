@@ -97,12 +97,11 @@ static asdf_value_t *asdf_gwcs_affine_serialize(
     };
 
     asdf_ndarray_storage_set(&mat_arr, ASDF_ARRAY_STORAGE_INLINE);
-    void *mat_data = asdf_ndarray_data_alloc_temp(file, &mat_arr);
 
-    if (!mat_data)
+    if (asdf_ndarray_data_copy(&mat_arr, affine->matrix) != ASDF_NDARRAY_OK) {
+        ASDF_ERROR_OOM(file);
         goto cleanup;
-
-    memcpy(mat_data, affine->matrix, (size_t)affine->n_inputs * affine->n_inputs * sizeof(double));
+    }
 
     asdf_value_t *mat_val = asdf_value_of_ndarray(file, &mat_arr);
 
@@ -123,12 +122,11 @@ static asdf_value_t *asdf_gwcs_affine_serialize(
     };
 
     asdf_ndarray_storage_set(&tr_arr, ASDF_ARRAY_STORAGE_INLINE);
-    void *tr_data = asdf_ndarray_data_alloc_temp(file, &tr_arr);
 
-    if (!tr_data)
+    if (asdf_ndarray_data_copy(&tr_arr, affine->translation) != ASDF_NDARRAY_OK) {
+        ASDF_ERROR_OOM(file);
         goto cleanup;
-
-    memcpy(tr_data, affine->translation, (size_t)affine->n_inputs * sizeof(double));
+    }
 
     asdf_value_t *tr_val = asdf_value_of_ndarray(file, &tr_arr);
 

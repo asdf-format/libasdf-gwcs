@@ -74,6 +74,7 @@ cleanup:
 static asdf_value_t *asdf_gwcs_polynomial_serialize(
     asdf_file_t *file, const void *obj, UNUSED(const void *userdata)) {
     const asdf_gwcs_polynomial_t *poly = obj;
+    asdf_value_t *value = NULL;
 
     if (poly->ndim == 0 || poly->n_coeffs == 0)
         return NULL;
@@ -99,17 +100,13 @@ static asdf_value_t *asdf_gwcs_polynomial_serialize(
     };
 
     asdf_ndarray_storage_set(&ndarray, ASDF_ARRAY_STORAGE_INLINE);
-    void *data = asdf_ndarray_data_alloc_temp(file, &ndarray);
 
-    if (!data) {
-        free(shape);
+    if (asdf_ndarray_data_copy(&ndarray, poly->coefficients) != ASDF_NDARRAY_OK) {
+        ASDF_ERROR_OOM(file);
         goto cleanup;
     }
 
-    memcpy(data, poly->coefficients, (size_t)poly->n_coeffs * sizeof(double));
-
     asdf_value_t *coeff_val = asdf_value_of_ndarray(file, &ndarray);
-    free(shape);
 
     if (!coeff_val)
         goto cleanup;
@@ -119,10 +116,14 @@ static asdf_value_t *asdf_gwcs_polynomial_serialize(
         goto cleanup;
     }
 
-    return asdf_value_of_mapping(map);
+    value = asdf_value_of_mapping(map);
 cleanup:
-    asdf_mapping_destroy(map);
-    return NULL;
+    free(shape);
+
+    if (!value)
+        asdf_mapping_destroy(map);
+
+    return value;
 }
 
 
