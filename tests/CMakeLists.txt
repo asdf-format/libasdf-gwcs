@@ -6,6 +6,12 @@ set(nix_gnu_cflags -Wall -Wextra)
 set(nix_clang_cflags -Wall -Wextra)
 set(win_msvc_cflags /Wall)
 
+# Environment applied to every test.  Prepending the build tree's library
+# directory keeps an installed copy of libasdf-gwcs from shadowing the one
+# just built (the loader searches LD_LIBRARY_PATH before DT_RUNPATH).
+set(runtime
+    "srcdir=set:${CMAKE_CURRENT_SOURCE_DIR};top_srcdir=set:${CMAKE_SOURCE_DIR};top_builddir=set:${CMAKE_BINARY_DIR};LD_LIBRARY_PATH=path_list_prepend:${CMAKE_BINARY_DIR}/src")
+
 # Build munit+util static library
 add_library(munit ${MUNIT_DIR}/munit.c)
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
