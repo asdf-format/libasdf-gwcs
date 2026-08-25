@@ -58,6 +58,25 @@ static asdf_value_t *asdf_gwcs_serialize(
     if (ASDF_IS_ERR(err))
         goto cleanup;
 
+    /* pixel_shape is optional; write it only when the WCS actually carries one. */
+    if (gwcs->pixel_shape && gwcs->pixel_ndim > 0) {
+        asdf_sequence_t *shape_seq =
+            asdf_sequence_of_uint64(file, gwcs->pixel_shape, (int)gwcs->pixel_ndim);
+
+        if (!shape_seq) {
+            err = ASDF_VALUE_ERR_OOM;
+            goto cleanup;
+        }
+
+        err = asdf_mapping_set_sequence(map, "pixel_shape", shape_seq);
+
+        if (ASDF_IS_ERR(err)) {
+            asdf_sequence_destroy(shape_seq);
+            goto cleanup;
+        }
+        /* shape_seq is owned by map now */
+    }
+
     steps_seq = asdf_sequence_create(file);
 
     if (!steps_seq)
@@ -121,7 +140,59 @@ static asdf_value_err_t asdf_gwcs_deserialize(
 
     gwcs->name = strdup(name);
 
-    // TODO: Implement pixel_shape parsing
+    if (!gwcs->name) {
+        err = ASDF_VALUE_ERR_OOM;
+        goto cleanup;
+    }
+
+    /* pixel_shape is optional (added in wcs-1.2.0) and explicitly nullable, so
+     * fetch the raw value and check for null rather than asking for a sequence
+     * outright, which would warn on a legitimate "pixel_shape: null".
+     *
+     * asdf_value_as_sequence yields a *view* of pixel_shape_val, so only the
+     * value itself is released here. */
+    asdf_value_t *pixel_shape_val = asdf_mapping_get(gwcs_map, "pixel_shape");
+
+    if (pixel_shape_val && !asdf_value_is_null(pixel_shape_val)) {
+        asdf_sequence_t *pixel_shape_seq = NULL;
+        int ndim = 0;
+
+        if (asdf_value_as_sequence(pixel_shape_val, &pixel_shape_seq) != ASDF_VALUE_OK)
+            err = ASDF_VALUE_ERR_TYPE_MISMATCH;
+        else if ((ndim = asdf_sequence_size(pixel_shape_seq)) < 0)
+            err = ASDF_VALUE_ERR_PARSE_FAILURE;
+        else {
+            uint64_t *pixel_shape = calloc((size_t)ndim, sizeof(uint64_t));
+
+            if (!pixel_shape) {
+                err = ASDF_VALUE_ERR_OOM;
+            } else {
+                gwcs->pixel_shape = pixel_shape;
+                gwcs->pixel_ndim = (uint32_t)ndim;
+
+                asdf_sequence_iter_t *ps_iter = asdf_sequence_iter_init(pixel_shape_seq);
+
+                while (asdf_sequence_iter_next(&ps_iter)) {
+                    uint64_t dim = 0;
+
+                    if (asdf_value_as_uint64(ps_iter->value, &dim) != ASDF_VALUE_OK) {
+                        asdf_sequence_iter_destroy(ps_iter);
+                        err = ASDF_VALUE_ERR_TYPE_MISMATCH;
+                        break;
+                    }
+
+                    pixel_shape[ps_iter->index] = dim;
+                }
+            }
+        }
+
+        if (ASDF_IS_ERR(err)) {
+            asdf_value_destroy(pixel_shape_val);
+            goto cleanup;
+        }
+    }
+
+    asdf_value_destroy(pixel_shape_val);
 
     // Parse steps
     err = asdf_get_required_property(
@@ -198,6 +269,17 @@ static bool asdf_gwcs_copy_impl(asdf_file_t *file, const void *src, void *dst) {
             return false;
     }
 
+    if (gwcs->pixel_shape && gwcs->pixel_ndim > 0) {
+        uint64_t *pixel_shape = calloc(gwcs->pixel_ndim, sizeof(uint64_t));
+
+        if (UNLIKELY(!pixel_shape))
+            return false;
+
+        memcpy(pixel_shape, gwcs->pixel_shape, gwcs->pixel_ndim * sizeof(uint64_t));
+        copy->pixel_shape = pixel_shape;
+        copy->pixel_ndim = gwcs->pixel_ndim;
+    }
+
     if (gwcs->steps) {
         asdf_gwcs_step_t *steps = calloc(gwcs->n_steps, sizeof(asdf_gwcs_step_t));
 
@@ -226,6 +308,9 @@ static void asdf_gwcs_deinit_impl(void *value) {
     if (gwcs->name)
         free((char *)gwcs->name);
 
+    if (gwcs->pixel_shape)
+        free((uint64_t *)gwcs->pixel_shape);
+
     if (gwcs->steps) {
         /* steps is a contiguous array: deinit each element, then free the
          * array once (asdf_gwcs_step_destroy would free each interior pointer). */
@@ -253,8 +338,9 @@ static const asdf_extension_vtab_t asdf_gwcs_vtab = {
  *
  * NOTE: The main difference between versions for now is the expected version
  * of step property tag; this is not yet fully accounted for.  The optional
- * pixel_shape property was only added in version 1.2.0 of the schema and is
- * not yet handled by this extension.
+ * pixel_shape property was only added in version 1.2.0 of the schema; it is
+ * read and written when present, and omitted otherwise, so it is harmless for
+ * the earlier versions that do not define it.
  */
 ASDF_REGISTER_EXTENSION(
     gwcs,

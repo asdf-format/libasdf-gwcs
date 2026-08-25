@@ -240,6 +240,12 @@ MU_TEST(test_asdf_get_gwcs) {
     assert_int(gwcs->n_steps, ==, 2);
     assert_not_null(gwcs->steps);
 
+    // This fixture carries "pixel_shape: [5000, 5000]"
+    assert_int(gwcs->pixel_ndim, ==, 2);
+    assert_not_null(gwcs->pixel_shape);
+    assert_uint64(gwcs->pixel_shape[0], ==, 5000);
+    assert_uint64(gwcs->pixel_shape[1], ==, 5000);
+
     const asdf_gwcs_step_t *step = &gwcs->steps[0];
     assert_not_null(step->frame);
     assert_int(step->frame->type, ==, ASDF_GWCS_FRAME_2D);
