@@ -52,6 +52,7 @@ static void asdf_gwcs_transform_deinit_base(asdf_gwcs_transform_t *transform) {
         free((void *)transform->outputs);
     }
 
+    free((char *)transform->tag);
     free((char *)transform->name);
     asdf_gwcs_bounding_box_destroy((asdf_gwcs_bounding_box_t *)transform->bounding_box);
     asdf_gwcs_transform_destroy((asdf_gwcs_transform_t *)transform->inverse);
@@ -74,11 +75,19 @@ static bool asdf_gwcs_transform_copy_base(
      * transforms), so clear the base heap pointers before taking deep copies;
      * this keeps the deinit-on-failure path free of shared (double-freed)
      * pointers. */
+    dst->tag = NULL;
     dst->name = NULL;
     dst->inputs = NULL;
     dst->outputs = NULL;
     dst->bounding_box = NULL;
     dst->inverse = NULL;
+
+    if (src->tag) {
+        dst->tag = strdup(src->tag);
+
+        if (UNLIKELY(!dst->tag))
+            return false;
+    }
 
     if (src->name) {
         dst->name = strdup(src->name);
@@ -150,6 +159,15 @@ static const asdf_gwcs_transform_shim_vtab_t *transform_shim_of(const void *obj)
 }
 
 
+/* The extension userdata libasdf hands the shims is the per-type
+ * asdf_gwcs_transform_data_t; a transform's own methods expect the pointer its
+ * registration passed, which lives inside it. */
+static const void *transform_own_userdata(const void *userdata) {
+    const asdf_gwcs_transform_data_t *data = userdata;
+    return data ? data->userdata : NULL;
+}
+
+
 /* Shared copy method installed for every transform: copy the base fields plus
  * the type's own fields.  Types with no own copy method are shallow apart from
  * the base and POD fields, so the whole struct is shallow-copied. */
@@ -197,7 +215,7 @@ static asdf_value_t *asdf_gwcs_transform_serialize_shim(
     asdf_mapping_t *map = NULL;
 
     if (shim->orig->serialize) {
-        value = shim->orig->serialize(file, obj, userdata);
+        value = shim->orig->serialize(file, obj, transform_own_userdata(userdata));
 
         if (!value)
             return NULL;
@@ -360,11 +378,23 @@ static asdf_value_err_t asdf_gwcs_transform_deserialize_shim(
     if (ASDF_IS_ERR(err))
         return err;
 
+    /* Record the tag as it actually appeared in the file, version included;
+     * ext->tags[0] is only the preferred (write) tag.  asdf_value_tag returns
+     * a pointer into libfyaml token memory, so it must be copied. */
+    ((asdf_gwcs_transform_t *)*out)->tag = strdup(tag);
+
+    if (UNLIKELY(!((asdf_gwcs_transform_t *)*out)->tag)) {
+        asdf_gwcs_transform_deinit(*out);
+        free(*out);
+        *out = NULL;
+        return ASDF_VALUE_ERR_OOM;
+    }
+
     const asdf_gwcs_transform_shim_vtab_t *shim =
         (const asdf_gwcs_transform_shim_vtab_t *)ext->vtab;
 
     if (shim->orig->deserialize) {
-        err = shim->orig->deserialize(value, userdata, out);
+        err = shim->orig->deserialize(value, transform_own_userdata(userdata), out);
 
         if (ASDF_IS_ERR(err)) {
             asdf_gwcs_transform_deinit(*out);
@@ -375,6 +405,38 @@ static asdf_value_err_t asdf_gwcs_transform_deserialize_shim(
     }
 
     return ASDF_VALUE_OK;
+}
+
+
+const char *asdf_gwcs_transform_tag(const asdf_gwcs_transform_t *transform) {
+    if (!transform)
+        return NULL;
+
+    if (transform->tag)
+        return transform->tag;
+
+    /* Constructed in memory rather than read from a file: fall back to the
+     * tag its type would be serialized with. */
+    const asdf_extension_t *ext = (const asdf_extension_t *)transform->type;
+
+    if (!ext || !ext->tags)
+        return NULL;
+
+    return ext->tags[0];
+}
+
+
+const char *asdf_gwcs_transform_type_name(const asdf_gwcs_transform_t *transform) {
+    if (!transform || !transform->type)
+        return NULL;
+
+    const asdf_extension_t *ext = (const asdf_extension_t *)transform->type;
+    const asdf_gwcs_transform_data_t *data = ext->userdata;
+
+    if (!data || !data->name[0])
+        return NULL;
+
+    return data->name;
 }
 
 
@@ -650,7 +712,15 @@ void asdf_gwcs_transform_register(asdf_gwcs_transform_type_t type) {
     /* TODO: Handle tag overlaps on registration */
     // Ensure extension map initialized
     asdf_gwcs_transform_map_create();
-    const char *const *tags = ((asdf_extension_t *)type)->tags;
+    asdf_extension_t *ext = (asdf_extension_t *)type;
+    const char *const *tags = ext->tags;
+
+    /* The type name is the same for every version of the tag, so derive it
+     * once from the preferred one. */
+    asdf_gwcs_transform_data_t *data = ext->userdata;
+
+    if (data)
+        tag_type_name(data->name, sizeof(data->name), tags[0]);
 
     for (const char *const *tag = tags; *tag; tag++) {
         char *full_tag = tag_canonicalize(*tag);

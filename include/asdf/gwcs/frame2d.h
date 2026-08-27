@@ -13,7 +13,14 @@
 
 ASDF_BEGIN_DECLS
 
+/**
+ * A two-dimensional Cartesian coordinate frame (``gwcs/frame2d``)
+ *
+ * The per-axis arrays are indexed by axis, and any of their entries may be
+ * ``NULL`` when the corresponding property is absent from the file.
+ */
 typedef struct {
+    /** Common frame fields; `asdf_gwcs_frame_t.type` is ``ASDF_GWCS_FRAME_2D`` */
     asdf_gwcs_frame_t base;
     const char *axes_names[2];
     uint32_t axes_order[2];

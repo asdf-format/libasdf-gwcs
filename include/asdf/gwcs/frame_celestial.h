@@ -14,7 +14,21 @@
 
 ASDF_BEGIN_DECLS
 
+/**
+ * A celestial coordinate frame (``gwcs/celestial_frame``)
+ *
+ * .. note::
+ *
+ *    The schema tag orders the words the other way round from this header and
+ *    C type: the tag is ``gwcs/celestial_frame``, the type is
+ *    ``asdf_gwcs_frame_celestial_t``.
+ *
+ * The per-axis arrays are sized for three axes so that the same layout covers
+ * frames carrying a distance or radial-velocity axis alongside the two sky
+ * axes; entries beyond those actually present are ``NULL``.
+ */
 typedef struct {
+    /** Common frame fields; `asdf_gwcs_frame_t.type` is ``ASDF_GWCS_FRAME_CELESTIAL`` */
     asdf_gwcs_frame_t base;
     const char *axes_names[3];
     uint32_t axes_order[3];
@@ -24,7 +38,7 @@ typedef struct {
      * Astropy coordinate reference frame, or NULL if absent/unrecognized.
      *
      * Ownership: the celestial frame owns this pointer; it is freed by
-     * `asdf_gwcs_frame_celestial_destroy`.
+     * ``asdf_gwcs_frame_celestial_destroy``.
      */
     asdf_gwcs_baseframe_t *reference_frame;
 } asdf_gwcs_frame_celestial_t;

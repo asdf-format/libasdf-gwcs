@@ -33,6 +33,21 @@ typedef struct {
 ASDF_DECLARE_EXTENSION(gwcs_base_frame, asdf_gwcs_frame_t);
 
 /**
+ * Return the short name of a frame's type
+ *
+ * This is the frame's schema name with neither the tag's namespace nor its
+ * version: ``frame``, ``frame2d``, ``celestial_frame``.  Unlike the ``name``
+ * member of `asdf_gwcs_frame_t`, which is an optional user-supplied label for
+ * one particular frame, this identifies what kind of frame it is.
+ *
+ * The returned string is static and must not be freed.
+ *
+ * :param frame: The frame to inspect
+ * :return: The type name, or ``NULL`` if ``frame`` is ``NULL``
+ */
+ASDF_EXPORT const char *asdf_gwcs_frame_type_name(const asdf_gwcs_frame_t *frame);
+
+/**
  * Polymorphic value constructor: dispatches to the appropriate typed
  * asdf_value_of_gwcs_frame* function based on frame->type.
  */

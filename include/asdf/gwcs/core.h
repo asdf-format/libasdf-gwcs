@@ -14,6 +14,16 @@ ASDF_BEGIN_DECLS
 #define ASDF_GWCS_TAG_PREFIX "tag:stsci.edu:gwcs/"
 
 
+/**
+ * Size of the buffer holding a type name derived from a schema tag
+ *
+ * Type names are stored inline in each extension's per-type data struct, so
+ * they are bounded; the longest name among the schemas implemented here is
+ * ``slant_zenithal_perspective``, at 26 characters.
+ */
+#define ASDF_GWCS_TYPE_NAME_MAX 32
+
+
 ASDF_EXPORT extern asdf_software_t libasdf_gwcs_software;
 
 

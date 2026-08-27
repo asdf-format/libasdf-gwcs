@@ -437,6 +437,28 @@ asdf_value_err_t asdf_value_as_gwcs_frame(asdf_value_t *value, asdf_gwcs_frame_t
 }
 
 
+/*
+ * Frames are dispatched on an enum rather than an extension token, so unlike
+ * transforms and coordinate frames there is nowhere to hang a tag-derived name;
+ * the schema names are spelled out here until frames get the registration
+ * system asdf_value_as_gwcs_frame's TODO describes.
+ */
+const char *asdf_gwcs_frame_type_name(const asdf_gwcs_frame_t *frame) {
+    if (!frame)
+        return NULL;
+
+    switch (frame->type) {
+    case ASDF_GWCS_FRAME_2D:
+        return "frame2d";
+    case ASDF_GWCS_FRAME_CELESTIAL:
+        return "celestial_frame";
+    case ASDF_GWCS_FRAME_GENERIC:
+    default:
+        return "frame";
+    }
+}
+
+
 asdf_value_t *asdf_gwcs_frame_value_of(asdf_file_t *file, const asdf_gwcs_frame_t *frame) {
     if (!frame)
         return NULL;

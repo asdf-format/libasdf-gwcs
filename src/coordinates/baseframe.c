@@ -47,7 +47,15 @@ ASDF_DESTRUCTOR static void coordinate_frame_map_destroy(void) {
 
 void asdf_gwcs_coordinate_frame_register(asdf_gwcs_coordinate_frame_type_t type) {
     coordinate_frame_map_ensure_init();
-    const char *const *tags = ((asdf_extension_t *)type)->tags;
+    asdf_extension_t *ext = (asdf_extension_t *)type;
+    const char *const *tags = ext->tags;
+
+    /* The type name is the same for every version of the tag, so derive it
+     * once from the preferred one. */
+    asdf_gwcs_coordinate_frame_data_t *data = ext->userdata;
+
+    if (data)
+        tag_type_name(data->name, sizeof(data->name), tags[0]);
 
     for (const char *const *tag = tags; *tag; tag++) {
         char *full_tag = tag_canonicalize(*tag);
@@ -61,6 +69,20 @@ void asdf_gwcs_coordinate_frame_register(asdf_gwcs_coordinate_frame_type_t type)
         (void)res;
         free(full_tag);
     }
+}
+
+
+const char *asdf_gwcs_coordinate_frame_type_name(const asdf_gwcs_baseframe_t *frame) {
+    if (!frame || !frame->type)
+        return NULL;
+
+    const asdf_extension_t *ext = (const asdf_extension_t *)frame->type;
+    const asdf_gwcs_coordinate_frame_data_t *data = ext->userdata;
+
+    if (!data || !data->name[0])
+        return NULL;
+
+    return data->name;
 }
 
 

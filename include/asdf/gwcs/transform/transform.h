@@ -15,6 +15,7 @@
 
 #include <asdf/core/asdf.h>
 #include <asdf/extension.h>
+#include <asdf/gwcs/core.h>
 #include <asdf/gwcs/transform/property/bounding_box.h>
 
 ASDF_BEGIN_DECLS
@@ -22,7 +23,12 @@ ASDF_BEGIN_DECLS
 
 #define ASDF_GWCS_TRANSFORM_TAG_PREFIX ASDF_STANDARD_TAG_PREFIX "transform/"
 
-// Forward-declaration
+/**
+ * The base transform type
+ *
+ * Forward-declared here so that the transform headers can refer to it before
+ * it is defined; see :c:struct:`asdf_gwcs_transform` below for the fields.
+ */
 typedef struct asdf_gwcs_transform asdf_gwcs_transform_t;
 
 
@@ -41,15 +47,48 @@ typedef struct {
 typedef asdf_gwcs_transform_ext_t *asdf_gwcs_transform_type_t;
 
 
+/**
+ * Per-type static data attached to a transform's extension registration
+ *
+ * Every transform registered through ``ASDF_GWCS_REGISTER_TRANSFORM`` gets one
+ * of these as its extension ``userdata``, so a transform's own userdata moves
+ * into the ``userdata`` member here.  The serialize and deserialize shims
+ * unwrap it again, so a transform's own vtab methods still receive the
+ * pointer the registration passed.
+ */
 typedef struct {
+    /**
+     * The transform's type name, derived from its preferred tag
+     *
+     * Filled in at registration from the last path element of ``tags[0]``
+     * with the version suffix removed, so ``affine-1.5.0`` becomes
+     * ``affine``.  Read it with `asdf_gwcs_transform_type_name`.
+     */
+    char name[ASDF_GWCS_TYPE_NAME_MAX];
+
     /** Optional FITS WCS CTYPE value associated with a transform */
     const char *ctype;
+
+    /** The ``userdata`` the transform itself registered, if any */
+    const void *userdata;
 } asdf_gwcs_transform_data_t;
 
 
 static const asdf_gwcs_transform_type_t ASDF_GWCS_TRANSFORM_INVALID;
 
 
+/**
+ * Base type for all transforms
+ *
+ * This is the base of a tagged union: ``type`` identifies the concrete transform
+ * type, and `asdf_gwcs_transform_tag` renders that as a schema tag.  Concrete
+ * transform types embed these fields via ``ASDF_GWCS_TRANSFORM_BASE``, which
+ * makes them reachable both directly and through an explicit ``.base``.
+ *
+ * Most of the fields below come from the base
+ * ``stsci.edu/transform/transform-1.4.0`` schema; several are laid out for
+ * future ABI compatibility and are not yet populated, as noted individually.
+ */
 typedef struct asdf_gwcs_transform {
     /**
      * Enum value specifying the type of transform
@@ -57,20 +96,34 @@ typedef struct asdf_gwcs_transform {
     asdf_gwcs_transform_type_t type;
 
     /**
+     * The full YAML tag this transform was read with (may be `NULL`)
+     *
+     * Each transform type is registered for several versions of its schema.
+     * For a transform deserialized from a file this records the tag *as it
+     * appeared in that file*, including its version, rather than the
+     * preferred tag the type would be written with.  It is `NULL` for
+     * transforms constructed in memory.
+     *
+     * Prefer `asdf_gwcs_transform_tag` to reading this directly; it falls
+     * back to the type's preferred tag when this is `NULL`.
+     */
+    const char *tag;
+
+    /**
      * A human-readable name for the transform (may be `NULL`)
      *
-     * This an other fields up through `input_units_equivalencies` are from
-     * the base `stsci.edu/transform/transform-1.4.0 schema` but are not
+     * This and other fields up through `input_units_equivalencies` are from
+     * the base ``stsci.edu/transform/transform-1.4.0`` schema but are not
      * fully implemented (many of them are not used or needed for FITS WCS
      * and will likely be moved later into a base transform field, but they
      * are laid out here with future ABI compatibility in mind...)
-     * */
+     */
     const char *name;
 
     /**
      * Not yet implemented, but would be an inverse transform
      * (currently always `NULL`)
-     * */
+     */
     const asdf_gwcs_transform_t *inverse;
 
     /** Number of input variables. */
@@ -97,6 +150,46 @@ typedef struct asdf_gwcs_transform {
     /** Input unit equivalences (not yet implemented) */
     const void *input_units_equivalencies;
 } asdf_gwcs_transform_t;
+
+
+/**
+ * Return the full YAML tag identifying a transform's type
+ *
+ * For a transform deserialized from a file this is the tag as it appeared in
+ * that file, preserving the schema version actually used.  For a transform
+ * constructed in memory it is the preferred tag its type would be serialized
+ * with.
+ *
+ * The returned string is owned by the transform (or by its extension
+ * registration) and must not be freed.
+ *
+ * :param transform: The transform to inspect
+ * :return: The transform's tag, or ``NULL`` if ``transform`` is ``NULL`` or
+ *   has no type
+ */
+ASDF_EXPORT const char *asdf_gwcs_transform_tag(
+    const asdf_gwcs_transform_t *transform);
+
+
+/**
+ * Return the short name of a transform's type
+ *
+ * This is the transform's schema name with neither the tag's namespace nor
+ * its version: ``affine``, ``compose``, ``fitswcs_imaging``.  Unlike the
+ * ``name`` member of `asdf_gwcs_transform_t`, which is an optional
+ * user-supplied label for one particular transform, this identifies what kind
+ * of transform it is, and is the same for every transform of that type
+ * regardless of which schema version it was read with.
+ *
+ * The returned string is owned by the transform's extension registration and
+ * must not be freed.
+ *
+ * :param transform: The transform to inspect
+ * :return: The type name, or ``NULL`` if ``transform`` is ``NULL`` or has no
+ *   type
+ */
+ASDF_EXPORT const char *asdf_gwcs_transform_type_name(
+    const asdf_gwcs_transform_t *transform);
 
 
 /**
@@ -144,6 +237,7 @@ ASDF_EXPORT void asdf_gwcs_transform_destroy(asdf_gwcs_transform_t *transform);
         asdf_gwcs_transform_t base; \
         struct { \
             asdf_gwcs_transform_type_t type; \
+            const char *tag; \
             const char *name; \
             const asdf_gwcs_transform_t *inverse; \
             uint32_t n_inputs; \
@@ -158,7 +252,29 @@ ASDF_EXPORT void asdf_gwcs_transform_destroy(asdf_gwcs_transform_t *transform);
     }
 
 
+/**
+ * Add a transform type to the runtime tag-to-type registry
+ *
+ * .. warning::
+ *
+ *    Internal plumbing, exported only because the registration macros expand
+ *    in each transform's own translation unit.  Not intended for general use.
+ *
+ * :param type: The transform type token to register
+ */
 ASDF_EXPORT void asdf_gwcs_transform_register(asdf_gwcs_transform_type_t type);
+
+/**
+ * Look up the extension registered for a transform tag
+ *
+ * .. warning::
+ *
+ *    Internal plumbing; not intended for general use.
+ *
+ * :param file: The file providing the extension context
+ * :param tag: The full YAML tag to look up
+ * :return: The matching extension, or ``NULL`` if the tag is unknown
+ */
 ASDF_EXPORT const asdf_extension_t *asdf_gwcs_transform_get(asdf_file_t *file, const char *tag);
 
 
@@ -174,8 +290,18 @@ ASDF_EXPORT const asdf_extension_t *asdf_gwcs_transform_get(asdf_file_t *file, c
  * NOTE: This is an internal implementation detail of the transform
  * polymorphiism support.
  */
+/**
+ * Storage for the shim that supplies base-transform behaviour to a type
+ *
+ * .. warning::
+ *
+ *    Internal plumbing; not intended for general use.
+ */
 typedef struct {
+    /** The vtab actually registered, whose methods are the shims */
     asdf_extension_vtab_t vtab;
+
+    /** The transform type's own vtab, handling only its own fields */
     const asdf_extension_vtab_t *orig;
 } asdf_gwcs_transform_shim_vtab_t;
 
@@ -204,21 +330,31 @@ ASDF_EXPORT void asdf_gwcs_transform_install_shim(
 
 
 /*
- * Register a transform "subclass".
+ * Register a transform "subclass", with every per-type datum spelled out.
  *
  * ``ext_vtab`` is a pointer to the transform's own `asdf_extension_vtab_t`; its
  * methods handle only the type's own fields (a serializer returns a mapping of
  * just those fields), and the base transform handling is supplied centrally by
  * the installed shim (see `asdf_gwcs_transform_install_shim`).
  *
+ * The extension's ``userdata`` is an `asdf_gwcs_transform_data_t` carrying the
+ * type name, the optional ``_ctype``, and ``_userdata``.  The shims unwrap the
+ * last of these before calling ``ext_vtab``'s methods, so a transform's own
+ * methods see the pointer registered here and not the wrapper.
+ *
  * TODO: this is a stopgap until libasdf formalizes extension hierarchies and
  * can generate this itself.
  */
-#define ASDF_GWCS_REGISTER_TRANSFORM( \
-    extname, ttype, type, software, ext_vtab, userdata, ...) \
+#define ASDF_GWCS_REGISTER_TRANSFORM_FULL( \
+    extname, ttype, type, software, ext_vtab, _ctype, _userdata, ...) \
     ASDF_GWCS_TRANSFORM_SHIM_VTAB(extname, ext_vtab); \
+    static asdf_gwcs_transform_data_t asdf_gwcs_##extname##_transform_data = { \
+        .ctype = (_ctype), \
+        .userdata = (_userdata), \
+    }; \
     ASDF_REGISTER_EXTENSION(gwcs_##extname, type, software, \
-        &asdf_gwcs_##extname##_shim_vtab.vtab, userdata, __VA_ARGS__); \
+        &asdf_gwcs_##extname##_shim_vtab.vtab, \
+        &asdf_gwcs_##extname##_transform_data, __VA_ARGS__); \
     const asdf_gwcs_transform_type_t ASDF_GWCS_TRANSFORM_##ttype = \
         (asdf_gwcs_transform_type_t)&ASDF_EXT_STATIC_NAME(gwcs_##extname); \
     static ASDF_CONSTRUCTOR void asdf_gwcs_transform_register_##extname(void) { \
@@ -230,13 +366,17 @@ ASDF_EXPORT void asdf_gwcs_transform_install_shim(
     }
 
 
+/* Register a transform with no associated FITS WCS CTYPE. */
+#define ASDF_GWCS_REGISTER_TRANSFORM( \
+    extname, ttype, type, software, ext_vtab, userdata, ...) \
+    ASDF_GWCS_REGISTER_TRANSFORM_FULL( \
+        extname, ttype, type, software, ext_vtab, NULL, userdata, __VA_ARGS__)
+
+
+/* Register a transform that corresponds to a FITS WCS projection code. */
 #define ASDF_GWCS_REGISTER_TRANSFORM_WITH_CTYPE(extname, ttype, type, software, vtab, _ctype, ...) \
-    static const asdf_gwcs_transform_data_t asdf_gwcs_##extname##_transform_data = { \
-        .ctype = (#_ctype) \
-    }; \
-    ASDF_GWCS_REGISTER_TRANSFORM( \
-        extname, ttype, type, software, vtab, (void *)&asdf_gwcs_##extname##_transform_data, \
-        __VA_ARGS__);
+    ASDF_GWCS_REGISTER_TRANSFORM_FULL( \
+        extname, ttype, type, software, vtab, (#_ctype), NULL, __VA_ARGS__)
 
 
 #define ASDF_GWCS_DECLARE_TRANSFORM(extname, ttype, type) \
