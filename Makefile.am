@@ -71,7 +71,7 @@ if HAVE_AST
 src_files += src/backends/ast_yaml.c
 libasdf_gwcs_la_SOURCES += src/backends/ast_yaml.c
 libasdf_gwcs_la_CFLAGS  += $(AST_CFLAGS)
-libasdf_gwcs_la_LIBADD  += $(AST_LIBS) $(YAML_LIBS)
+libasdf_gwcs_la_LIBADD  += $(AST_LIBS) $(FYAML_LIBS)
 endif
 
 pkgconfigdir = $(libdir)/pkgconfig
@@ -82,3 +82,41 @@ format:
 	clang-format -i $(addprefix $(srcdir)/,$(src_files)) $(addprefix $(srcdir)/,$(src_headers))
 
 .PHONY: format
+
+# CMake-related files to include in the distribution
+EXTRA_DIST = \
+    README.rst \
+    CHANGES.rst \
+    LICENSE \
+    autogen.sh \
+    towncrier.toml \
+    .clang-format \
+    CMakeLists.txt \
+    config.h.cmake \
+    cmake/AddressAnalyzer.cmake \
+    cmake/ASDFGWCSOptions.cmake \
+    cmake/SubmoduleInit.cmake \
+    src/CMakeLists.txt
+
+CMAKE_EXTRA_FLAGS=
+
+# Try building and running tests with cmake to ensure the cmake build works
+# from the distribution tarball
+distcheck-cmake:
+	@echo "=== Running CMake build inside distcheck ==="
+	rm -rf $(distdir)/_build/cmake
+	mkdir $(distdir)/_build/cmake
+	cd $(distdir)/_build/cmake && \
+	    cmake ../.. \
+                -DENABLE_TESTING_ALL=YES \
+                -DCMAKE_BUILD_TYPE=Release \
+                $(CMAKE_EXTRA_FLAGS) && \
+            $(MAKE) && \
+            $(MAKE) test
+
+.PHONY: distcheck-cmake
+
+
+# 1. Test the CMake build
+distcheck-hook:
+	$(MAKE) distcheck-cmake

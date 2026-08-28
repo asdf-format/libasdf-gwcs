@@ -88,7 +88,17 @@ roman_build21_refs = \
     fixtures/roman/build21/ast_wcs_results.csv \
     fixtures/roman/build21/gwcs_wcs_results.csv
 
+# CMake-related files to include in the distribution
+CMAKE_DIST = CMakeLists.txt
+
 EXTRA_DIST = \
+    $(CMAKE_DIST) \
+    munit.h \
+    util.h \
+    munit/COPYING \
+    munit/munit.h \
+    fixtures/roman_l2_wcs.asdf \
+    fixtures/roman_l3_wcs.asdf \
     $(roman_build21_fixtures) \
     $(roman_build21_refs) \
     scripts/create_roman_fixture.py

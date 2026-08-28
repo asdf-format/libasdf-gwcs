@@ -41,3 +41,10 @@ install(
 
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/asdf/gwcs/transform/property"
 )
+
+install(
+    FILES
+        asdf/gwcs/coordinates/baseframe.h
+
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/asdf/gwcs/coordinates"
+)

@@ -4,6 +4,7 @@ nobase_include_HEADERS = \
     asdf/gwcs/core.h \
     asdf/gwcs/eval.h \
     asdf/gwcs/fitswcs_imaging.h \
+    asdf/gwcs/grid.h \
     asdf/gwcs/frame.h \
     asdf/gwcs/frame2d.h \
     asdf/gwcs/frame_celestial.h \
@@ -25,3 +26,6 @@ nobase_include_HEADERS = \
     asdf/gwcs/transform/transform.h \
     asdf/gwcs/transform/property/bounding_box.h \
     asdf/gwcs/wcs.h
+
+# CMake-related files to include in the distribution
+EXTRA_DIST = CMakeLists.txt
