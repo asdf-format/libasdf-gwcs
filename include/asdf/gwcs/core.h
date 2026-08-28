@@ -1,6 +1,9 @@
 /**
  * Core types shared across all libasdf-gwcs public headers
  */
+
+//
+
 #ifndef ASDF_GWCS_CORE_H
 #define ASDF_GWCS_CORE_H
 
@@ -46,6 +49,19 @@ typedef enum {
     /** An error occurred during coordinate evaluation */
     ASDF_GWCS_ERR_EVALUATION_FAILED,
 } asdf_gwcs_err_t;
+
+
+/**
+ * Return a short human-readable description of an `asdf_gwcs_err_t`
+ *
+ * The returned string is statically allocated and must not be freed.  An
+ * unrecognized error code yields ``"unknown error"`` rather than ``NULL``, so
+ * the result is always safe to pass to ``printf``.
+ *
+ * :param err: The error code to describe
+ * :return: A NUL-terminated description of ``err``
+ */
+ASDF_EXPORT const char *asdf_gwcs_strerror(asdf_gwcs_err_t err);
 
 
 ASDF_END_DECLS

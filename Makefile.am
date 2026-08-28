@@ -5,6 +5,7 @@ src_files = \
     src/coordinates/baseframe.c \
     src/coordinates/fk4.c \
     src/coordinates/fk5.c \
+    src/core.c \
     src/eval.c \
     src/grid.c \
     src/fitswcs_imaging.c \
