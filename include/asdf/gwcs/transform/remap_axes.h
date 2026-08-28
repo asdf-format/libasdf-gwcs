@@ -15,7 +15,7 @@ ASDF_BEGIN_DECLS
  */
 typedef struct {
     ASDF_GWCS_TRANSFORM_BASE;
-    /** Heap-allocated array of length ``base.n_outputs``. */
+    /** Heap-allocated array of length ``n_outputs``. */
     const uint32_t *mapping;
 } asdf_gwcs_remap_axes_t;
 

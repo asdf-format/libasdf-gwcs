@@ -2,6 +2,8 @@
  * Partial implementation of the gwcs/frame2d-1.2.0 schema
  */
 
+//
+
 #ifndef ASDF_GWCS_FRAME2D_H
 #define ASDF_GWCS_FRAME2D_H
 

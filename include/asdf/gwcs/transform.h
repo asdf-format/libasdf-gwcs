@@ -1,4 +1,9 @@
-/** Top-level transform convenience header */
+/**
+ * Top-level transform convenience header--declares all implemented transforms
+ */
+
+//
+
 #ifndef ASDF_GWCS_TRANSFORM_H
 #define ASDF_GWCS_TRANSFORM_H
 #include <asdf/gwcs/transform/affine.h>

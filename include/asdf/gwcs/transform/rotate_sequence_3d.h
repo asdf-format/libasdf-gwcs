@@ -8,17 +8,22 @@
 ASDF_BEGIN_DECLS
 
 /**
+ * Whether a rotation sequence acts on Cartesian or spherical coordinates
+ */
+typedef enum {
+    /** Rotate a Cartesian vector (the default) */
+    ASDF_GWCS_ROTATION_TYPE_CARTESIAN,
+    /** Rotate spherical (longitude/latitude) coordinates */
+    ASDF_GWCS_ROTATION_TYPE_SPHERICAL,
+} asdf_gwcs_rotation_type_t;
+
+/**
  * Representation of the ``transform/rotate_sequence_3d-1.1.0`` schema.
  *
  * A sequence of 3-D rotations about named axes.  Each rotation is specified
  * by an angle in degrees; the axes are given by a string like ``"zyx"`` or
  * ``"xyz"``.
  */
-typedef enum {
-    ASDF_GWCS_ROTATION_TYPE_CARTESIAN,
-    ASDF_GWCS_ROTATION_TYPE_SPHERICAL,
-} asdf_gwcs_rotation_type_t;
-
 typedef struct {
     ASDF_GWCS_TRANSFORM_BASE;
     /** Number of rotation angles. */

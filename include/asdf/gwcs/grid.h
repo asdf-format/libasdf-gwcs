@@ -1,6 +1,9 @@
 /**
  * 2-D pixel sampling grid utilities
  */
+
+//
+
 #ifndef ASDF_GWCS_GRID_H
 #define ASDF_GWCS_GRID_H
 
@@ -22,8 +25,8 @@ ASDF_BEGIN_DECLS
  * ``y1 = y0 + ny - 1``.
  */
 typedef struct {
-    double   x0, y0;
-    double   x1, y1;
+    double x0, y0;
+    double x1, y1;
     uint32_t nx, ny;
 } asdf_gwcs_grid2d_t;
 

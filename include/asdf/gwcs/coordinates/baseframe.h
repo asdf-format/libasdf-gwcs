@@ -3,6 +3,8 @@
  * and its derived concrete coordinate frame types.
  */
 
+//
+
 #ifndef ASDF_GWCS_COORDINATES_BASEFRAME_H
 #define ASDF_GWCS_COORDINATES_BASEFRAME_H
 

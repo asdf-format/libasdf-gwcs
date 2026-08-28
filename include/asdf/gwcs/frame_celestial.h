@@ -2,6 +2,8 @@
  * Partial implementation of the gwcs/frame_celestial-1.2.0 schema
  */
 
+//
+
 #ifndef ASDF_GWCS_FRAME_CELESTIAL_H
 #define ASDF_GWCS_FRAME_CELESTIAL_H
 

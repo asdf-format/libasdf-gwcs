@@ -7,8 +7,15 @@
 
 ASDF_BEGIN_DECLS
 
+/**
+ * A transform returning a fixed value, ignoring its input
+ *
+ * ``out = value``
+ */
 typedef struct {
     ASDF_GWCS_TRANSFORM_BASE;
+
+    /** The constant value produced for every input */
     double value;
 } asdf_gwcs_constant_t;
 

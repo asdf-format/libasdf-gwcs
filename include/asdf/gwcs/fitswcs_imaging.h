@@ -3,12 +3,13 @@
  * schema--a GWCS transform encapuslating a FITS WCS
  *
  * The C type representing the FITS WCS data is called just `asdf_gwcs_fits_t`
- * for short.
- *
- * If libasdf is configured with the ``--with-fits-wcs`` flag (which requires
- * WCSLIB) then it is also possible to convert this to the associated
- * `wcsprm`.  But even without WCSLIB it is possible to read these objects.
+ * for short, and the generated accessors are named accordingly
+ * (``asdf_get_gwcs_fits``, ``asdf_gwcs_fits_destroy``, and so on) even though
+ * the schema and this header are named ``fitswcs_imaging``.
  */
+
+//
+
 #ifndef ASDF_GWCS_FITSWCS_IMAGING_H
 #define ASDF_GWCS_FITSWCS_IMAGING_H
 
@@ -21,7 +22,7 @@ ASDF_BEGIN_DECLS
  * Contains properties from an ``gwcs/fitswcs_imaging-1.0.0`` object
  */
 typedef struct {
-    asdf_gwcs_transform_t base;
+    ASDF_GWCS_TRANSFORM_BASE;
 
     /** The FITS CRPIXn headers (0-indexed) */
     const double crpix[2];
@@ -41,7 +42,7 @@ typedef struct {
      * .. warning::
      *
      *   Extracting the correct CTYPEn headers requires the full GWCS object
-     *   to be read (e.g. with `asdf_get_gwcs`).  In this case the ctype values
+     *   to be read (e.g. with ``asdf_get_gwcs``).  In this case the ctype values
      *   will be filled in on this object.
      *
      *   Otherwise, if a ``fitswcs_imaging`` transform object is read directly,
@@ -82,10 +83,9 @@ typedef struct {
 ASDF_EXPORT bool asdf_gwcs_is_fits(const asdf_file_t *file, asdf_gwcs_t *gwcs);
 
 
-/**
- * This declares the ASDF_GWCS_TRANSFORM_FITWCS_IMAGING constant as well
- * as the libasdf extension declarations.
- */
+
+/* This declares the ASDF_GWCS_TRANSFORM_FITWCS_IMAGING constant as well
+ * as the libasdf extension declarations. */
 ASDF_GWCS_DECLARE_TRANSFORM(fits, FITSWCS_IMAGING, asdf_gwcs_fits_t);
 
 

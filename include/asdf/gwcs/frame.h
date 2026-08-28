@@ -1,6 +1,13 @@
 /**
- * Partial implementation of the gwcs/frame-1.2.0 schema
+ * Partial implementation of the gwcs/frame-1.2.0 schema.
+ *
+ * .. warning::
+ *
+ *   This API is still in progress--in particular the use of a frame type
+ *   enum may not prove stable in the next releases.
  */
+
+//
 
 #ifndef ASDF_GWCS_FRAME_H
 #define ASDF_GWCS_FRAME_H
@@ -15,16 +22,36 @@ ASDF_BEGIN_DECLS
 
 
 /**
- * Enum for tagging which type of frame a give `asdf_frame_t *` contains
+ * Enum tagging which type of frame an `asdf_gwcs_frame_t` actually contains
+ *
+ * Check this before downcasting a frame pointer to a concrete frame type.
  */
 typedef enum {
+    /** A bare ``gwcs/frame`` with no additional structure */
     ASDF_GWCS_FRAME_GENERIC,
+    /** An `asdf_gwcs_frame2d_t` (``gwcs/frame2d``) */
     ASDF_GWCS_FRAME_2D,
+    /** An `asdf_gwcs_frame_celestial_t` (``gwcs/celestial_frame``) */
     ASDF_GWCS_FRAME_CELESTIAL,
 } asdf_gwcs_frame_type_t;
 
+/**
+ * Base type for all GWCS coordinate frames
+ *
+ * Concrete frame types embed this as their first member, so a frame pointer
+ * may be cast to the concrete type once ``type`` has been checked:
+ *
+ * .. code-block:: c
+ *
+ *    if (frame->type == ASDF_GWCS_FRAME_2D) {
+ *        const asdf_gwcs_frame2d_t *f2d = (const asdf_gwcs_frame2d_t *)frame;
+ *    }
+ */
 typedef struct {
+    /** Which concrete frame type this is */
     asdf_gwcs_frame_type_t type;
+
+    /** A human-readable name for the frame (may be ``NULL``) */
     const char *name;
 } asdf_gwcs_frame_t;
 
@@ -54,12 +81,56 @@ ASDF_EXPORT const char *asdf_gwcs_frame_type_name(const asdf_gwcs_frame_t *frame
 ASDF_EXPORT asdf_value_t *asdf_gwcs_frame_value_of(
     asdf_file_t *file, const asdf_gwcs_frame_t *frame);
 
-/** TODO: Document */
+/**
+ * Polymorphic cast of a generic value to whichever frame type it is tagged as
+ *
+ * Unlike ``asdf_value_as_gwcs_base_frame``, this recognizes any of the
+ * concrete frame tags and sets the resulting object's ``type`` accordingly, so
+ * that the result may be downcast.
+ *
+ * :param value: The value to convert
+ * :param out: Receives the new `asdf_gwcs_frame_t`, owned by the caller
+ * :return: ``ASDF_VALUE_OK`` on success
+ */
 ASDF_EXPORT asdf_value_err_t asdf_value_as_gwcs_frame(asdf_value_t *value, asdf_gwcs_frame_t **out);
+
+/**
+ * Polymorphic deep copy of a frame of any type
+ *
+ * :param file: The file the copy is associated with
+ * :param frame: The frame to copy
+ * :return: A newly allocated copy owned by the caller, or ``NULL`` on failure
+ */
 ASDF_EXPORT asdf_gwcs_frame_t *asdf_gwcs_frame_copy(asdf_file_t *file, const asdf_gwcs_frame_t *frame);
+
+/**
+ * Polymorphic deep copy into caller-provided storage
+ *
+ * ``copy`` must point to storage large enough for ``frame``'s concrete type.
+ *
+ * :param file: The file the copy is associated with
+ * :param frame: The frame to copy
+ * :param copy: Destination storage
+ * :return: ``true`` on success
+ */
 ASDF_EXPORT bool asdf_gwcs_frame_copy_into(
     asdf_file_t *file, const asdf_gwcs_frame_t *frame, asdf_gwcs_frame_t *copy);
+
+/**
+ * Release what a frame owns, without freeing the frame itself
+ *
+ * Use this for a frame embedded in storage you allocated yourself; use
+ * `asdf_gwcs_frame_destroy` for one returned by this library.
+ *
+ * :param frame: The frame to de-initialize
+ */
 ASDF_EXPORT void asdf_gwcs_frame_deinit(asdf_gwcs_frame_t *frame);
+
+/**
+ * Free a frame of any type, along with everything it owns
+ *
+ * :param frame: The frame to destroy
+ */
 ASDF_EXPORT void asdf_gwcs_frame_destroy(asdf_gwcs_frame_t *frame);
 
 ASDF_END_DECLS

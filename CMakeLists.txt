@@ -119,6 +119,9 @@ if(ENABLE_TESTING)
     enable_testing()
     add_subdirectory(tests)
 endif()
+if(ENABLE_DOCS)
+    add_subdirectory(docs)
+endif()
 
 # Generate and install pkg-config file
 set(prefix ${CMAKE_INSTALL_PREFIX})

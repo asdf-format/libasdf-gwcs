@@ -1,4 +1,4 @@
-SUBDIRS = include tests third_party
+SUBDIRS = include tests third_party docs
 
 src_files = \
     src/backend.c \
@@ -74,6 +74,20 @@ libasdf_gwcs_la_CFLAGS  += $(AST_CFLAGS)
 libasdf_gwcs_la_LIBADD  += $(AST_LIBS) $(FYAML_LIBS)
 endif
 
+if BUILD_DOCS
+# LIBASDF_CFLAGS is passed through so that hawkmoth's clang can find libasdf's
+# headers; without them the public headers fail to parse and their declarations
+# silently vanish from the generated API documentation.
+# See libasdf_include_flags() in docs/conf.py
+docs:
+	$(AM_V_at)LIBASDF_CFLAGS="$(LIBASDF_CFLAGS)" \
+	    $(SPHINXBUILD) $(SPHINX_FLAGS) -b html $(srcdir)/docs $(builddir)/docs/_build/html
+
+distcheck-docs:
+	$(MAKE) docs SPHINX_FLAGS=-W
+endif
+.PHONY: docs distcheck-docs
+
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libasdf-gwcs.pc
 CLEANFILES = libasdf-gwcs.pc
@@ -117,6 +131,8 @@ distcheck-cmake:
 .PHONY: distcheck-cmake
 
 
-# 1. Test the CMake build
+# 1. Check building docs from the distribution if possible
+# 2. Test the CMake build
 distcheck-hook:
+	$(MAKE) distcheck-docs
 	$(MAKE) distcheck-cmake

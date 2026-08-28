@@ -1,6 +1,9 @@
 /**
  * Backend descriptor and registration interface for WCS evaluation
  */
+
+//
+
 #ifndef ASDF_GWCS_BACKEND_H
 #define ASDF_GWCS_BACKEND_H
 
@@ -43,28 +46,28 @@ typedef struct {
 } asdf_gwcs_transform_vtab_t;
 
 /**
- * Descriptor for a WCS evaluation backend.
+ * Descriptor for a WCS evaluation backend
  *
  * Backends are registered at library-load time via `ASDF_GWCS_REGISTER_BACKEND`
  * and retrieved by name with `asdf_gwcs_backend_get`.
  */
 struct asdf_gwcs_backend {
-    /** Unique name identifying this backend (e.g. ``"ast_yaml"``). */
+    /** Unique name identifying this backend (e.g. ``"ast_yaml"``) */
     const char *name;
 
-    /** Pipeline-level operations; must not be NULL if the backend is usable. */
+    /** Pipeline-level operations; must not be NULL if the backend is usable */
     const asdf_gwcs_pipeline_vtab_t *pipeline;
 
-    /** Per-transform operations; may be NULL. */
+    /** Per-transform operations; may be NULL */
     const asdf_gwcs_transform_vtab_t *transform;
 
-    /** Arbitrary backend-private data. */
+    /** Arbitrary backend-private data */
     void *userdata;
 };
 
 
 /**
- * Retrieve a registered backend by name.
+ * Retrieve a registered backend by name
  *
  * :param name: The backend name string (e.g. ``"ast_yaml"``).
  * :return: The backend descriptor, or NULL if no backend with that name is
@@ -73,7 +76,7 @@ struct asdf_gwcs_backend {
 ASDF_EXPORT const asdf_gwcs_backend_t *asdf_gwcs_backend_get(const char *name);
 
 /**
- * Register a backend.
+ * Register a backend
  *
  * Intended for use via `ASDF_GWCS_REGISTER_BACKEND`; not exported from the
  * shared library ABI so that third-party backends must link statically or be
@@ -82,7 +85,7 @@ ASDF_EXPORT const asdf_gwcs_backend_t *asdf_gwcs_backend_get(const char *name);
 extern void asdf_gwcs_backend_register(const asdf_gwcs_backend_t *backend);
 
 /**
- * Register a backend at library load time.
+ * Register a backend at library load time
  *
  * Places a `asdf_gwcs_backend_t` descriptor in static storage and arranges
  * for it to be registered automatically when the library is loaded.

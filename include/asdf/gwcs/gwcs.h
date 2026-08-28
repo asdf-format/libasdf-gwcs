@@ -1,6 +1,13 @@
 /**
+ * Umbrella header for libasdf-gwcs
  *
+ * Including this pulls in the entire public API: the WCS object and its steps,
+ * every coordinate frame and transform type, and the evaluation interface.
+ * Most programs need only this header alongside libasdf's own ``<asdf.h>``.
  */
+
+//
+
 #ifndef ASDF_GWCS_GWCS_H
 #define ASDF_GWCS_GWCS_H
 

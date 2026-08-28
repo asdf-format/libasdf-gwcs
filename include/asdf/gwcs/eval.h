@@ -1,6 +1,9 @@
 /**
- * WCS evaluation context -- pixel-to-world coordinate transforms
+ * WCS evaluation context
  */
+
+//
+
 #ifndef ASDF_GWCS_EVAL_H
 #define ASDF_GWCS_EVAL_H
 
@@ -24,7 +27,7 @@ ASDF_BEGIN_DECLS
 typedef struct asdf_gwcs_eval asdf_gwcs_eval_t;
 
 /**
- * Backend descriptor; see `asdf/gwcs/backend.h`.
+ * Backend descriptor; see ``asdf/gwcs/backend.h``.
  */
 typedef struct asdf_gwcs_backend asdf_gwcs_backend_t;
 
@@ -66,6 +69,8 @@ ASDF_EXPORT asdf_gwcs_err_t asdf_gwcs_eval_2d(
 
 /**
  * Release all resources held by an evaluation context.
+ *
+ * Passing ``NULL`` is a no-op.
  *
  * :param eval: Context to destroy; must not be used afterwards.
  */

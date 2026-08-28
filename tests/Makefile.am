@@ -88,6 +88,54 @@ roman_build21_refs = \
     fixtures/roman/build21/ast_wcs_results.csv \
     fixtures/roman/build21/gwcs_wcs_results.csv
 
+# Check the examples in the documentation
+#
+# The example programs embedded in README.rst and the usage pages are marked
+# with the ``:test:`` option (see scripts/extract_doc_examples.py); each is
+# extracted to a .c file, compiled against the freshly built libasdf-gwcs, and
+# run as part of the test suite so the documentation cannot drift from the API.
+if HAVE_PYTHON
+DOC_EXAMPLES_DIR = $(builddir)/doc_examples
+
+DOC_EXAMPLE_FILES = \
+    $(top_srcdir)/README.rst \
+    $(top_srcdir)/docs/usage/reading-writing.rst \
+    $(top_srcdir)/docs/usage/evaluation.rst
+
+# The extracted examples are compiled against the public headers, so a header
+# change must force them to be rebuilt; otherwise a stale example binary can be
+# run against a newer library with a different struct layout.
+doc_example_headers = \
+    $(wildcard $(top_srcdir)/include/asdf/gwcs/*.h) \
+    $(wildcard $(top_srcdir)/include/asdf/gwcs/*/*.h) \
+    $(wildcard $(top_srcdir)/include/asdf/gwcs/*/*/*.h)
+
+DOC_EXAMPLE_DEPS = \
+    $(DOC_EXAMPLE_FILES) \
+    $(doc_example_headers) \
+    $(srcdir)/scripts/extract_doc_examples.py \
+    $(top_builddir)/libasdf-gwcs.la
+
+TESTS += $(DOC_EXAMPLES_DIR)/test-doc-examples.sh
+
+$(DOC_EXAMPLES_DIR)/test-doc-examples.sh: $(DOC_EXAMPLE_DEPS)
+	$(AM_V_at)$(PYTHON3) $(srcdir)/scripts/extract_doc_examples.py \
+	  $(DOC_EXAMPLE_FILES) \
+	  --out-dir $(DOC_EXAMPLES_DIR) \
+	  --fixtures-dir $(abs_srcdir)/fixtures $(QUIET_OUT)
+	$(AM_V_at)for f in $(DOC_EXAMPLES_DIR)/*.c; do \
+	    exe=$${f%.c}; \
+	    $(LIBTOOL) --mode=link $(CC) \
+	      -I$(top_srcdir)/include \
+	      $(LIBASDF_CFLAGS) $(ASDF_GWCS_CFLAGS) \
+	      $(unit_test_ldflags) \
+	      $$f $(top_builddir)/libasdf-gwcs.la $(LIBASDF_LIBS) \
+	      -o $$exe $(QUIET_OUT); \
+	done
+endif
+
+QUIET_OUT = $(if $(filter 1,$(V)),, > /dev/null)
+
 # CMake-related files to include in the distribution
 CMAKE_DIST = CMakeLists.txt
 
@@ -101,6 +149,11 @@ EXTRA_DIST = \
     fixtures/roman_l3_wcs.asdf \
     $(roman_build21_fixtures) \
     $(roman_build21_refs) \
-    scripts/create_roman_fixture.py
+    scripts/create_roman_fixture.py \
+    scripts/extract_doc_examples.py
+
+# Clean up extracted doc examples
+distclean-local:
+	rm -rf $(builddir)/doc_examples
 
 check-local: $(munit_submodule)

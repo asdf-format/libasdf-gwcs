@@ -193,10 +193,21 @@ LIBASDF_LIBS=$(printf '%s\n' "$LIBASDF_LIBS" | sed 's/none required//g')
 STC_CPPFLAGS="-I\$(top_srcdir)/third_party/STC/include"
 AC_SUBST([STC_CPPFLAGS])
 
+# --- Optional features -------------------------------------------------------
+
+# Enable/check doc build requirements
+ASDF_CHECK_SPHINX
+
+# Python is used to extract the testable examples from the documentation
+AC_PATH_PROG([PYTHON3], [python3], [no])
+AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON3" != "no"])
+AC_SUBST([PYTHON3])
+
 AC_SUBST([ASDF_GWCS_CFLAGS])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([
   Makefile
+  docs/Makefile
   include/Makefile
   libasdf-gwcs.pc
   tests/Makefile
