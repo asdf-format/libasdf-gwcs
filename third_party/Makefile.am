@@ -1,5 +1,10 @@
 if HAVE_AST
 SUBDIRS = ast
+
+# AST is LGPL-3.0-or-later and is statically linked into libasdf-gwcs, so its
+# license text must accompany any binary distribution (LGPLv3 section 4b).
+ast_licensedir = $(docdir)
+ast_license_DATA = ast/COPYING
 endif
 
 # AST is a build-only dependency; don't recurse into its test suite
@@ -39,6 +44,7 @@ stc_headers = \
     $(stc_dir)/include/stc/sort.h \
     $(stc_dir)/include/stc/list.h \
     $(stc_dir)/include/stc/sys/crange.h \
+    $(stc_dir)/include/stc/sys/finalize.h \
     $(stc_dir)/include/stc/sys/filter.h \
     $(stc_dir)/include/stc/sys/sumtype.h \
     $(stc_dir)/include/stc/sys/utility.h \
@@ -80,3 +86,7 @@ CMAKE_DIST = CMakeLists.txt
 EXTRA_DIST = \
     $(CMAKE_DIST) \
     $(stc_dir)/LICENSE
+
+if HAVE_AST
+EXTRA_DIST += ast/COPYING
+endif

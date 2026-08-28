@@ -74,8 +74,11 @@ AS_IF([test "x$enable_logging" = "xyes"],
 )
 
 # Submodule initialization (required dependencies)
-AX_SUBMODULE_INIT([third_party/STC])
-AX_SUBMODULE_INIT([tests/munit])
+# Use a distributed file as the sentinel rather than the default PATH/.git:
+# a release tarball has no .git anywhere, so keying on it would make the
+# tarball impossible to configure.
+AX_SUBMODULE_INIT([third_party/STC], [third_party/STC/include/stc/common.h])
+AX_SUBMODULE_INIT([tests/munit], [tests/munit/munit.h])
 
 # --enable-ast (default: yes)
 # Uses vendored submodule at third_party/ast; falls back to system libast.

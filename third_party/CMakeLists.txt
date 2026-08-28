@@ -19,3 +19,12 @@ install(
     FILES STC/LICENSE
     RENAME LICENSE_STC.txt DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}
 )
+
+# AST is LGPL-3.0-or-later and is statically linked into libasdf-gwcs, so its
+# license text must accompany any binary distribution (LGPLv3 section 4b).
+if (ASDF_GWCS_ENABLE_AST AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/ast/COPYING)
+    install(
+        FILES ast/COPYING
+        RENAME LICENSE_AST.txt DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}
+    )
+endif()
