@@ -150,19 +150,28 @@ static bool asdf_gwcs_transform_copy_shallow(
 }
 
 
+/* A transform's type token is the address of its extension registration.
+ *
+ * Taking a transform rather than a void * keeps callers honest, while still
+ * accepting the void * an extension vtab method is handed, since C converts
+ * that implicitly. */
+static inline const asdf_extension_t *transform_ext(const asdf_gwcs_transform_t *transform) {
+    return (const asdf_extension_t *)transform->type;
+}
+
+
 /* Recover the shim vtab (and hence the type's own methods) from an object's
  * extension.  The libasdf vtab is the first member of
  * asdf_gwcs_transform_shim_vtab_t, so ext->vtab points straight at it. */
-static const asdf_gwcs_transform_shim_vtab_t *transform_shim_of(const void *obj) {
-    const asdf_extension_t *ext = (const asdf_extension_t *)((const asdf_gwcs_transform_t *)obj)->type;
-    return (const asdf_gwcs_transform_shim_vtab_t *)ext->vtab;
+static inline const asdf_gwcs_transform_shim_vtab_t *transform_shim_of(const void *obj) {
+    return (const asdf_gwcs_transform_shim_vtab_t *)transform_ext(obj)->vtab;
 }
 
 
 /* The extension userdata libasdf hands the shims is the per-type
  * asdf_gwcs_transform_data_t; a transform's own methods expect the pointer its
  * registration passed, which lives inside it. */
-static const void *transform_own_userdata(const void *userdata) {
+static inline const void *transform_own_userdata(const void *userdata) {
     const asdf_gwcs_transform_data_t *data = userdata;
     return data ? data->userdata : NULL;
 }
@@ -180,8 +189,7 @@ static bool asdf_gwcs_transform_copy_shim(asdf_file_t *file, const void *src, vo
         return shim->orig->copy(file, src, dst);
     }
 
-    const asdf_extension_t *ext = (const asdf_extension_t *)((const asdf_gwcs_transform_t *)src)->type;
-    return asdf_gwcs_transform_copy_shallow(file, src, dst, ext->size);
+    return asdf_gwcs_transform_copy_shallow(file, src, dst, transform_ext(src)->size);
 }
 
 
@@ -417,7 +425,7 @@ const char *asdf_gwcs_transform_tag(const asdf_gwcs_transform_t *transform) {
 
     /* Constructed in memory rather than read from a file: fall back to the
      * tag its type would be serialized with. */
-    const asdf_extension_t *ext = (const asdf_extension_t *)transform->type;
+    const asdf_extension_t *ext = transform_ext(transform);
 
     if (!ext || !ext->tags)
         return NULL;
@@ -430,7 +438,7 @@ const char *asdf_gwcs_transform_type_name(const asdf_gwcs_transform_t *transform
     if (!transform || !transform->type)
         return NULL;
 
-    const asdf_extension_t *ext = (const asdf_extension_t *)transform->type;
+    const asdf_extension_t *ext = transform_ext(transform);
     const asdf_gwcs_transform_data_t *data = ext->userdata;
 
     if (!data || !data->name[0])
@@ -610,7 +618,7 @@ bool asdf_gwcs_transform_copy_into(
     if (!transform || !copy)
         return false;
 
-    const asdf_extension_t *ext = (const asdf_extension_t *)transform->type;
+    const asdf_extension_t *ext = transform_ext(transform);
 
     /* The registered vtab copy method is a shim that copies the base fields
      * and then the concrete type's own fields (see ASDF_GWCS_REGISTER_TRANSFORM).
@@ -635,7 +643,7 @@ asdf_gwcs_transform_t *asdf_gwcs_transform_copy(
     if (!transform)
         return NULL;
 
-    const asdf_extension_t *ext = (const asdf_extension_t *)transform->type;
+    const asdf_extension_t *ext = transform_ext(transform);
 
     if (UNLIKELY(!ext))
         return NULL;
@@ -691,7 +699,7 @@ void asdf_gwcs_transform_deinit(asdf_gwcs_transform_t *transform) {
     if (!transform)
         return;
 
-    const asdf_extension_t *ext = (const asdf_extension_t *)transform->type;
+    const asdf_extension_t *ext = transform_ext(transform);
 
     if (ext && ext->vtab && ext->vtab->deinit) {
         ext->vtab->deinit(transform);
@@ -822,8 +830,7 @@ asdf_value_t *asdf_value_of_gwcs_transform(
     if (!transform)
         return NULL;
 
-    const asdf_extension_t *ext = (asdf_extension_t *)transform->type;
-    return asdf_value_of_extension_type(file, transform, ext);
+    return asdf_value_of_extension_type(file, transform, transform_ext(transform));
 }
 
 
