@@ -440,6 +440,161 @@ const char *asdf_gwcs_transform_type_name(const asdf_gwcs_transform_t *transform
 }
 
 
+/* The children method, or NULL for a transform that has none (including one
+ * with no type at all). */
+static asdf_gwcs_transform_children_t transform_children_method(
+    const asdf_gwcs_transform_t *transform) {
+    if (!transform || !transform->type)
+        return NULL;
+
+    return transform_shim_of(transform)->children;
+}
+
+
+uint32_t asdf_gwcs_transform_n_children(const asdf_gwcs_transform_t *transform) {
+    asdf_gwcs_transform_children_t children = transform_children_method(transform);
+
+    if (!children)
+        return 0;
+
+    return children(transform, 0, NULL);
+}
+
+
+bool asdf_gwcs_transform_get_child(
+    const asdf_gwcs_transform_t *transform, uint32_t index, asdf_gwcs_transform_iter_t *out) {
+    if (!out)
+        return false;
+
+    asdf_gwcs_transform_children_t children = transform_children_method(transform);
+
+    if (!children)
+        return false;
+
+    out->value = NULL;
+    out->role = NULL;
+
+    uint32_t n_children = children(transform, index, out);
+
+    /* A children method that reports a count above index must also have filled
+     * in the child, but do not hand back a half-populated iterator if not. */
+    if (index >= n_children || !out->value)
+        return false;
+
+    out->index = index;
+    out->size = n_children;
+    out->depth = 0;
+    return true;
+}
+
+
+/* One level of the depth-first walk: which transform's children are being
+ * visited, how far through them the walk is, and how many there are. */
+typedef struct {
+    const asdf_gwcs_transform_t *parent;
+    uint32_t pos;
+    uint32_t size;
+} transform_iter_frame_t;
+
+
+/* The iterator's real contents.  The public struct is the first member, so a
+ * pointer to one converts to the other; everything the walk needs to keep
+ * between calls stays out of the public API. */
+typedef struct {
+    asdf_gwcs_transform_iter_t pub;
+    int max_depth;
+    int height;
+    int capacity;
+    transform_iter_frame_t *stack;
+} transform_iter_impl_t;
+
+
+static bool transform_iter_push(transform_iter_impl_t *impl, const asdf_gwcs_transform_t *parent) {
+    if (impl->height == impl->capacity) {
+        int capacity = impl->capacity ? impl->capacity * 2 : 8;
+        transform_iter_frame_t *stack = realloc(
+            impl->stack, (size_t)capacity * sizeof(transform_iter_frame_t));
+
+        if (UNLIKELY(!stack))
+            return false;
+
+        impl->stack = stack;
+        impl->capacity = capacity;
+    }
+
+    impl->stack[impl->height++] = (transform_iter_frame_t){
+        .parent = parent, .pos = 0, .size = asdf_gwcs_transform_n_children(parent)};
+    return true;
+}
+
+
+asdf_gwcs_transform_iter_t *asdf_gwcs_transform_iter_init(
+    const asdf_gwcs_transform_t *transform, int max_depth) {
+    transform_iter_impl_t *impl = calloc(1, sizeof(transform_iter_impl_t));
+
+    if (UNLIKELY(!impl))
+        return NULL;
+
+    impl->max_depth = max_depth;
+
+    if (UNLIKELY(!transform_iter_push(impl, transform))) {
+        free(impl);
+        return NULL;
+    }
+
+    return &impl->pub;
+}
+
+
+bool asdf_gwcs_transform_iter_next(asdf_gwcs_transform_iter_t **iter) {
+    if (!iter || !*iter)
+        return false;
+
+    transform_iter_impl_t *impl = (transform_iter_impl_t *)*iter;
+
+    /* Pre-order: having just reported a transform, descend into it before
+     * moving on to its siblings, so long as the depth limit allows. */
+    bool may_descend = impl->max_depth == ASDF_GWCS_DEPTH_UNLIMITED ||
+                       impl->pub.depth < impl->max_depth;
+
+    if (impl->pub.value && may_descend && asdf_gwcs_transform_n_children(impl->pub.value) > 0 &&
+        UNLIKELY(!transform_iter_push(impl, impl->pub.value)))
+        goto exhausted;
+
+    while (impl->height > 0) {
+        transform_iter_frame_t *frame = &impl->stack[impl->height - 1];
+
+        if (frame->pos >= frame->size) {
+            impl->height--;
+            continue;
+        }
+
+        if (UNLIKELY(!asdf_gwcs_transform_get_child(frame->parent, frame->pos, &impl->pub)))
+            goto exhausted;
+
+        impl->pub.index = frame->pos++;
+        impl->pub.size = frame->size;
+        impl->pub.depth = impl->height - 1;
+        return true;
+    }
+
+exhausted:
+    asdf_gwcs_transform_iter_destroy(*iter);
+    *iter = NULL;
+    return false;
+}
+
+
+void asdf_gwcs_transform_iter_destroy(asdf_gwcs_transform_iter_t *iter) {
+    if (!iter)
+        return;
+
+    transform_iter_impl_t *impl = (transform_iter_impl_t *)iter;
+    free(impl->stack);
+    free(impl);
+}
+
+
 void asdf_gwcs_transform_install_shim(
     asdf_extension_t *ext, asdf_gwcs_transform_shim_vtab_t *shim) {
     shim->vtab.serialize = asdf_gwcs_transform_serialize_shim;

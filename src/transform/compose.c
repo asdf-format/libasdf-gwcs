@@ -157,6 +157,21 @@ static void asdf_gwcs_compose_deinit_impl(void *value) {
 }
 
 
+/* The sub-transforms of a compose are an ordered pipeline, so they have no
+ * individual roles. */
+static uint32_t asdf_gwcs_compose_children(
+    const asdf_gwcs_transform_t *transform, uint32_t index, asdf_gwcs_transform_iter_t *out) {
+    const asdf_gwcs_compose_t *compose = (const asdf_gwcs_compose_t *)transform;
+
+    if (out && index < compose->n_forward) {
+        out->value = compose->forward[index];
+        out->role = NULL;
+    }
+
+    return compose->n_forward;
+}
+
+
 static const asdf_extension_vtab_t asdf_gwcs_compose_vtab = {
     .serialize = asdf_gwcs_compose_serialize,
     .deserialize = asdf_gwcs_compose_deserialize,
@@ -171,12 +186,13 @@ static const asdf_extension_vtab_t asdf_gwcs_compose_vtab = {
  * NOTE: The only differences so far between compose schema versions is in the
  * base transform schema version; nominally all versions are supported.
  */
-ASDF_GWCS_REGISTER_TRANSFORM(
+ASDF_GWCS_REGISTER_TRANSFORM_WITH_CHILDREN(
     compose,
     COMPOSE,
     asdf_gwcs_compose_t,
     &libasdf_gwcs_software,
     &asdf_gwcs_compose_vtab,
+    asdf_gwcs_compose_children,
     NULL,
     ASDF_GWCS_TRANSFORM_TAG_PREFIX "compose-1.4.0",
     ASDF_GWCS_TRANSFORM_TAG_PREFIX "compose-1.3.0",

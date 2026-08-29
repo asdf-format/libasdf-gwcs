@@ -133,9 +133,15 @@ the extension generates, and has exactly the signature libasdf's
    :fixture: roman_l2_wcs.asdf
 
    #include <inttypes.h>
+   #include <stdbool.h>
    #include <stdio.h>
    #include <asdf.h>
    #include <asdf/gwcs/gwcs.h>
+
+   // Composite transforms nest arbitrarily deep, so the walk through the
+   // transform tree truncates here for demonstration purposes; increase
+   // it to see more of the tree.
+   #define MAX_DEPTH 3
 
    int main(int argc, char **argv) {
        if (argc < 2) {
@@ -197,16 +203,58 @@ the extension generates, and has exactly the signature libasdf's
            const asdf_gwcs_step_t *step = &wcs->steps[idx];
            const asdf_gwcs_frame_t *frame = step->frame;
 
-           printf("  [%" PRIu32 "] %s (%s) -> ", idx,
+           printf("[%d] %s (%s)\n", idx,
                   frame && frame->name ? frame->name : "(unnamed)",
                   frame ? asdf_gwcs_frame_type_name(frame) : "?");
 
            // The final step has no transform: it only names the frame that
            // the pipeline ends in.
-           if (step->transform)
-               printf("%s\n", asdf_gwcs_transform_tag(step->transform));
-           else
-               printf("(end of pipeline)\n");
+           if (!step->transform)
+               continue;
+
+           // The step's transform, followed by everything nested beneath it
+           // up to MAX_DEPTH.
+           // Print a tree display of the step's transform and nested composite
+           // transforms.
+           asdf_gwcs_transform_iter_t *iter =
+               asdf_gwcs_transform_iter_init(step->transform, MAX_DEPTH);
+
+           const asdf_gwcs_transform_t *transform = step->transform;
+           bool last = true;
+           int depth = 0;
+
+           // Bit d records whether the ancestor at depth d was the last of its
+           // siblings, which is what decides between a "│" and a blank.
+           uint32_t last_ancestors = 0;
+
+           for (;;) {
+               fputs(" ", stdout);
+
+               for (int level = 0; level < depth; level++)
+                   fputs((last_ancestors >> level) & 1 ? "   " : "│  ", stdout);
+
+               printf("%s %s", last ? "└─" : "├─",
+                      asdf_gwcs_transform_type_name(transform));
+
+               // A transform may also carry a name of its own, which is the
+               // file author's label for it rather than its type.
+               if (transform->name)
+                   printf(" (%s)", transform->name);
+
+               printf("\n");
+
+               if (last)
+                   last_ancestors |= 1u << depth;
+               else
+                   last_ancestors &= ~(1u << depth);
+
+               if (!asdf_gwcs_transform_iter_next(&iter))
+                   break;
+
+               transform = iter->value;
+               last = iter->index + 1 == iter->size;
+               depth = iter->depth + 1;
+           }
        }
 
        asdf_value_destroy(found);
@@ -228,14 +276,65 @@ which prints::
     WCS at: /roman/meta/wcs
     name: FIT-LVL2-GAIADR3_S3
     steps: 5
-      [0] detector (frame2d) -> tag:stsci.edu:asdf/transform/compose-1.3.0
-      [1] v2v3 (frame2d) -> tag:stsci.edu:asdf/transform/compose-1.3.0
-      [2] v2v3vacorr (frame2d) -> tag:stsci.edu:asdf/transform/compose-1.3.0
-      [3] v2v3corr (frame2d) -> tag:stsci.edu:asdf/transform/compose-1.3.0
-      [4] world (celestial_frame) -> (end of pipeline)
+    [0] detector (frame2d)
+     └─ compose
+        ├─ compose
+        │  ├─ compose
+        │  │  ├─ concatenate
+        │  │  │  ├─ shift
+        │  │  │  └─ shift
+        │  │  └─ concatenate
+        │  │     ├─ shift
+        │  │     └─ shift
+        │  └─ compose
+        │     ├─ compose
+        │     │  ├─ remap_axes
+        │     │  └─ concatenate
+        │     └─ compose
+        │        ├─ remap_axes
+        │        └─ concatenate
+        └─ concatenate
+           ├─ shift
+           └─ shift
+    [1] v2v3 (frame2d)
+     └─ compose (DVA_Correction)
+        ├─ concatenate
+        │  ├─ scale (dva_scale_v2)
+        │  └─ scale (dva_scale_v3)
+        └─ concatenate
+           ├─ shift (dva_v2_shift)
+           └─ shift (dva_v3_shift)
+    [2] v2v3vacorr (frame2d)
+     └─ compose (JWST tangent-plane linear correction. v1)
+        ├─ compose
+        │  ├─ compose
+        │  │  ├─ compose
+        │  │  │  ├─ compose
+        │  │  │  └─ compose (TAN to cartesian 3D)
+        │  │  └─ rotate_sequence_3d (optic_axis_to_det)
+        │  └─ spherical_cartesian (c2s)
+        └─ concatenate (deg_to_arcsec_2D)
+           ├─ scale (deg_to_arcsec_1D)
+           └─ scale (deg_to_arcsec_1D)
+    [3] v2v3corr (frame2d)
+     └─ compose (v23tosky)
+        ├─ compose
+        │  ├─ compose
+        │  │  ├─ concatenate
+        │  │  │  ├─ scale
+        │  │  │  └─ scale
+        │  │  └─ spherical_cartesian
+        │  └─ rotate_sequence_3d
+        └─ spherical_cartesian
+    [4] world (celestial_frame)
 
-Note that the tags reported carry the schema version **as it appears in that
-file** (here ``compose-1.3.0``), not the version libasdf-gwcs would write.
+The last step has no transform, since it only names the frame the pipeline
+ends in.
+
+Most transform types are leaves, but ``compose``, ``concatenate`` and
+``divide``, etc. are built out of other transforms.  The iterator descends into
+whatever a given transform holds, without the caller needing to know how that
+type stores its parts, and ``MAX_DEPTH`` bounds the depth.
 
 ``pixel_shape`` is optional, and this particular file records it as ``null``,
 which is why no shape is printed.  A file that does carry one, such as
@@ -248,8 +347,9 @@ which is why no shape is printed.  A file that does carry one, such as
     name: 270p65x48y69
     pixel_shape: [5000, 5000]
     steps: 2
-      [0] detector (frame2d) -> tag:stsci.edu:gwcs/fitswcs_imaging-1.0.0
-      [1] icrs (celestial_frame) -> (end of pipeline)
+    [0] detector (frame2d)
+     └─ fitswcs_imaging
+    [1] icrs (celestial_frame)
 
 
 Evaluating a WCS

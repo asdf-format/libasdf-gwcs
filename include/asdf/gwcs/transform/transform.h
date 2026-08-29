@@ -195,6 +195,156 @@ ASDF_EXPORT const char *asdf_gwcs_transform_type_name(
 
 
 /**
+ * Iterator over the sub-transforms a composite transform is built from
+ *
+ * Several transforms are composites, built by combining other transforms:
+ * ``compose`` and ``concatenate`` hold an ordered list of them, while
+ * ``divide`` holds a numerator and a denominator.  How each stores its parts
+ * differs, so they are reached through this iterator rather than through any
+ * one member.
+ *
+ * Initialize with `asdf_gwcs_transform_iter_init`.  After each successful call
+ * to `asdf_gwcs_transform_iter_next`, the fields below describe the current
+ * sub-transform.
+ *
+ * Because sub-transforms may be composites in turn, the iterator can descend
+ * into them: ``max_depth`` given to `asdf_gwcs_transform_iter_init` says how
+ * far.  The walk is depth-first and pre-order, so a sub-transform is always
+ * reported before anything nested inside it.
+ *
+ * Sub-transforms are owned by their parent: they are valid as long as it is,
+ * and must not be destroyed individually.
+ */
+typedef struct {
+    /** The current sub-transform */
+    const asdf_gwcs_transform_t *value;
+
+    /**
+     * What the current sub-transform is to its parent (may be ``NULL``)
+     *
+     * For a composite whose parts are named, this is the name of the property
+     * holding it: ``"numerator"``, ``"denominator"``, ``"projection"``.  For a
+     * composite whose parts are an ordered list, such as ``compose``, the
+     * parts have no individual names and this is ``NULL``.
+     */
+    const char *role;
+
+    /** Index of the current sub-transform among its immediate siblings */
+    uint32_t index;
+
+    /** How many immediate siblings the current sub-transform has, itself
+     * included */
+    uint32_t size;
+
+    /**
+     * Tree depth of the transform being iterated
+     *
+     * ``0`` for an immediate sub-transform, ``1`` for a sub-transform of one
+     * of those, and so on.  Always ``0`` unless a non-zero ``max_depth`` was
+     * given to `asdf_gwcs_transform_iter_init`.
+     */
+    int depth;
+} asdf_gwcs_transform_iter_t;
+
+
+/**
+ * Enumerate a transform type's sub-transforms
+ *
+ * The single method a composite transform implements.  It always returns the
+ * total number of sub-transforms; when ``out`` is non-``NULL`` and ``index``
+ * is less than that total, it additionally fills ``out``'s ``value`` and
+ * ``role``.  Passing ``NULL`` for ``out`` is how the count is queried on its
+ * own, so the count never has to be found by probing.
+ *
+ * :param transform: The transform to enumerate
+ * :param index: Which sub-transform to report through ``out``
+ * :param out: Receives the sub-transform, or ``NULL`` to query only the count
+ * :return: The total number of sub-transforms
+ */
+typedef uint32_t (*asdf_gwcs_transform_children_t)(
+    const asdf_gwcs_transform_t *transform, uint32_t index,
+    asdf_gwcs_transform_iter_t *out);
+
+
+/**
+ * Return how many sub-transforms a transform is built from
+ *
+ * :param transform: The transform to inspect
+ * :return: The number of sub-transforms, or ``0`` for a transform that is not
+ *   a composite (or is ``NULL``)
+ */
+ASDF_EXPORT uint32_t asdf_gwcs_transform_n_children(const asdf_gwcs_transform_t *transform);
+
+
+/**
+ * Fetch a single sub-transform by index
+ *
+ * :param transform: The composite transform to read from
+ * :param index: Which sub-transform to fetch
+ * :param out: Receives the sub-transform
+ * :return: ``true`` if ``index`` named a sub-transform, ``false`` otherwise
+ */
+ASDF_EXPORT bool asdf_gwcs_transform_get_child(
+    const asdf_gwcs_transform_t *transform, uint32_t index,
+    asdf_gwcs_transform_iter_t *out);
+
+
+/** Pass as ``max_depth`` to descend as far as the tree goes */
+#define ASDF_GWCS_DEPTH_UNLIMITED (-1)
+
+
+/**
+ * Create a new iterator over a transform's sub-transforms
+ *
+ * ``max_depth`` bounds how far the walk descends.  ``0`` visits only the
+ * transform's immediate sub-transforms; ``1`` also visits theirs, and so on.
+ * `ASDF_GWCS_DEPTH_UNLIMITED` walks the entire tree, which for a
+ * real WCS can be a great many transforms.
+ *
+ * Iterating a transform that is not a composite is not an error; the
+ * iteration simply yields nothing.
+ *
+ * :param transform: The transform whose sub-transforms to walk
+ * :param max_depth: How many levels below ``transform`` to descend
+ * :return: A new `asdf_gwcs_transform_iter_t *` handle, or ``NULL`` on
+ *   allocation failure
+ */
+ASDF_EXPORT asdf_gwcs_transform_iter_t *asdf_gwcs_transform_iter_init(
+    const asdf_gwcs_transform_t *transform, int max_depth);
+
+
+/**
+ * Advance the iterator to the next sub-transform
+ *
+ * Typical usage::
+ *
+ *   asdf_gwcs_transform_iter_t *iter = asdf_gwcs_transform_iter_init(transform, 0);
+ *   while (asdf_gwcs_transform_iter_next(&iter)) {
+ *       // iter->value, iter->role and iter->index are valid here
+ *   }
+ *
+ * When iteration is exhausted the iterator is freed automatically and
+ * ``*iter`` is set to ``NULL``.  For early exit call
+ * `asdf_gwcs_transform_iter_destroy` before breaking.
+ *
+ * :param iter: Pointer to the iterator handle; set to ``NULL`` on exhaustion
+ * :return: ``true`` if a sub-transform was found; ``false`` when done
+ */
+ASDF_EXPORT bool asdf_gwcs_transform_iter_next(asdf_gwcs_transform_iter_t **iter);
+
+
+/**
+ * Release resources held by an in-progress sub-transform iterator
+ *
+ * Call this only when breaking out of iteration early.  Safe to call with
+ * ``NULL``.
+ *
+ * :param iter: The `asdf_gwcs_transform_iter_t *` to destroy
+ */
+ASDF_EXPORT void asdf_gwcs_transform_iter_destroy(asdf_gwcs_transform_iter_t *iter);
+
+
+/**
  * Polymorphic value constructor: dispatches to asdf_value_of_<transform> for
  * known transforms, or uses a temporary extension for generic ones.
  */
@@ -305,6 +455,15 @@ typedef struct {
 
     /** The transform type's own vtab, handling only its own fields */
     const asdf_extension_vtab_t *orig;
+
+    /**
+     * Enumerates the type's sub-transforms; ``NULL`` for a non-composite
+     *
+     * This has no counterpart in `asdf_extension_vtab_t`: sub-transforms are a
+     * transform-level notion, so the method lives here rather than in the
+     * libasdf-facing table.
+     */
+    asdf_gwcs_transform_children_t children;
 } asdf_gwcs_transform_shim_vtab_t;
 
 /*
@@ -325,9 +484,10 @@ ASDF_EXPORT void asdf_gwcs_transform_install_shim(
  * the transform's own vtab; `ASDF_GWCS_REGISTER_TRANSFORM` registers its
  * ``vtab`` member and `asdf_gwcs_transform_install_shim` fills that in.
  */
-#define ASDF_GWCS_TRANSFORM_SHIM_VTAB(extname, ext_vtab) \
+#define ASDF_GWCS_TRANSFORM_SHIM_VTAB(extname, ext_vtab, _children) \
     static asdf_gwcs_transform_shim_vtab_t asdf_gwcs_##extname##_shim_vtab = { \
         .orig = (ext_vtab), \
+        .children = (_children), \
     }
 
 
@@ -344,12 +504,15 @@ ASDF_EXPORT void asdf_gwcs_transform_install_shim(
  * last of these before calling ``ext_vtab``'s methods, so a transform's own
  * methods see the pointer registered here and not the wrapper.
  *
+ * ``_children`` is the type's `asdf_gwcs_transform_children_t`, or NULL if the
+ * transform holds no sub-transforms.
+ *
  * TODO: this is a stopgap until libasdf formalizes extension hierarchies and
  * can generate this itself.
  */
 #define ASDF_GWCS_REGISTER_TRANSFORM_FULL( \
-    extname, ttype, type, software, ext_vtab, _ctype, _userdata, ...) \
-    ASDF_GWCS_TRANSFORM_SHIM_VTAB(extname, ext_vtab); \
+    extname, ttype, type, software, ext_vtab, _ctype, _children, _userdata, ...) \
+    ASDF_GWCS_TRANSFORM_SHIM_VTAB(extname, ext_vtab, _children); \
     static asdf_gwcs_transform_data_t asdf_gwcs_##extname##_transform_data = { \
         .ctype = (_ctype), \
         .userdata = (_userdata), \
@@ -368,17 +531,24 @@ ASDF_EXPORT void asdf_gwcs_transform_install_shim(
     }
 
 
-/* Register a transform with no associated FITS WCS CTYPE. */
+/* Register a leaf transform: no FITS WCS CTYPE and no sub-transforms. */
 #define ASDF_GWCS_REGISTER_TRANSFORM( \
     extname, ttype, type, software, ext_vtab, userdata, ...) \
     ASDF_GWCS_REGISTER_TRANSFORM_FULL( \
-        extname, ttype, type, software, ext_vtab, NULL, userdata, __VA_ARGS__)
+        extname, ttype, type, software, ext_vtab, NULL, NULL, userdata, __VA_ARGS__)
 
 
 /* Register a transform that corresponds to a FITS WCS projection code. */
 #define ASDF_GWCS_REGISTER_TRANSFORM_WITH_CTYPE(extname, ttype, type, software, vtab, _ctype, ...) \
     ASDF_GWCS_REGISTER_TRANSFORM_FULL( \
-        extname, ttype, type, software, vtab, (#_ctype), NULL, __VA_ARGS__)
+        extname, ttype, type, software, vtab, (#_ctype), NULL, NULL, __VA_ARGS__)
+
+
+/* Register a composite transform, i.e. one built from sub-transforms. */
+#define ASDF_GWCS_REGISTER_TRANSFORM_WITH_CHILDREN( \
+    extname, ttype, type, software, ext_vtab, _children, userdata, ...) \
+    ASDF_GWCS_REGISTER_TRANSFORM_FULL( \
+        extname, ttype, type, software, ext_vtab, NULL, _children, userdata, __VA_ARGS__)
 
 
 #define ASDF_GWCS_DECLARE_TRANSFORM(extname, ttype, type) \

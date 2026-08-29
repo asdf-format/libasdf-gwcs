@@ -182,6 +182,67 @@ explicit ``.base``:
           shift->n_outputs,
           shift->offset);
 
+Composite transforms
+~~~~~~~~~~~~~~~~~~~~
+
+Some transforms are built out of other transforms.  ``compose`` and
+``concatenate`` hold an ordered list of them; ``divide`` holds transforms
+applied for a numerator and a denominator.  Since each stores its
+sub-transforms differently in their associated C structs; thus they are reached
+through an iterator rather than through any one struct member:
+
+.. code:: c
+
+   asdf_gwcs_transform_iter_t *iter = asdf_gwcs_transform_iter_init(transform, 0);
+
+   while (asdf_gwcs_transform_iter_next(&iter))
+       printf("%s%s\n",
+              iter->role ? iter->role : "",
+              asdf_gwcs_transform_type_name(iter->value));
+
+The iterator follows the same conventions as libasdf's
+``asdf_sequence_iter``: it is freed automatically when iteration is
+exhausted, and `asdf_gwcs_transform_iter_destroy` releases it if you break out
+early.  ``iter->size`` is the total number of sub-transforms, also available
+on its own from `asdf_gwcs_transform_n_children`, which returns ``0`` for a
+transform that is not a composite.  Iterating a non-composite is not an error;
+it simply yields nothing.
+
+``iter->role`` names the property a sub-transform came from (e.g. ``numerator``
+and ``denominator``) and is ``NULL`` when the parent holds an ordered list whose
+elements have no individual names, as with ``compose``.
+
+Sub-transforms are owned by their parent.  They live as long as it does and
+must not be destroyed individually.
+
+Descending into nested transforms
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The second argument to `asdf_gwcs_transform_iter_init` is how many levels
+below ``transform`` the walk may descend.  ``0``, as above, visits only its
+immediate sub-transforms.  Anything higher visits theirs as well, depth-first
+and pre-order, so a transform is always reported before anything nested inside
+it, and `ASDF_GWCS_DEPTH_UNLIMITED` walks the whole tree:
+
+.. code:: c
+
+   asdf_gwcs_transform_iter_t *iter = asdf_gwcs_transform_iter_init(
+       transform, ASDF_GWCS_DEPTH_UNLIMITED);
+
+   while (asdf_gwcs_transform_iter_next(&iter))
+       printf("%*s%s\n", iter->depth * 2, "",
+              asdf_gwcs_transform_type_name(iter->value));
+
+``iter->depth`` is ``0`` for an immediate sub-transform, ``1`` for one nested
+a level below that, and so on, which is what makes indenting by nesting level
+a one-liner.  ``index`` and ``size`` always describe the current transform's
+position among its *immediate* siblings, so ``index + 1 == size`` identifies
+the last child at any level.
+
+Real pipelines nest deeply---the ``roman_l2_wcs.asdf`` test fixture reaches
+nine levels and 80 transforms---so an unlimited walk can produce far more than
+expected.
+
 Most transform types are registered *generically*: their tags are recognized
 and they round-trip through the library unchanged, but they have no dedicated
 struct beyond the base, so only the base fields are populated.  The types with
