@@ -22,16 +22,15 @@ checked:
    `asdf_gwcs_frame_celestial_t`, but the schema tag reverses the words:
    ``gwcs/celestial_frame-1.2.0``.
 
-A celestial frame additionally owns a *reference frame* --- the astropy
+A celestial frame additionally owns a *reference frame*---the astropy
 coordinate frame it is expressed in.  These are declared in
 ``coordinates/baseframe.h``, which registers ICRS, Galactic, FK5, FK4 and
 FK4NoETerms.
 
-.. warning::
-
-   Reference-frame ``frame_attributes``, notably FK4/FK5 ``equinox``, are
-   currently parsed but discarded, pending multi-version tag resolution
-   support in libasdf.  They are written back as an empty mapping.
+ICRS and Galactic define no ``frame_attributes`` and are represented directly
+as `asdf_gwcs_baseframe_t`.  The equinox-based frames have concrete types of
+their own in ``coordinates/fk.h``, carrying the ``equinox`` every one of them
+requires and, for the FK4 frames, an optional ``obstime``.
 
 .. toctree::
   :maxdepth: 1
@@ -40,3 +39,4 @@ FK4NoETerms.
   frame2d.h
   frame_celestial.h
   coordinates/baseframe.h
+  coordinates/fk.h

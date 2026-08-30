@@ -45,6 +45,7 @@ install(
 install(
     FILES
         asdf/gwcs/coordinates/baseframe.h
+        asdf/gwcs/coordinates/fk.h
 
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/asdf/gwcs/coordinates"
 )

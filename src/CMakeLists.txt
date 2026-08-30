@@ -5,6 +5,7 @@ set(libasdf_gwcs_sources
     coordinates/baseframe.c
     coordinates/fk4.c
     coordinates/fk5.c
+    coordinates/frame_attributes.c
     core.c
     eval.c
     grid.c

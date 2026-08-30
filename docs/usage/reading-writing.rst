@@ -155,6 +155,20 @@ Downcast on the discriminant to reach the concrete type:
        break;
    }
 
+Most reference frames carry no ``frame_attributes`` and are represented
+directly as `asdf_gwcs_baseframe_t`.  The equinox-based ones are the
+exception: `asdf_gwcs_fk5_t` adds a required ``equinox``, and
+`asdf_gwcs_fk4_t`--shared by FK4 and FK4NoETerms, whose schemas are
+identical--adds an optional ``obstime`` alongside it.  Both are libasdf
+`asdf_time_t` values, and both round-trip:
+
+.. code:: c
+
+   if (cel->reference_frame->type == ASDF_GWCS_COORDINATE_FRAME_FK5) {
+       const asdf_gwcs_fk5_t *fk5 = (const asdf_gwcs_fk5_t *)cel->reference_frame;
+       printf("equinox %s\n", fk5->equinox->value);
+   }
+
 .. note::
 
    The header is spelled ``frame_celestial.h`` and the C type
@@ -290,9 +304,6 @@ upgrading them.
 Known limitations
 -----------------
 
-* ``frame_attributes`` on the FK4/FK5 reference frames--notably
-  ``equinox``--are currently parsed but discarded, pending multi-version tag
-  resolution support in libasdf.  They are written back as an empty mapping.
 * Supergalactic and BarycentricMeanEcliptic reference frames are not yet
   registered.
 * The ``inverse``, ``fixed``, ``bounds`` and ``input_units_equivalencies``

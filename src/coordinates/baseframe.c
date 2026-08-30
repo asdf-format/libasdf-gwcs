@@ -54,8 +54,10 @@ void asdf_gwcs_coordinate_frame_register(asdf_gwcs_coordinate_frame_type_t type)
      * once from the preferred one. */
     asdf_gwcs_coordinate_frame_data_t *data = ext->userdata;
 
-    if (data)
+    if (data) {
         tag_type_name(data->name, sizeof(data->name), tags[0]);
+        data->type = type;
+    }
 
     for (const char *const *tag = tags; *tag; tag++) {
         char *full_tag = tag_canonicalize(*tag);
@@ -218,10 +220,18 @@ static asdf_value_t *empty_frame_serialize(
 
 
 static asdf_value_err_t empty_frame_deserialize(
-    UNUSED(asdf_value_t *value), UNUSED(const void *userdata), void **out) {
+    UNUSED(asdf_value_t *value), const void *userdata, void **out) {
+    const asdf_gwcs_coordinate_frame_data_t *data = userdata;
+    asdf_gwcs_baseframe_t *frame = calloc(1, sizeof(asdf_gwcs_baseframe_t));
 
-    *out = calloc(1, sizeof(asdf_gwcs_baseframe_t));
-    return *out ? ASDF_VALUE_OK : ASDF_VALUE_ERR_OOM;
+    if (!frame)
+        return ASDF_VALUE_ERR_OOM;
+
+    if (data)
+        frame->type = data->type;
+
+    *out = frame;
+    return ASDF_VALUE_OK;
 }
 
 

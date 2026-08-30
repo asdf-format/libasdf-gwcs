@@ -59,6 +59,16 @@ typedef struct {
      */
     char name[ASDF_GWCS_TYPE_NAME_MAX];
 
+    /**
+     * The type token this frame was registered as
+     *
+     * Filled in at registration.  A frame's deserializer stamps this onto the
+     * object it builds: the generated per-type accessors call the deserializer
+     * directly, so without it ``type`` would be left zeroed for everything but
+     * `asdf_value_as_gwcs_coordinate_frame`.
+     */
+    asdf_gwcs_coordinate_frame_type_t type;
+
     /** The ``userdata`` the frame itself registered, if any */
     const void *userdata;
 } asdf_gwcs_coordinate_frame_data_t;
@@ -116,14 +126,11 @@ typedef struct {
     ASDF_EXPORT extern const asdf_gwcs_coordinate_frame_type_t ASDF_GWCS_COORDINATE_FRAME_##ttype;
 
 
-/* Coordinate frames with empty frame_attributes */
+/* Coordinate frames with empty frame_attributes.  The ones that do carry
+ * frame_attributes (FK4, FK4NoETerms, FK5) have their own concrete types; see
+ * <asdf/gwcs/coordinates/fk.h>. */
 ASDF_GWCS_DECLARE_COORDINATE_FRAME(icrs, ICRS, asdf_gwcs_baseframe_t);
 ASDF_GWCS_DECLARE_COORDINATE_FRAME(galactic, GALACTIC, asdf_gwcs_baseframe_t);
-
-/* Coordinate frames with frame_attributes */
-ASDF_GWCS_DECLARE_COORDINATE_FRAME(fk5, FK5, asdf_gwcs_baseframe_t);
-ASDF_GWCS_DECLARE_COORDINATE_FRAME(fk4, FK4, asdf_gwcs_baseframe_t);
-ASDF_GWCS_DECLARE_COORDINATE_FRAME(fk4noeterms, FK4_NO_E, asdf_gwcs_baseframe_t);
 
 
 /**

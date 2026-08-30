@@ -1072,6 +1072,114 @@ MU_TEST(test_asdf_gwcs_copy_roman_l3) {
 }
 
 
+MU_TEST(test_asdf_set_gwcs_fk5) {
+    const char *path = get_temp_file_path(fixture->tempfile_prefix, ".asdf");
+    asdf_file_t *file = asdf_open(NULL);
+    assert_not_null(file);
+
+    asdf_time_t equinox = {
+        .value = "J2000.000", .format = ASDF_TIME_FORMAT_JYEAR_STR, .scale = ASDF_TIME_SCALE_TT};
+    asdf_gwcs_fk5_t fk5 = {
+        .base = {.type = ASDF_GWCS_COORDINATE_FRAME_FK5}, .equinox = &equinox};
+
+    assert_int(asdf_set_coordinates_fk5(file, "frame", &fk5), ==, ASDF_VALUE_OK);
+    assert_int(asdf_write_to(file, path), ==, 0);
+    asdf_close(file);
+
+    file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_fk5_t *out = NULL;
+    assert_int(asdf_get_coordinates_fk5(file, "frame", &out), ==, ASDF_VALUE_OK);
+    assert_not_null(out);
+    assert_ptr(out->type, ==, ASDF_GWCS_COORDINATE_FRAME_FK5);
+    assert_string_equal(asdf_gwcs_coordinate_frame_type_name(&out->base), "fk5");
+
+    // The equinox survives the round trip verbatim, scale included.
+    assert_not_null(out->equinox);
+    assert_string_equal(out->equinox->value, "J2000.000");
+    assert_int(out->equinox->format, ==, ASDF_TIME_FORMAT_JYEAR_STR);
+    assert_int(out->equinox->scale, ==, ASDF_TIME_SCALE_TT);
+
+    asdf_coordinates_fk5_destroy(out);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
+MU_TEST(test_asdf_set_gwcs_fk4) {
+    const char *path = get_temp_file_path(fixture->tempfile_prefix, ".asdf");
+    asdf_file_t *file = asdf_open(NULL);
+    assert_not_null(file);
+
+    asdf_time_t equinox = {
+        .value = "B1950.000", .format = ASDF_TIME_FORMAT_BYEAR_STR, .scale = ASDF_TIME_SCALE_TAI};
+    asdf_time_t obstime = {
+        .value = "B1950.000", .format = ASDF_TIME_FORMAT_BYEAR_STR, .scale = ASDF_TIME_SCALE_TAI};
+    asdf_gwcs_fk4_t fk4 = {
+        .base = {.type = ASDF_GWCS_COORDINATE_FRAME_FK4},
+        .equinox = &equinox,
+        .obstime = &obstime};
+
+    assert_int(asdf_set_coordinates_fk4(file, "frame", &fk4), ==, ASDF_VALUE_OK);
+    assert_int(asdf_write_to(file, path), ==, 0);
+    asdf_close(file);
+
+    file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_fk4_t *out = NULL;
+    assert_int(asdf_get_coordinates_fk4(file, "frame", &out), ==, ASDF_VALUE_OK);
+    assert_not_null(out);
+
+    assert_not_null(out->equinox);
+    assert_string_equal(out->equinox->value, "B1950.000");
+    assert_int(out->equinox->scale, ==, ASDF_TIME_SCALE_TAI);
+
+    // obstime is optional but was written, so it must come back too.
+    assert_not_null(out->obstime);
+    assert_string_equal(out->obstime->value, "B1950.000");
+
+    asdf_coordinates_fk4_destroy(out);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
+MU_TEST(test_asdf_set_gwcs_fk4_no_obstime) {
+    const char *path = get_temp_file_path(fixture->tempfile_prefix, ".asdf");
+    asdf_file_t *file = asdf_open(NULL);
+    assert_not_null(file);
+
+    asdf_time_t equinox = {
+        .value = "B1950.000", .format = ASDF_TIME_FORMAT_BYEAR_STR, .scale = ASDF_TIME_SCALE_TAI};
+    asdf_gwcs_fk4_t fk4 = {
+        .base = {.type = ASDF_GWCS_COORDINATE_FRAME_FK4_NO_E}, .equinox = &equinox};
+
+    assert_int(asdf_set_coordinates_fk4noeterms(file, "frame", &fk4), ==, ASDF_VALUE_OK);
+    assert_int(asdf_write_to(file, path), ==, 0);
+    asdf_close(file);
+
+    file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_fk4_t *out = NULL;
+    assert_int(asdf_get_coordinates_fk4noeterms(file, "frame", &out), ==, ASDF_VALUE_OK);
+    assert_not_null(out);
+    assert_string_equal(
+        asdf_gwcs_coordinate_frame_type_name(&out->base), "fk4noeterms");
+
+    assert_not_null(out->equinox);
+
+    // Omitted on write, so it must stay absent rather than appear as a null.
+    assert_null(out->obstime);
+
+    asdf_coordinates_fk4noeterms_destroy(out);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
 MU_TEST_SUITE(
     gwcs,
     MU_RUN_TEST(test_asdf_get_gwcs_fits),
@@ -1099,7 +1207,10 @@ MU_TEST_SUITE(
     MU_RUN_TEST(test_asdf_set_gwcs_spherical_cartesian),
     MU_RUN_TEST(test_asdf_get_roman_l2_gwcs),
     MU_RUN_TEST(test_asdf_gwcs_copy_roman_l2),
-    MU_RUN_TEST(test_asdf_gwcs_copy_roman_l3)
+    MU_RUN_TEST(test_asdf_gwcs_copy_roman_l3),
+    MU_RUN_TEST(test_asdf_set_gwcs_fk5),
+    MU_RUN_TEST(test_asdf_set_gwcs_fk4),
+    MU_RUN_TEST(test_asdf_set_gwcs_fk4_no_obstime)
 );
 
 

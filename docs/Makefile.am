@@ -2,6 +2,7 @@
 api_header_pages = \
     api/backend.h.rst \
     api/coordinates/baseframe.h.rst \
+    api/coordinates/fk.h.rst \
     api/core.h.rst \
     api/eval.h.rst \
     api/fitswcs_imaging.h.rst \

@@ -12,6 +12,7 @@
 #define ASDF_GWCS_GWCS_H
 
 #include <asdf/gwcs/backend.h>
+#include <asdf/gwcs/coordinates/fk.h>
 #include <asdf/gwcs/core.h>
 #include <asdf/gwcs/eval.h>
 #include <asdf/gwcs/grid.h>

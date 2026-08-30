@@ -5,6 +5,7 @@ src_files = \
     src/coordinates/baseframe.c \
     src/coordinates/fk4.c \
     src/coordinates/fk5.c \
+    src/coordinates/frame_attributes.c \
     src/core.c \
     src/eval.c \
     src/grid.c \
@@ -32,6 +33,7 @@ src_files = \
 
 src_headers = \
     src/backend.h \
+    src/coordinates/frame_attributes.h \
     src/eval.h \
     src/fitswcs_imaging.h \
     src/frame.h \
