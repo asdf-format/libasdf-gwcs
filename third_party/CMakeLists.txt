@@ -11,6 +11,13 @@ add_library(stc STATIC
     ${STC_DIR}/src/stc_core.c
 )
 set_property(TARGET stc PROPERTY POSITION_INDEPENDENT_CODE 1)
+# libasdf vendors its own copy of STC, and if these symbols are exported the
+# dynamic linker binds libasdf's cregex calls to the copy here, so libasdf
+# compiles regexes with one STC and matches them with another (how this was
+# noticed).  More generally, shouldn't export those symbols.
+# See also https://github.com/asdf-format/libasdf/pull/247
+# which fixes this on the libasdf side
+set_property(TARGET stc PROPERTY C_VISIBILITY_PRESET hidden)
 target_link_libraries(stc PUBLIC m)
 target_include_directories(stc PRIVATE
         STC/include

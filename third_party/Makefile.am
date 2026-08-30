@@ -77,7 +77,13 @@ noinst_HEADERS = $(stc_headers)
 noinst_LTLIBRARIES = libstc.la
 
 libstc_la_SOURCES = $(stc_src)
-libstc_la_CFLAGS = $(AM_CFLAGS)
+# libasdf vendors its own copy of STC, and if these symbols are exported the
+# dynamic linker binds libasdf's cregex calls to the copy here, so libasdf
+# compiles regexes with one STC and matches them with another (how this was
+# noticed).  More generally, shouldn't export those symbols.
+# See also https://github.com/asdf-format/libasdf/pull/247
+# which fixes this on the libasdf side
+libstc_la_CFLAGS = $(AM_CFLAGS) -fvisibility=hidden
 libstc_la_LDFLAGS = $(AM_LDFLAGS) -lm
 
 # CMake-related files to include in the distribution
