@@ -1,20 +1,13 @@
 project(stc)
+# libasdf-gwcs uses STC only for its cstr-keyed hashmaps, so cstr_core is the
+# only implementation unit needed; see third_party/Makefile.am for how the
+# minimal set was derived.
 add_library(stc STATIC
-    ${STC_DIR}/src/fmt.c
-    ${STC_DIR}/src/csview.c
-    ${STC_DIR}/src/cstr_io.c
-    ${STC_DIR}/src/cspan.c
     ${STC_DIR}/src/cstr_core.c
-    ${STC_DIR}/src/cstr_utf8.c
-    ${STC_DIR}/src/random.c
-    ${STC_DIR}/src/cregex.c
-    ${STC_DIR}/src/stc_core.c
 )
 set_property(TARGET stc PROPERTY POSITION_INDEPENDENT_CODE 1)
-# libasdf vendors its own copy of STC, and if these symbols are exported the
-# dynamic linker binds libasdf's cregex calls to the copy here, so libasdf
-# compiles regexes with one STC and matches them with another (how this was
-# noticed).  More generally, shouldn't export those symbols.
+# libasdf vendors its own copy of STC, but we shouldn't export any symbols
+# from STC's compiled internals.
 # See also https://github.com/asdf-format/libasdf/pull/247
 # which fixes this on the libasdf side
 set_property(TARGET stc PROPERTY C_VISIBILITY_PRESET hidden)

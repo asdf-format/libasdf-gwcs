@@ -134,10 +134,16 @@ AS_IF([test "x$enable_ast" = "xyes"], [
     dnl installs libyaml may live outside those paths.  Pass it
     dnl CPPFLAGS/LDFLAGS with our pkg-config findings so AST's configure sees
     dnl it.
+    dnl AST is absorbed into libasdf-gwcs.so, so build it with hidden
+    dnl visibility: otherwise its ~2500 symbols are re-exported from our shared
+    dnl library and would collide with any program that links its own libast.
+    dnl (Same hazard as the vendored STC; see third_party/Makefile.am.)  These
+    dnl are merged into any CFLAGS the user passed rather than replacing them.
     AX_SUBDIRS_CONFIGURE(
       [[third_party/ast]],
       [[--disable-shared], [--enable-static], [--with-pic], [--with-simd], [--with-yaml=fyaml]],
-      [[FYAML_CFLAGS=$FYAML_CFLAGS], [FYAML_LIBS=$FYAML_LIBS]],
+      [[FYAML_CFLAGS=$FYAML_CFLAGS], [FYAML_LIBS=$FYAML_LIBS],
+       [CFLAGS=-fvisibility=hidden]],
       [], [])
     dnl ast.h is generated in the top of the AST build directory
     AST_CFLAGS="-I\$(top_builddir)/third_party/ast"
