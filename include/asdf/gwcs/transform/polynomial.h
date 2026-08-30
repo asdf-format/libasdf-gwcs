@@ -8,7 +8,9 @@
 ASDF_BEGIN_DECLS
 
 /**
- * Representation of the ``transform/polynomial-1.2.0`` schema.
+ * Representation of version 1.2.0 of the
+ * :external+asdf-transform-schemas:doc:`transform/polynomial <generated/schemas/polynomial-1.2.0>`
+ * schema.
  *
  * An N-dimensional polynomial transform.  Coefficients are stored as a
  * ``(degree+1)^ndim`` row-major array of ``double``.

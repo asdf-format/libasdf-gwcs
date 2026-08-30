@@ -6,7 +6,7 @@
 .. _libasdf: https://libasdf.readthedocs.io/en/latest/
 .. _libasdf extensions: https://libasdf.readthedocs.io/en/latest/usage/extensions.html
 .. _GWCS: https://gwcs.readthedocs.io/
-.. _GWCS schemas: https://asdf-wcs-schemas.readthedocs.io/en/latest/
-.. _transform schemas: https://www.asdf-format.org/projects/asdf-standard/en/latest/reference_files/transform.html
-.. _coordinates schemas: https://www.asdf-format.org/projects/asdf-standard/en/latest/reference_files/coordinates.html
-.. _Starlink AST: https://starlink.eaton.co.uk/AST/
+.. _GWCS schemas: https://www.asdf-format.org/projects/asdf-wcs-schemas/en/latest/
+.. _transform schemas: https://www.asdf-format.org/projects/asdf-transform-schemas/en/latest/transforms.html
+.. _coordinates schemas: https://www.asdf-format.org/projects/asdf-coordinates-schemas/en/latest/frames.html
+.. _Starlink AST: https://starlink.eao.hawaii.edu/starlink/AST

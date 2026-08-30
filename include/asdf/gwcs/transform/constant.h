@@ -10,6 +10,9 @@ ASDF_BEGIN_DECLS
 /**
  * A transform returning a fixed value, ignoring its input
  *
+ * Implements the :external+asdf-transform-schemas:doc:`transform/constant <generated/schemas/constant-1.4.0>`
+ * schema.
+ *
  * ``out = value``
  */
 typedef struct {

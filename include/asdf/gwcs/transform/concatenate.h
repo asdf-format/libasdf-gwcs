@@ -8,7 +8,9 @@
 ASDF_BEGIN_DECLS
 
 /**
- * Representation of the ``transform/concatenate-1.3.0`` schema.
+ * Representation of version 1.3.0 of the
+ * :external+asdf-transform-schemas:doc:`transform/concatenate <generated/schemas/concatenate-1.2.0>`
+ * schema.
  *
  * Parallel composition of N transforms applied to disjoint input ranges:
  * ``(out0, out1, ...) = (forward[0](in0), forward[1](in1), ...)``.

@@ -11,11 +11,22 @@ as generic mappings.
 
 Three families of schema are implemented:
 
-* ``tag:stsci.edu:gwcs/`` --- the WCS object itself, its steps, and its
-  coordinate frames.
-* ``tag:stsci.edu:asdf/transform/`` --- the transform (model) types.
-* ``tag:stsci.edu:asdf/coordinates/frames/`` --- the astropy reference frames
+* ``tag:stsci.edu:gwcs/`` --- the
+  :external+asdf-wcs-schemas:doc:`WCS object <generated/gwcs/wcs-1.1.0>`
+  itself, its :external+asdf-wcs-schemas:doc:`steps
+  <generated/gwcs/step-1.1.0>`, and its coordinate frames.
+* ``tag:stsci.edu:asdf/transform/`` --- the
+  :external+asdf-transform-schemas:doc:`transform (model) types <transforms>`.
+* ``tag:stsci.edu:asdf/coordinates/frames/`` --- the
+  :external+asdf-coordinates-schemas:doc:`astropy reference frames <frames>`
   attached to celestial frames.
+
+.. note::
+
+   Upstream publishes a page per schema, but not always for the newest
+   version.  Schema links throughout these pages point at the most recent
+   version that is published, which may be older than the version
+   libasdf-gwcs reads and writes.
 
 
 Getting a WCS out of a file
@@ -158,9 +169,14 @@ Downcast on the discriminant to reach the concrete type:
 Most reference frames carry no ``frame_attributes`` and are represented
 directly as `asdf_gwcs_baseframe_t`.  The equinox-based ones are the
 exception: `asdf_gwcs_fk5_t` adds a required ``equinox``, and
-`asdf_gwcs_fk4_t`--shared by FK4 and FK4NoETerms, whose schemas are
-identical--adds an optional ``obstime`` alongside it.  Both are libasdf
-`asdf_time_t` values, and both round-trip:
+`asdf_gwcs_fk4_t`--shared by
+:external+asdf-coordinates-schemas:doc:`FK4 <generated/schemas/frames/fk4-1.0.0>`
+and
+:external+asdf-coordinates-schemas:doc:`FK4NoETerms <generated/schemas/frames/fk4noeterms-1.0.0>`,
+whose schemas are identical--adds an optional ``obstime`` alongside it.  Both
+are :external+asdf-standard:doc:`time/time
+<generated/stsci.edu/asdf/time/time-1.2.0>` values, read as libasdf's
+`asdf_time_t`, and both round-trip:
 
 .. code:: c
 
@@ -173,7 +189,9 @@ identical--adds an optional ``obstime`` alongside it.  Both are libasdf
 
    The header is spelled ``frame_celestial.h`` and the C type
    `asdf_gwcs_frame_celestial_t`, but the corresponding schema tag has the
-   words the other way round: ``gwcs/celestial_frame-1.2.0``.
+   words the other way round:
+   :external+asdf-wcs-schemas:doc:`gwcs/celestial_frame
+   <generated/gwcs/celestial_frame-1.0.0>`.
 
    This spelling change is just a matter of keeping the API consistent (all
    frame types prefixed with ``asdf_gwcs_frame_``).
@@ -182,8 +200,11 @@ identical--adds an optional ``obstime`` alongside it.  Both are libasdf
 Transforms
 ----------
 
-`asdf_gwcs_transform_t` is the base of a tagged union.  Concrete transform
-types embed it via the ``ASDF_GWCS_TRANSFORM_BASE`` macro, which makes the
+`asdf_gwcs_transform_t` corresponds to the
+:external+asdf-transform-schemas:doc:`base transform schema
+<generated/schemas/transform-1.2.0>`, from which every transform type derives,
+and is the base of a tagged union.  Concrete transform types embed it via the
+``ASDF_GWCS_TRANSFORM_BASE`` macro, which makes the
 base fields directly accessible on the derived struct as well as through an
 explicit ``.base``:
 
@@ -199,9 +220,13 @@ explicit ``.base``:
 Composite transforms
 ~~~~~~~~~~~~~~~~~~~~
 
-Some transforms are built out of other transforms.  ``compose`` and
-``concatenate`` hold an ordered list of them; ``divide`` holds transforms
-applied for a numerator and a denominator.  Since each stores its
+Some transforms are built out of other transforms.
+:external+asdf-transform-schemas:doc:`compose <generated/schemas/compose-1.2.0>`
+and
+:external+asdf-transform-schemas:doc:`concatenate <generated/schemas/concatenate-1.2.0>`
+hold an ordered list of them;
+:external+asdf-transform-schemas:doc:`divide <generated/schemas/divide-1.2.0>`
+holds transforms applied for a numerator and a denominator.  Since each stores its
 sub-transforms differently in their associated C structs; thus they are reached
 through an iterator rather than through any one struct member:
 
@@ -262,18 +287,18 @@ and they round-trip through the library unchanged, but they have no dedicated
 struct beyond the base, so only the base fields are populated.  The types with
 their own structs are:
 
-- ``affine``
-- ``compose``
-- ``concatenate``
-- ``constant``
-- ``divide``
-- ``identity``
-- ``polynomial``
-- ``remap_axes``,
-- ``rotate_sequence_3d``
-- ``scale``
-- ``shift``
-- ``spherical_cartesian``
+- :external+asdf-transform-schemas:doc:`affine <generated/schemas/affine-1.3.0>`
+- :external+asdf-transform-schemas:doc:`compose <generated/schemas/compose-1.2.0>`
+- :external+asdf-transform-schemas:doc:`concatenate <generated/schemas/concatenate-1.2.0>`
+- :external+asdf-transform-schemas:doc:`constant <generated/schemas/constant-1.4.0>`
+- :external+asdf-transform-schemas:doc:`divide <generated/schemas/divide-1.2.0>`
+- :external+asdf-transform-schemas:doc:`identity <generated/schemas/identity-1.2.0>`
+- :external+asdf-transform-schemas:doc:`polynomial <generated/schemas/polynomial-1.2.0>`
+- :external+asdf-transform-schemas:doc:`remap_axes <generated/schemas/remap_axes-1.3.0>`
+- :external+asdf-transform-schemas:doc:`rotate_sequence_3d <generated/schemas/rotate_sequence_3d-1.0.0>`
+- :external+asdf-transform-schemas:doc:`scale <generated/schemas/scale-1.2.0>`
+- :external+asdf-transform-schemas:doc:`shift <generated/schemas/shift-1.2.0>`
+- :external+asdf-wcs-schemas:doc:`spherical_cartesian <generated/gwcs/spherical_cartesian-1.1.0>`
 - ``fitswcs_imaging``
 
 That is, these are the only transforms currently with explicit implementations

@@ -8,6 +8,9 @@ ASDF_BEGIN_DECLS
 /**
  * A multiplicative scaling
  *
+ * Implements the :external+asdf-transform-schemas:doc:`transform/scale <generated/schemas/scale-1.2.0>`
+ * schema.
+ *
  * ``out = in * factor``
  */
 typedef struct {

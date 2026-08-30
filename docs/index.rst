@@ -37,12 +37,16 @@ Resources
 See also
 ========
 
-- libasdf_, the ASDF library this extends, and its
-  `extension documentation <libasdf extensions_>`_.
-- GWCS_, the Python reference implementation of the Generalized World
-  Coordinate System, and the `GWCS schemas`_ this library implements.
-- The ASDF `transform schemas`_, which describe the transform (model) types,
-  and the `coordinates schemas`_, which describe the astropy reference frames.
+- :external+libasdf:doc:`libasdf <index>`, the ASDF library this extends, and
+  its documentation on
+  :external+libasdf:doc:`extension types <usage/extensions>`.
+- :external+gwcs:doc:`GWCS <index>`, the Python reference implementation of the
+  Generalized World Coordinate System, and the
+  :external+asdf-wcs-schemas:doc:`WCS schemas <wcs>` this library implements.
+- The :external+asdf-transform-schemas:doc:`transform schemas <transforms>`,
+  which describe the transform (model) types, and the
+  :external+asdf-coordinates-schemas:doc:`frame schemas <frames>`, which
+  describe the astropy reference frames.
 - The :ref:`Advanced Scientific Data Format (ASDF) standard
   <asdf-standard:asdf-standard>`.
 - `Starlink AST`_, which provides the only evaluation backend currently

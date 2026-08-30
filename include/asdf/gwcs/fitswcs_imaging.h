@@ -1,6 +1,6 @@
 /**
- * Representation of the http://stsci.edu/schemas/gwcs/fitswcs_imaging-1.0.0
- * schema--a GWCS transform encapuslating a FITS WCS
+ * Representation of the ``gwcs/fitswcs_imaging-1.0.0`` schema--a GWCS
+ * transform encapsulating a FITS WCS
  *
  * The C type representing the FITS WCS data is called just `asdf_gwcs_fits_t`
  * for short, and the generated accessors are named accordingly

@@ -8,7 +8,9 @@
 ASDF_BEGIN_DECLS
 
 /**
- * Representation of the ``transform/remap_axes-1.4.0`` schema.
+ * Representation of version 1.4.0 of the
+ * :external+asdf-transform-schemas:doc:`transform/remap_axes <generated/schemas/remap_axes-1.3.0>`
+ * schema.
  *
  * Selects and/or reorders input axes.  ``mapping[idx]`` gives the index of the
  * input axis to use for output axis ``idx``.

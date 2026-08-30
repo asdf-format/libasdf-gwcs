@@ -99,6 +99,16 @@ nitpick_ignore = [
 intersphinx_mapping = {
     'asdf': ('https://www.asdf-format.org/projects/asdf/en/stable', None),
     'asdf-standard': ('https://www.asdf-format.org/projects/asdf-standard/en/latest/', None),
+    # ASDF schema docs
+    # Each expose a std:doc target per schema, e.g.
+    # :external+asdf-transform-schemas:doc:`generated/schemas/affine-1.5.0`.
+    'asdf-transform-schemas': (
+        'https://www.asdf-format.org/projects/asdf-transform-schemas/en/latest/', None),
+    'asdf-coordinates-schemas': (
+        'https://www.asdf-format.org/projects/asdf-coordinates-schemas/en/latest/', None),
+    'asdf-wcs-schemas': (
+        'https://www.asdf-format.org/projects/asdf-wcs-schemas/en/latest/', None),
+    'gwcs': ('https://gwcs.readthedocs.io/en/latest/', None),
     # TODO: Change to www.asdf-format.org URL once the libasdf docs are hosted under it
     'libasdf': ('https://libasdf.readthedocs.io/en/latest/', None),
     'numpy': ('https://numpy.org/doc/stable/', None)

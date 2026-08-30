@@ -8,7 +8,8 @@
 ASDF_BEGIN_DECLS
 
 /**
- * Representation of the ``transform/compose-1.3.0`` schema.
+ * Representation of version 1.3.0 of the
+ * :external+asdf-transform-schemas:doc:`transform/compose <generated/schemas/compose-1.2.0>` schema.
  *
  * Serial composition of two transforms applied right-to-left:
  * ``out = forward[0](forward[1](in))``.

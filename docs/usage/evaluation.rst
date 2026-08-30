@@ -10,10 +10,10 @@ actual coordinates.  This is what libasdf-gwcs's evaluation engine provides.
 What "forward" means
 --------------------
 
-A GWCS pipeline can begin and end in any coordinate frame.  In practice it
-usually starts on the detector and ends on the sky, so evaluating it maps
-pixels to world coordinates, but that is a property of the particular WCS,
-not of the format.
+A :external+asdf-wcs-schemas:doc:`GWCS pipeline <generated/gwcs/wcs-1.1.0>` can
+begin and end in any coordinate frame.  In practice it usually starts on the
+detector and ends on the sky, so evaluating it maps pixels to world
+coordinates, but that is a property of the particular WCS, not of the format.
 
 What libasdf-gwcs guarantees is narrower: it evaluates the **forward**
 transformation of the pipeline as stored in the file.
@@ -205,8 +205,10 @@ Three things follow from this:
   evaluation context is created, not when the file is read.  Reading succeeds;
   ``asdf_gwcs_eval_create`` returns ``NULL`` with
   ``ASDF_GWCS_ERR_TRANSFORM_NOT_SUPPORTED``.
-* AST works internally in radians.  When the pipeline's output frame is a sky
-  frame the results are converted to degrees to match the GWCS convention.
+* AST works internally in radians.  When the pipeline's output frame is a
+  :external+asdf-wcs-schemas:doc:`celestial frame
+  <generated/gwcs/celestial_frame-1.0.0>` the results are converted to degrees
+  to match the GWCS convention.
   This conversion is currently keyed on the frame type rather than on real unit
   handling, which is a known rough edge.
 

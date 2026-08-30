@@ -20,6 +20,10 @@ typedef enum {
 /**
  * Conversion between spherical and Cartesian coordinates
  *
+ * Implements the
+ * :external+asdf-wcs-schemas:doc:`gwcs/spherical_cartesian <generated/gwcs/spherical_cartesian-1.1.0>`
+ * schema.
+ *
  * The direction of the conversion is given by `direction`; the two directions
  * correspond to the separate ``spherical_to_cartesian`` and
  * ``cartesian_to_spherical`` schema tags.

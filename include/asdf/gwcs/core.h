@@ -13,7 +13,9 @@
 ASDF_BEGIN_DECLS
 
 
-/** Prefix for all GWCS schema tags */
+/**
+ * Prefix for all :external+asdf-wcs-schemas:doc:`GWCS schema <index>` tags
+ */
 #define ASDF_GWCS_TAG_PREFIX "tag:stsci.edu:gwcs/"
 
 

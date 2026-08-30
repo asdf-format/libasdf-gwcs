@@ -1,5 +1,6 @@
 /**
- * Partial implementation of the gwcs/step-1.3.0 schema
+ * Partial implementation of version 1.3.0 of the
+ * :external+asdf-wcs-schemas:doc:`gwcs/step <generated/gwcs/step-1.1.0>` schema
  */
 
 //

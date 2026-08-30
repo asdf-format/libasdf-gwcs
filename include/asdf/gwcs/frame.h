@@ -1,5 +1,6 @@
 /**
- * Partial implementation of the gwcs/frame-1.2.0 schema.
+ * Partial implementation of version 1.2.0 of the
+ * :external+asdf-wcs-schemas:doc:`gwcs/frame <generated/gwcs/frame-1.0.0>` schema.
  *
  * .. warning::
  *

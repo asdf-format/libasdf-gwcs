@@ -1,6 +1,7 @@
 /**
- * Representation of the http://stsci.edu/schemas/asdf/transform/transform-1.4.0
- * base schema for all GWCS transforms.
+ * Representation of version 1.4.0 of the
+ * :external+asdf-transform-schemas:doc:`transform/transform <generated/schemas/transform-1.2.0>` base
+ * schema, from which all GWCS transforms derive.
  *
  * .. todo::
  *

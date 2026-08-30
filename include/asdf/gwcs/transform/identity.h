@@ -8,6 +8,9 @@ ASDF_BEGIN_DECLS
 /**
  * A transform that passes its inputs through unchanged
  *
+ * Implements the :external+asdf-transform-schemas:doc:`transform/identity <generated/schemas/identity-1.2.0>`
+ * schema.
+ *
  * ``out = in``.  It carries no parameters of its own beyond the number of
  * axes, which is given by the base :c:member:`asdf_gwcs_transform.n_inputs`.
  */

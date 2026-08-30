@@ -6,7 +6,8 @@
 ASDF_BEGIN_DECLS
 
 /**
- * Representation of the ``transform/shift-1.3.0`` schema.
+ * Representation of version 1.3.0 of the
+ * :external+asdf-transform-schemas:doc:`transform/shift <generated/schemas/shift-1.2.0>` schema.
  *
  * Applies a scalar offset to a single axis: ``out = in + offset``.
  */

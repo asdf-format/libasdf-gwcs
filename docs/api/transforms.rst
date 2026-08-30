@@ -3,9 +3,13 @@
 Transforms
 ==========
 
-`asdf_gwcs_transform_t` is the base of a tagged union.  Its ``type`` member is
-an opaque token identifying the concrete type; `asdf_gwcs_transform_tag`
-turns that into the full YAML tag.
+`asdf_gwcs_transform_t` implements the
+:external+asdf-transform-schemas:doc:`base transform schema
+<generated/schemas/transform-1.2.0>` that every
+:external+asdf-transform-schemas:doc:`transform type <transforms>` derives
+from, and is the base of a tagged union.  Its ``type`` member is an opaque
+token identifying the concrete type; `asdf_gwcs_transform_tag` turns that into
+the full YAML tag.
 
 Concrete transform types embed the base via the ``ASDF_GWCS_TRANSFORM_BASE``
 macro.  That macro expands to an anonymous union, so the base fields are

@@ -1,5 +1,7 @@
 /**
- * Partial implementation of the gwcs/frame_celestial-1.2.0 schema
+ * Partial implementation of version 1.2.0 of the
+ * :external+asdf-wcs-schemas:doc:`gwcs/celestial_frame <generated/gwcs/celestial_frame-1.0.0>`
+ * schema
  */
 
 //

@@ -20,12 +20,14 @@ checked:
 
    The header is ``frame_celestial.h`` and the C type
    `asdf_gwcs_frame_celestial_t`, but the schema tag reverses the words:
-   ``gwcs/celestial_frame-1.2.0``.
+   :external+asdf-wcs-schemas:doc:`gwcs/celestial_frame
+   <generated/gwcs/celestial_frame-1.0.0>`.
 
 A celestial frame additionally owns a *reference frame*---the astropy
 coordinate frame it is expressed in.  These are declared in
-``coordinates/baseframe.h``, which registers ICRS, Galactic, FK5, FK4 and
-FK4NoETerms.
+``coordinates/baseframe.h``, which registers the
+:external+asdf-coordinates-schemas:doc:`astropy frame schemas <frames>` for
+ICRS, Galactic, FK5, FK4 and FK4NoETerms.
 
 ICRS and Galactic define no ``frame_attributes`` and are represented directly
 as `asdf_gwcs_baseframe_t`.  The equinox-based frames have concrete types of
