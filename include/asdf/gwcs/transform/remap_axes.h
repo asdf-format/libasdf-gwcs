@@ -8,12 +8,12 @@
 ASDF_BEGIN_DECLS
 
 /**
- * Representation of version 1.4.0 of the
- * :external+asdf-transform-schemas:doc:`transform/remap_axes <generated/schemas/remap_axes-1.3.0>`
- * schema.
+ * Selects and/or reorders input axes
  *
- * Selects and/or reorders input axes.  ``mapping[idx]`` gives the index of the
- * input axis to use for output axis ``idx``.
+ * Implements version 1.4.0 of the
+ * :external+asdf-transform-schemas:doc:`transform/remap_axes <generated/schemas/remap_axes-1.3.0>`
+ * schema.  ``mapping[idx]`` gives the index of the input axis to use for
+ * output axis ``idx``.
  */
 typedef struct {
     ASDF_GWCS_TRANSFORM_BASE;

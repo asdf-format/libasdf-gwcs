@@ -18,13 +18,12 @@ typedef enum {
 } asdf_gwcs_rotation_type_t;
 
 /**
- * Representation of version 1.1.0 of the
- * :external+asdf-transform-schemas:doc:`transform/rotate_sequence_3d <generated/schemas/rotate_sequence_3d-1.0.0>`
- * schema.
+ * A sequence of 3-D rotations about named axes
  *
- * A sequence of 3-D rotations about named axes.  Each rotation is specified
- * by an angle in degrees; the axes are given by a string like ``"zyx"`` or
- * ``"xyz"``.
+ * Implements version 1.1.0 of the
+ * :external+asdf-transform-schemas:doc:`transform/rotate_sequence_3d <generated/schemas/rotate_sequence_3d-1.0.0>`
+ * schema.  Each rotation is specified by an angle in degrees; the axes are
+ * given by a string like ``"zyx"`` or ``"xyz"``.
  */
 typedef struct {
     ASDF_GWCS_TRANSFORM_BASE;

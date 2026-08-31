@@ -19,7 +19,9 @@
 ASDF_BEGIN_DECLS
 
 /**
- * Contains properties from an ``gwcs/fitswcs_imaging-1.0.0`` object
+ * A FITS imaging WCS: CRPIX, CRVAL, CDELT and PC plus a projection
+ *
+ * Contains the properties of a ``gwcs/fitswcs_imaging-1.0.0`` object.
  */
 typedef struct {
     ASDF_GWCS_TRANSFORM_BASE;

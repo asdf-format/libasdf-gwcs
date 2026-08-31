@@ -46,30 +46,31 @@ For a transform constructed in memory rather than read from a file, it falls
 back to the type's preferred (newest registered) tag.
 
 
+.. _concrete-transforms:
+
 Concrete transforms
 -------------------
 
-These types have a dedicated struct carrying their own parameters:
+These types have a dedicated struct carrying their own parameters, so their
+type-specific fields are populated on read and written back out:
 
-.. toctree::
-  :maxdepth: 1
+.. c:autosummary::
+   :header: Transform Summary
+   :widths: 25 75
 
-  transform/transform.h
-  transform/affine.h
-  transform/compose.h
-  transform/concatenate.h
-  transform/constant.h
-  transform/divide.h
-  transform/identity.h
-  transform/polynomial.h
-  transform/remap_axes.h
-  transform/rotate_sequence_3d.h
-  transform/scale.h
-  transform/shift.h
-  transform/spherical_cartesian.h
-  fitswcs_imaging.h
-  transform/property/bounding_box.h
-  transform.h
+   affine <asdf_gwcs_affine_t>
+   compose <asdf_gwcs_compose_t>
+   concatenate <asdf_gwcs_concatenate_t>
+   constant <asdf_gwcs_constant_t>
+   divide <asdf_gwcs_divide_t>
+   fitswcs_imaging <asdf_gwcs_fits_t>
+   identity <asdf_gwcs_identity_t>
+   polynomial <asdf_gwcs_polynomial_t>
+   remap_axes <asdf_gwcs_remap_axes_t>
+   rotate_sequence_3d <asdf_gwcs_rotate_sequence_3d_t>
+   scale <asdf_gwcs_scale_t>
+   shift <asdf_gwcs_shift_t>
+   spherical_cartesian <asdf_gwcs_spherical_cartesian_t>
 
 
 .. _generic-transforms:
@@ -121,3 +122,42 @@ zenithal_perspective        AZP    zenithal_perspective-1.5.0
 
    ``molleweide`` is spelled that way deliberately: it matches the upstream
    schema name, which misspells "Mollweide".
+
+
+Header reference
+----------------
+
+Each header's page documents its structs, its generated accessors and its
+``ASDF_GWCS_TRANSFORM_<NAME>`` type constant in full.  Besides one page per
+concrete transform, there are three that are not transform types themselves:
+
+``transform/transform.h``
+    The base type shared by every transform, and the registration machinery
+    concrete types are declared through.
+
+``transform/property/bounding_box.h``
+    The ``bounding_box`` property that any transform may carry, giving the
+    domain over which it is valid.
+
+``transform.h``
+    The umbrella header, which pulls in all of the above.
+
+.. toctree::
+  :maxdepth: 1
+
+  transform/transform.h
+  transform/affine.h
+  transform/compose.h
+  transform/concatenate.h
+  transform/constant.h
+  transform/divide.h
+  transform/identity.h
+  transform/polynomial.h
+  transform/remap_axes.h
+  transform/rotate_sequence_3d.h
+  transform/scale.h
+  transform/shift.h
+  transform/spherical_cartesian.h
+  fitswcs_imaging.h
+  transform/property/bounding_box.h
+  transform.h

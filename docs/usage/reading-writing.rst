@@ -218,6 +218,18 @@ explicit ``.base``:
           shift->n_outputs,
           shift->offset);
 
+Most transform types are registered *generically*: their tags are recognized
+and they round-trip through the library unchanged, but they have no dedicated
+struct beyond the base, so only the base fields are populated.  The ones that
+do have their own struct are listed, with a one-line summary of each, under
+:ref:`concrete-transforms`; the generic ones are tabulated there too, under
+:ref:`generic-transforms`.
+
+As a historical note on this library's development, the primary initial
+motivation was to support a typical WCS used for Roman Space Telescope imaging
+observations, hence that particular subset of transforms.  More will be added
+in future releases.
+
 Composite transforms
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -282,33 +294,6 @@ the last child at any level.
 Real pipelines nest deeply---the ``roman_l2_wcs.asdf`` test fixture reaches
 nine levels and 80 transforms---so an unlimited walk can produce far more than
 expected.
-
-Most transform types are registered *generically*: their tags are recognized
-and they round-trip through the library unchanged, but they have no dedicated
-struct beyond the base, so only the base fields are populated.  The types with
-their own structs are:
-
-- :external+asdf-transform-schemas:doc:`affine <generated/schemas/affine-1.3.0>`
-- :external+asdf-transform-schemas:doc:`compose <generated/schemas/compose-1.2.0>`
-- :external+asdf-transform-schemas:doc:`concatenate <generated/schemas/concatenate-1.2.0>`
-- :external+asdf-transform-schemas:doc:`constant <generated/schemas/constant-1.4.0>`
-- :external+asdf-transform-schemas:doc:`divide <generated/schemas/divide-1.2.0>`
-- :external+asdf-transform-schemas:doc:`identity <generated/schemas/identity-1.2.0>`
-- :external+asdf-transform-schemas:doc:`polynomial <generated/schemas/polynomial-1.2.0>`
-- :external+asdf-transform-schemas:doc:`remap_axes <generated/schemas/remap_axes-1.3.0>`
-- :external+asdf-transform-schemas:doc:`rotate_sequence_3d <generated/schemas/rotate_sequence_3d-1.0.0>`
-- :external+asdf-transform-schemas:doc:`scale <generated/schemas/scale-1.2.0>`
-- :external+asdf-transform-schemas:doc:`shift <generated/schemas/shift-1.2.0>`
-- :external+asdf-wcs-schemas:doc:`spherical_cartesian <generated/gwcs/spherical_cartesian-1.1.0>`
-- ``fitswcs_imaging``
-
-That is, these are the only transforms currently with explicit implementations
-in libasdf-gwcs.  As a historical note on this library's development history,
-the primary initial motivation was to support a typical WCS used for Roman
-Space Telescope imaging observations, hence this specific subset of transforms.
-Though more will be added in future releases.
-
-
 Writing
 -------
 
