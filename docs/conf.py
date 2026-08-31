@@ -187,6 +187,67 @@ latex_documents = [("index", project + ".tex", project + " Documentation", autho
 latex_logo = "_static/images/logo-light-mode.png"
 
 
+# -- Index grouping ------------------------------------------------------------
+# Nearly every symbol in this library is prefixed ``asdf_`` or ``ASDF_``, so the
+# generated index piles all of them under a single "A" heading and is close to
+# useless for finding anything.
+#
+# Sphinx builds each index heading from the *category key* of an index entry--
+# the fifth element of the ``(type, value, target_id, main, key)`` tuples the
+# domains emit--falling back to the entry's first letter only when that key is
+# ``None`` (see ``sphinx.environment.adapters.indexentries._group_by_func``).
+# Setting it lets us file each symbol under the first letter that actually
+# distinguishes it, so ``asdf_gwcs_transform_tag`` lands under "T".
+#
+# The entry text is left alone, so searching still works on the full name.
+
+# index_strip_prefixes is a new config setting for this purpose
+# it is used by _regroup_index_entries run as an env-check-consistency hook.
+index_strip_prefixes = ['asdf_gwcs_', 'ASDF_GWCS_', 'asdf_', 'ASDF_']
+
+
+def _index_group_key(entry_text: str, prefixes: list[str]) -> str | None:
+    """Letter to file an index entry under, or None to leave Sphinx's default"""
+    # Index text looks like "asdf_gwcs_transform_tag (C function)", and for a
+    # struct member "asdf_gwcs_t.name (C member)".  Group members with their
+    # parent so a struct and its fields never land under different letters.
+    name = entry_text.split(' ', 1)[0].split('.', 1)[0].strip()
+
+    # Longest first, so 'asdf_gwcs_' wins over 'asdf_'.  A prefix that would
+    # leave a single character behind is skipped in favour of a shorter one:
+    # 'asdf_gwcs_t' is far easier to find under G than under T.
+    for prefix in sorted(prefixes, key=len, reverse=True):
+        if not name.startswith(prefix):
+            continue
+
+        rest = name[len(prefix):].lstrip('_')
+
+        if len(rest) > 1 and rest[:1].isalpha():
+            return rest[0].upper()
+
+    return None
+
+
+def _regroup_index_entries(app, env):
+    prefixes = app.config.index_strip_prefixes
+
+    if not prefixes:
+        return
+
+    domain = env.domains['index']
+
+    for docname, entries in domain.entries.items():
+        regrouped = []
+
+        for entry_type, value, target_id, main, category_key in entries:
+            if entry_type == 'single' and category_key is None:
+                category_key = _index_group_key(value, prefixes)
+
+            regrouped.append((entry_type, value, target_id, main, category_key))
+
+        domain.entries[docname] = regrouped
+
+
 # -- Doc-example test directive options ----------------------------------------
 # The tests/scripts/extract_doc_examples.py script extracts ``.. code:: c``
 # blocks from the documentation and compiles/runs them as part of the test
@@ -208,3 +269,5 @@ class TestableCode(Code):
 def setup(app):
     app.add_css_file("css/globalnav.css")
     app.add_directive("code", TestableCode, override=True)
+    app.add_config_value("index_strip_prefixes", [], "env")
+    app.connect("env-check-consistency", _regroup_index_entries)
