@@ -294,11 +294,14 @@ the last child at any level.
 Real pipelines nest deeply---the ``roman_l2_wcs.asdf`` test fixture reaches
 nine levels and 80 transforms---so an unlimited walk can produce far more than
 expected.
+
+
 Writing
 -------
 
 Writing mirrors reading, via ``asdf_set_gwcs`` and the ``asdf_set_*`` functions
-for the individual types:
+for the individual types.  Writing back a WCS that was read from a file is a
+two-liner:
 
 .. code:: c
 
@@ -310,6 +313,175 @@ for the individual types:
 A value read from a file keeps the tag it was read with, so a straight
 read-then-write round trip preserves schema versions rather than silently
 upgrading them.
+
+
+Building a WCS from scratch
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Nothing requires a WCS to have come from a file.  Every type in this library is
+a plain struct, so a pipeline can be assembled in memory and written out.
+
+The example below builds the smallest useful WCS: two steps mapping detector
+pixels to ICRS sky coordinates through a
+:c:struct:`FITS imaging transform <asdf_gwcs_fits_t>`.  Note that none of it is
+heap-allocated: ``asdf_set_gwcs`` serializes into the file's tree, so these can
+all be ordinary stack values, and there is nothing to destroy afterwards.
+
+.. code:: c
+   :test: test-gwcs-write
+   :fixture: temp:wcs-from-scratch.asdf
+
+   #include <stdio.h>
+   #include <asdf.h>
+   #include <asdf/gwcs/gwcs.h>
+
+   int main(int argc, char **argv) {
+       const char *path = argc > 1 ? argv[1] : "out.asdf";
+
+       // Step 0's frame: the detector, in pixels.
+       asdf_gwcs_frame2d_t detector = {
+           .base = {.type = ASDF_GWCS_FRAME_2D, .name = "detector"},
+           .axes_names = {"x", "y"},
+           .axes_order = {0, 1},
+           .unit = {"pixel", "pixel"},
+           .axis_physical_types = {"custom:x", "custom:y"},
+       };
+
+       // The transform out of the detector frame.  A fitswcs_imaging carries
+       // the familiar FITS keywords plus the projection to apply.
+       asdf_gwcs_transform_t gnomonic = {.type = ASDF_GWCS_TRANSFORM_GNOMONIC};
+       asdf_gwcs_fits_t fits = {
+           .base = {.type = ASDF_GWCS_TRANSFORM_FITSWCS_IMAGING},
+           .crpix = {1024.5, 1024.5},
+           .crval = {5.63, -72.05},
+           .cdelt = {-1.0e-5, 1.0e-5},
+           .pc = {{1.0, 0.0}, {0.0, 1.0}},
+           .projection = &gnomonic,
+       };
+
+       // Step 1's frame: the sky.  A celestial frame names the astropy
+       // reference frame its coordinates are expressed in.
+       asdf_gwcs_baseframe_t icrs = {.type = ASDF_GWCS_COORDINATE_FRAME_ICRS};
+       asdf_gwcs_frame_celestial_t sky = {
+           .base = {.type = ASDF_GWCS_FRAME_CELESTIAL, .name = "world"},
+           .axes_names = {"lon", "lat", NULL},
+           .axes_order = {0, 1, 0},
+           .unit = {"deg", "deg", NULL},
+           .axis_physical_types = {"pos.eq.ra", "pos.eq.dec", NULL},
+           .reference_frame = &icrs,
+       };
+
+       // The last step has no transform: it only names the frame the
+       // pipeline ends in.
+       asdf_gwcs_step_t steps[2] = {
+           {.frame = (asdf_gwcs_frame_t *)&detector,
+            .transform = (const asdf_gwcs_transform_t *)&fits},
+           {.frame = (asdf_gwcs_frame_t *)&sky, .transform = NULL},
+       };
+
+       uint64_t shape[2] = {2048, 2048};
+       asdf_gwcs_t wcs = {
+           .name = "example",
+           .pixel_ndim = 2,
+           .pixel_shape = shape,
+           .n_steps = 2,
+           .steps = steps,
+       };
+
+       asdf_file_t *file = asdf_open(NULL);
+
+       if (asdf_set_gwcs(file, "wcs", &wcs) != ASDF_VALUE_OK) {
+           fprintf(stderr, "could not build the WCS\n");
+           return 1;
+       }
+
+       if (asdf_write_to(file, path) != 0) {
+           fprintf(stderr, "could not write %s\n", path);
+           return 1;
+       }
+
+       asdf_close(file);
+       printf("wrote %s\n", path);
+       return 0;
+   }
+
+The YAML that lands in the file is the same shape the reading examples walk:
+
+.. code:: yaml
+
+   wcs: !<tag:stsci.edu:gwcs/wcs-1.4.0>
+     name: example
+     pixel_shape:
+     - 2048
+     - 2048
+     steps:
+     - !<tag:stsci.edu:gwcs/step-1.3.0>
+       frame: !<tag:stsci.edu:gwcs/frame2d-1.2.0>
+         name: detector
+         axes_names: [
+           x,
+           y
+           ]
+         axes_order: [
+           0,
+           1
+           ]
+         unit: [
+           pixel,
+           pixel
+           ]
+         axis_physical_types: [
+           custom:x,
+           custom:y
+           ]
+       transform: !<tag:stsci.edu:gwcs/fitswcs_imaging-1.0.0>
+         crpix: !core/ndarray-1.1.0
+           data: [
+             1024.5,
+             1024.5
+             ]
+           datatype: float64
+         # crval, cdelt and pc follow in the same form
+         projection: !transform/gnomonic-1.4.0 {}
+     - !<tag:stsci.edu:gwcs/step-1.3.0>
+       frame: !<tag:stsci.edu:gwcs/celestial_frame-1.2.0>
+         name: world
+         axes_names: [
+           lon,
+           lat
+           ]
+         axes_order: [
+           0,
+           1
+           ]
+         unit: [
+           deg,
+           deg
+           ]
+         axis_physical_types: [
+           pos.eq.ra,
+           pos.eq.dec
+           ]
+         reference_frame: !<tag:astropy.org:astropy/coordinates/frames/icrs-1.3.0>
+           frame_attributes: {}
+       transform: null
+
+A few things are worth knowing when building a WCS this way:
+
+* Frames and transforms are referenced, not copied, while you assemble the
+  pipeline, so everything a `asdf_gwcs_t` points at must outlive the
+  ``asdf_set_gwcs`` call.  Stack values in the same scope, as above, satisfy
+  that.
+* ``ctype`` on `asdf_gwcs_fits_t` is *derived*, not set by you.  It is filled
+  in on read, from the terminal frame's ``axis_physical_types``, which is why
+  those matter even though they look like documentation.
+* The FITS keyword arrays are written as ``core/ndarray`` values rather than
+  bare YAML sequences, but stored *inline*, so a file built this way stays
+  YAML-only with no binary blocks.  The other transforms that carry arrays,
+  e.g. ``affine`` and ``polynomial``, do the same.  Evaluation forces every
+  array inline regardless before handing the tree to AST
+  (see :ref:`evaluation`), since a WCS read from someone else's file may well
+  use binary blocks.
 
 
 Known limitations
