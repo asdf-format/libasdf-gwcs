@@ -4,8 +4,9 @@ Reading and writing GWCS objects
 ================================
 
 libasdf-gwcs registers extension types for the GWCS schemas with libasdf.  Once
-your program links against both libasdf-gwcs and libasdf (see the README for
-the linker and pkg-config invocations), any ASDF file read through libasdf will
+your program links against both libasdf-gwcs and libasdf (see
+:ref:`linking against both libraries <linking>` for the linker and pkg-config
+invocations), any ASDF file read through libasdf will
 recognize GWCS tags and deserialize them into C structs instead of leaving them
 as generic mappings.
 

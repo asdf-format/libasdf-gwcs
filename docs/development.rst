@@ -5,7 +5,8 @@ Development resources
 
 This page covers building libasdf-gwcs from a git checkout, the conventions the
 project follows, and how releases are made.  If you only want to *use* the
-library, the build instructions in the README *should* be sufficient.
+library, the build instructions under :ref:`getting-started` *should* be
+sufficient.
 
 
 .. _build-systems:
@@ -63,8 +64,8 @@ The project has three git submodules, so clone with ``--recurse-submodules``
 
 ``third_party/ast``
     Starlink AST, providing the ``ast_yaml`` evaluation backend.  This is a
-    *fork*; see the README for why, and for the licensing consequences of
-    linking it.
+    *fork*; see :ref:`ast-backend` for why, and :ref:`licensing` for the
+    consequences of linking it.
 
 ``third_party/STC``
     A header-only C11 container library, used for the runtime tag-to-type
@@ -116,8 +117,7 @@ Useful ``configure`` options:
 ``--disable-ast``
     Build without the AST evaluation backend.  Reading and writing GWCS
     objects still works; only evaluation becomes unavailable.  Also removes
-    libasdf-gwcs's only LGPL-licensed dependency--see the README's licensing
-    section.
+    libasdf-gwcs's only LGPL-licensed dependency--see :ref:`licensing`.
 
 ``--disable-logging``
     Compile out libasdf-gwcs's internal log statements (they are enabled by

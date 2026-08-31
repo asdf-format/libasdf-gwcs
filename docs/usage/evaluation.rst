@@ -212,6 +212,6 @@ Three things follow from this:
   This conversion is currently keyed on the frame type rather than on real unit
   handling, which is a known rough edge.
 
-See the **AST support** and **Licensing** sections of the README for how AST is
-vendored, how to link against an external copy, how to turn it off, and what
-its LGPL licensing implies.
+See :ref:`ast-backend` for how AST is vendored, how to link against an
+external copy, and how to turn it off, and :ref:`licensing` for what its LGPL
+licensing implies.

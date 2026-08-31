@@ -50,6 +50,8 @@ an evaluation engine that does this for real files, at speed, from C.
    and associated ASDF schemas.
 
 
+.. _getting-started:
+
 Getting Started
 ===============
 
@@ -580,6 +582,8 @@ Notes
 
 - Run ``make check`` (autotools) or ``ctest`` (CMake) to run tests.
 
+
+.. _licensing:
 
 Licensing
 =========
