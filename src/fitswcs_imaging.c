@@ -197,6 +197,8 @@ static asdf_value_t *serialize_double2_ndarray(asdf_file_t *file, const double s
         return NULL;
     }
 
+    // These are small arrays so store them inline by default
+    asdf_ndarray_storage_set(&ndarray, ASDF_ARRAY_STORAGE_INLINE);
     return asdf_value_of_ndarray(file, &ndarray);
 }
 
@@ -258,6 +260,8 @@ static asdf_value_t *asdf_gwcs_fits_serialize(
         goto cleanup;
     }
 
+    // These are small arrays so store them inline by default
+    asdf_ndarray_storage_set(&pc_ndarray, ASDF_ARRAY_STORAGE_INLINE);
     val = asdf_value_of_ndarray(file, &pc_ndarray);
 
     if (!val)
