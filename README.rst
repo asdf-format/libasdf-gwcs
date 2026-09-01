@@ -26,11 +26,11 @@ transforms and coordinate frames as C-native data structures rather than as
 anonymous YAML mappings, and writes them back out again.  Three families of
 schema are implemented:
 
-* ``tag:stsci.edu:gwcs/`` --- the WCS object, its steps, and its coordinate
+* ``tag:stsci.edu:gwcs/``—the WCS object, its steps, and its coordinate
   frames (``frame``, ``frame2d``, ``celestial_frame``, etc.).
-* ``tag:stsci.edu:asdf/transform/`` --- around forty transform (model) types,
+* ``tag:stsci.edu:asdf/transform/``—around forty transform (model) types,
   from ``shift`` and ``affine`` through the full set of spherical projections.
-* ``tag:stsci.edu:asdf/coordinates/frames/`` --- the `Astropy-compatible
+* ``tag:stsci.edu:asdf/coordinates/frames/``—the `Astropy-compatible
   reference frames
   <https://docs.astropy.org/en/stable/coordinates/index.html#built-in-frame-classes>`__
   attached to celestial frames (ICRS, Galactic, FK5, FK4, FK4NoETerms, etc.).
@@ -95,7 +95,7 @@ Using libasdf-gwcs in your project
 
 libasdf extensions register themselves when the shared library that defines
 them is loaded.  In practice that means your program must **link against both
-libasdf-gwcs and libasdf**---there is currently no other supported mechanism
+libasdf-gwcs and libasdf**—there is currently no other supported mechanism
 for loading third-party libasdf extensions, so the linkage has to be there at
 build time, though in principle you could also use ``dlopen``.
 
@@ -126,7 +126,7 @@ This example opens a file, locates a WCS in it, and prints the pipeline.
 
 It takes the file as its first argument and, optionally, the path to the WCS
 within the ASDF tree as its second.  With no path given it searches the tree for
-the first GWCS it can find --- ``asdf_value_is_gwcs`` is one of the predicates
+the first GWCS it can find—``asdf_value_is_gwcs`` is one of the predicates
 the extension generates, and has exactly the signature libasdf's
 ``asdf_value_find`` expects, so the two compose directly.
 
@@ -470,7 +470,7 @@ Sky coordinates come back in degrees, with longitude in ``[-180, 180]``.
     ``-90.013`` here is equivalent to ``269.987``.
 
 A GWCS pipeline can begin and end in any coordinate frame, so a stored WCS is
-not inherently "pixel to world"---that is simply the common case.  What
+not inherently "pixel to world"—that is simply the common case.  What
 libasdf-gwcs evaluates is the **forward** transformation of the pipeline as
 stored.  Evaluating the reverse direction, whether from a stored analytic
 inverse or by solving numerically, is not yet supported.
@@ -513,8 +513,8 @@ under ``third_party/ast``.  There are a few things to know about it:
 * **It is a fork.** AST support presently works only with the custom fork that
   is vendored here, which carries updates to ``YamlChan`` and other changes
   not yet available in upstream AST.  Building against an external AST is
-  supported---both build systems fall back to searching the system for it when
-  the submodule is not present---but a stock upstream AST will not work yet.
+  supported—both build systems fall back to searching the system for it when
+  the submodule is not present—but a stock upstream AST will not work yet.
 
 * **It is linked statically by default.** The vendored AST is built as a static
   library and linked into ``libasdf-gwcs``, so there is no separate AST shared
@@ -602,7 +602,7 @@ licenses coexisting.
 with AST linked into it is what the LGPL calls a *Combined Work*.  It is a
 common misconception that this makes the result LGPL-licensed; it does not.
 Section 4 of the LGPLv3 explicitly permits conveying a Combined Work "under
-terms of your choice"---libasdf-gwcs's BSD licensing is not displaced---as
+terms of your choice"—libasdf-gwcs's BSD licensing is not displaced—as
 long as those terms do not restrict modification of the AST portions or reverse
 engineering for debugging such modifications (BSD terms plainly do not), and as
 long as you also:
@@ -622,7 +622,7 @@ long as you also:
     modified version.
 
   Because the AST here is a *fork*, linked statically, option §4d1 is not
-  available---so §4d0 is the applicable route.
+  available—so §4d0 is the applicable route.
 
 * **(§4e)** provide Installation Information, but only in the cases where
   GPLv3 §6 would require it (essentially, User Products); this does not arise
@@ -632,7 +632,7 @@ long as you also:
 published under a license that permits relinking against a modified AST.  The
 obligations above are therefore mostly a concern for *downstream* users who
 embed libasdf-gwcs, with AST statically linked, into a **proprietary**
-application: they take on §4a--§4d with respect to the AST portion.
+application: they take on §4a–§4d with respect to the AST portion.
 
 Anyone who would rather avoid the question entirely can build with
 ``--disable-ast`` / ``-DASDF_GWCS_ENABLE_AST=OFF``, which yields a purely
