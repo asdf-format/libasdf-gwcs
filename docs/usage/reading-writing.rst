@@ -474,7 +474,9 @@ A few things are worth knowing when building a WCS this way:
   that.
 * ``ctype`` on `asdf_gwcs_fits_t` is *derived*, not set by you.  It is filled
   in on read, from the terminal frame's ``axis_physical_types``, which is why
-  those matter even though they look like documentation.
+  those matter even though they look like documentation: get them wrong and
+  the CTYPEs come out wrong or empty.  See :ref:`known-limitations` for why it
+  works that way.
 * The FITS keyword arrays are written as ``core/ndarray`` values rather than
   bare YAML sequences, but stored *inline*, so a file built this way stays
   YAML-only with no binary blocks.  The other transforms that carry arrays,
@@ -483,6 +485,8 @@ A few things are worth knowing when building a WCS this way:
   (see :ref:`evaluation`), since a WCS read from someone else's file may well
   use binary blocks.
 
+
+.. _known-limitations:
 
 Known limitations
 -----------------
@@ -495,3 +499,16 @@ Known limitations
 * `asdf_gwcs_fits_t`'s ``ctype`` members are filled in only when the whole
   containing WCS is read (with ``asdf_get_gwcs``); reading a
   ``fitswcs_imaging`` transform on its own leaves them ``NULL``.
+
+  This one is inherent to the schema rather than an unfinished corner.  A
+  CTYPE such as ``RA---TAN`` is two halves from two places: the coordinate
+  type (``RA``) is derived from the ``axis_physical_types`` of the WCS's
+  *output* frame, whose UCD1+ terms map onto it (``pos.eq.ra`` gives ``RA``,
+  ``pos.galactic.lon`` gives ``GLON``), while the projection code (``TAN``)
+  comes from the transform's own ``projection``.  A ``fitswcs_imaging`` object
+  carries the second half but not the first: the output frame is a sibling
+  step of the WCS, not part of the transform, so on its own the transform
+  genuinely does not contain enough information to name its own axes.
+
+  This could arguably also be considered a shortcoming in the
+  ``fitswcs_imaging`` schema.

@@ -39,17 +39,29 @@ typedef struct {
     const double pc[2][2];
 
     /**
-     * The FITS CTYPEn headers (0-indexed)
+     * The FITS CTYPEn headers (0-indexed), e.g. ``RA---TAN``
+     *
+     * Unlike every other member here, these are *derived* rather than read
+     * from the ``fitswcs_imaging`` object, because a CTYPE is made of two
+     * halves that come from two different places:
+     *
+     * - The **coordinate type** (``RA``, ``DEC``, ``GLON``, ...) comes from
+     *   the ``axis_physical_types`` of the WCS's *output* frame, whose UCD1+
+     *   terms map onto it: ``pos.eq.ra`` gives ``RA``, ``pos.galactic.lon``
+     *   gives ``GLON``, and so on.
+     * - The **projection code** (``TAN``, ``SIN``, ...) comes from
+     *   `projection`, which is part of this object.
+     *
+     * Only the second half is knowable from a ``fitswcs_imaging`` object on
+     * its own.  The output frame is a sibling step of the containing
+     * `asdf_gwcs_t`, not part of this transform, so the first half is simply
+     * not present in the data unless the whole WCS is at hand.
      *
      * .. warning::
      *
-     *   Extracting the correct CTYPEn headers requires the full GWCS object
-     *   to be read (e.g. with ``asdf_get_gwcs``).  In this case the ctype values
-     *   will be filled in on this object.
-     *
-     *   Otherwise, if a ``fitswcs_imaging`` transform object is read directly,
-     *   without the full context of its containing GWCS, these values will be
-     *   ``NULL``!
+     *   Reading the full GWCS (with ``asdf_get_gwcs``, say) fills these in.
+     *   Reading a ``fitswcs_imaging`` transform on its own leaves them
+     *   ``NULL``, and no amount of inspecting the transform can recover them.
      */
     const char *ctype[2];
 
