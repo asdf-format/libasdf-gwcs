@@ -54,10 +54,48 @@ the default.
 
 `asdf_gwcs_eval_destroy` accepts ``NULL``, so it is safe on an error path.
 
+.. admonition:: Why a separate context?
+   :class: hint
+
+   Nothing about the basic use above depends on knowing this, but the shape of
+   the API is easier to accept once you know why it is not simply
+   ``asdf_gwcs_eval_2d(wcs, ...)``.
+
+   libasdf-gwcs does not evaluate anything itself.  The structs you get from
+   reading a file are a faithful representation of what the file said, not an
+   executable object: `asdf_gwcs_affine_t` holds a matrix, but there is no code
+   here that multiplies by it.  Evaluation is delegated to a backend, and
+   handing a WCS to one is not free.  The ``ast_yaml`` backend, for instance,
+   re-serializes the entire WCS to YAML in memory, feeds that to AST's YAML
+   channel to build an ``AstFrameSet``, and extracts the mapping from its base
+   frame to its current one---a full write-and-parse round trip, once per
+   WCS.
+
+   The context is where that work is kept.  Creating it pays the cost once;
+   `asdf_gwcs_eval_2d` then reuses the prepared mapping for as many points as
+   you care to throw at it.  Were the preparation folded into the evaluation
+   call, every call would repeat it.
+
+   It also owns what the backend allocated---in the case of the AST backend,
+   AST objects needing memory management, and facts derived while preparing,
+   such as whether the output frame is a sky frame and therefore needs radians
+   converted to degrees. That is why it must be destroyed rather than simply
+   going out of scope, and why a WCS the backend cannot handle at all---
+   an unsupported transform, or one this library cannot serialize---is rejected
+   by `asdf_gwcs_eval_create` rather than by the first evaluation: by then the
+   WCS has already been handed over and accepted.  Evaluation itself can still
+   fail, with `ASDF_GWCS_ERR_EVALUATION_FAILED`, for a point the mapping
+   cannot transform.
+
+   Finally, it is the seam that makes backends pluggable at all.
+   `asdf_gwcs_eval_t` is an opaque handle over a small vtable, so the calling
+   code above is identical whichever backend prepared it.
+
 .. note::
 
    Only a two-dimensional entry point exists at present.  There is no
-   N-dimensional equivalent of `asdf_gwcs_eval_2d` yet.
+   N-dimensional equivalent of `asdf_gwcs_eval_2d` yet, though it's a
+   straightforward extension for future work.
 
 
 Evaluating over a grid
