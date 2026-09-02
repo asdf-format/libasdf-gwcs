@@ -16,14 +16,6 @@ checked:
        /* ... */
    }
 
-.. note::
-
-   The header is :doc:`frame_celestial.h </api/frame_celestial.h>` and the
-   C type
-   `asdf_gwcs_frame_celestial_t`, but the schema tag reverses the words:
-   :external+asdf-wcs-schemas:doc:`gwcs/celestial_frame
-   <generated/gwcs/celestial_frame-1.0.0>`.
-
 A celestial frame additionally owns a *reference frame*---the astropy
 coordinate frame it is expressed in.  These are declared in
 ``coordinates/baseframe.h``, which registers the
@@ -34,6 +26,20 @@ ICRS and Galactic define no ``frame_attributes`` and are represented directly
 as `asdf_gwcs_baseframe_t`.  The equinox-based frames have concrete types of
 their own in ``coordinates/fk.h``, carrying the ``equinox`` every one of them
 requires and, for the FK4 frames, an optional ``obstime``.
+
+.. note::
+
+   In the case of celestial frame the API reverses the words relative to its
+   schema: the tag is
+   :external+asdf-wcs-schemas:doc:`gwcs/celestial_frame
+   <generated/gwcs/celestial_frame-1.0.0>`, while the header is
+   :doc:`frame_celestial.h </api/frame_celestial.h>` and the C type is
+   `asdf_gwcs_frame_celestial_t`.
+
+   This is just to keep the C API internally consistent, so that every frame
+   type shares the ``asdf_gwcs_frame_`` prefix and sorts together.  The same
+   applies to the header names.
+
 
 .. toctree::
   :maxdepth: 1

@@ -132,7 +132,9 @@ Frames
 `asdf_gwcs_frame_t` is a base struct carrying a ``type`` discriminant and a
 ``name``.  As with transforms, ``name`` is the file author's label for this
 particular frame, while `asdf_gwcs_frame_type_name` reports the schema name of
-its type---``frame``, ``frame2d`` or ``celestial_frame``.
+its type---``frame``, ``frame2d`` or
+:external+asdf-wcs-schemas:doc:`celestial_frame
+<generated/gwcs/celestial_frame-1.0.0>`.
 
 Downcast on the discriminant to reach the concrete type:
 
@@ -173,19 +175,6 @@ are :external+asdf-standard:doc:`time/time
        const asdf_gwcs_fk5_t *fk5 = (const asdf_gwcs_fk5_t *)cel->reference_frame;
        printf("equinox %s\n", fk5->equinox->value);
    }
-
-.. note::
-
-   The header is spelled :doc:`frame_celestial.h </api/frame_celestial.h>`
-   and the C type
-   `asdf_gwcs_frame_celestial_t`, but the corresponding schema tag has the
-   words the other way round:
-   :external+asdf-wcs-schemas:doc:`gwcs/celestial_frame
-   <generated/gwcs/celestial_frame-1.0.0>`.
-
-   This spelling change is just a matter of keeping the API consistent (all
-   frame types prefixed with ``asdf_gwcs_frame_``).
-
 
 Transforms
 ----------

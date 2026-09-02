@@ -21,12 +21,6 @@ ASDF_BEGIN_DECLS
 /**
  * A celestial coordinate frame (``gwcs/celestial_frame``)
  *
- * .. note::
- *
- *    The schema tag orders the words the other way round from this header and
- *    C type: the tag is ``gwcs/celestial_frame``, the type is
- *    ``asdf_gwcs_frame_celestial_t``.
- *
  * The per-axis arrays are sized for three axes so that the same layout covers
  * frames carrying a distance or radial-velocity axis alongside the two sky
  * axes; entries beyond those actually present are ``NULL``.
