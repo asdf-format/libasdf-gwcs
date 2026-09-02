@@ -196,8 +196,9 @@ concrete transform, there are three that are not transform types themselves:
     The ``bounding_box`` property that any transform may carry, giving the
     domain over which it is valid.
 
-:doc:`transform.h </api/transform.h>`
-    The umbrella header, which pulls in all of the above.
+``transform.h``
+    A convenience header that includes all of the above; it declares nothing
+    itself, so it has no page of its own.
 
 .. toctree::
   :maxdepth: 1
@@ -217,6 +218,5 @@ concrete transform, there are three that are not transform types themselves:
   transform/spherical_cartesian.h
   fitswcs_imaging.h
   transform/property/bounding_box.h
-  transform.h
 
 

@@ -4,6 +4,10 @@
  * Including this pulls in the entire public API: the WCS object and its steps,
  * every coordinate frame and transform type, and the evaluation interface.
  * Most programs need only this header alongside libasdf's own ``<asdf.h>``.
+ *
+ * Individual headers can be included instead where only part of the API is
+ * wanted.  ``<asdf/gwcs/transform.h>`` is a second convenience header of the
+ * same kind, covering every transform type and nothing else.
  */
 
 //

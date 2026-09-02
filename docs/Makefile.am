@@ -12,7 +12,6 @@ api_header_pages = \
     api/grid.h.rst \
     api/gwcs.h.rst \
     api/step.h.rst \
-    api/transform.h.rst \
     api/transform/affine.h.rst \
     api/transform/compose.h.rst \
     api/transform/concatenate.h.rst \
