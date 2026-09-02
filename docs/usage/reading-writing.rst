@@ -73,32 +73,20 @@ libasdf's tree traversal expects, so it can be used directly as a predicate:
 The generated API
 -----------------
 
-Every extension type is declared with libasdf's ``ASDF_DECLARE_EXTENSION``
-macro, which generates a uniform family of eleven exported functions.  For the
-top-level WCS (registered as ``gwcs``) these are:
+``asdf_get_gwcs`` above is not written out anywhere in this library's source.
+Every extension type is declared with libasdf's `ASDF_DECLARE_EXTENSION`
+macro, which generates a uniform family of eleven exported functions for it,
+so the top-level WCS gets ``asdf_get_gwcs``, ``asdf_set_gwcs``,
+``asdf_value_as_gwcs``, ``asdf_gwcs_copy``, ``asdf_gwcs_destroy`` and the
+rest.  The same eleven exist for every other type here with its registered
+name substituted: ``asdf_get_gwcs_step``, ``asdf_get_gwcs_frame2d``,
+``asdf_get_gwcs_shift``, and so on.
 
-.. code:: c
-
-   asdf_value_err_t asdf_get_gwcs(asdf_file_t *, const char *path, asdf_gwcs_t **out);
-   asdf_value_err_t asdf_set_gwcs(asdf_file_t *, const char *path, const asdf_gwcs_t *);
-   bool             asdf_is_gwcs(asdf_file_t *, const char *path);
-   asdf_value_err_t asdf_value_as_gwcs(asdf_value_t *, asdf_gwcs_t **out);
-   bool             asdf_value_is_gwcs(asdf_value_t *);
-   asdf_value_t    *asdf_value_of_gwcs(asdf_file_t *, const asdf_gwcs_t *);
-   asdf_gwcs_t     *asdf_gwcs_copy(asdf_file_t *, const asdf_gwcs_t *src);
-   bool             asdf_gwcs_copy_into(asdf_file_t *, const asdf_gwcs_t *src, asdf_gwcs_t *dst);
-   asdf_gwcs_t    **asdf_gwcs_array_copy(asdf_file_t *, const asdf_gwcs_t **src);
-   void             asdf_gwcs_deinit(asdf_gwcs_t *);
-   void             asdf_gwcs_destroy(asdf_gwcs_t *);
-
-The same pattern holds for every other type in this library, with the
-registered name substituted: ``asdf_get_gwcs_step``, ``asdf_get_gwcs_frame2d``,
-``asdf_get_gwcs_shift``, and so on.  Only the exceptions are documented
-individually in the :ref:`API reference <api>`.
-
-``deinit`` releases the fields an object owns but not the object's own
-storage; ``destroy`` does both.  Use ``deinit`` when the struct is embedded in
-something you allocated yourself.
+That family is what most of the rest of this page uses.  See
+:ref:`generated-api` for the full list, what each one does, and the ownership
+conventions that go with them; because the functions come from the
+preprocessor, they do not appear in the generated pages for the individual
+headers.
 
 
 Walking the pipeline
@@ -292,9 +280,9 @@ a one-liner.  ``index`` and ``size`` always describe the current transform's
 position among its *immediate* siblings, so ``index + 1 == size`` identifies
 the last child at any level.
 
-Real pipelines nest deeply---the ``roman_l2_wcs.asdf`` test fixture reaches
-nine levels and 80 transforms---so an unlimited walk can produce far more than
-expected.
+Real pipelines can nest deeply---the ``roman_l2_wcs.asdf`` test fixture (a
+sample level 2 Roman data product), for example, reaches nine levels and 80
+transforms---so an unbounded walk can produce more than one might expect.
 
 
 Writing

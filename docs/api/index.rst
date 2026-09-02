@@ -36,10 +36,15 @@ macro, which generates a uniform family of **eleven** exported functions for it:
    void             asdf_<name>_deinit(<type> *);
    void             asdf_<name>_destroy(<type> *);
 
+So the top-level WCS, registered as ``gwcs``, gets ``asdf_get_gwcs``,
+``asdf_value_as_gwcs``, ``asdf_gwcs_destroy`` and the other eight; steps,
+registered as ``gwcs_step``, get ``asdf_get_gwcs_step`` and so on, as does
+every frame type and every transform type.
+
 Because these are produced by the preprocessor they do not appear in the pages
-below, which show only the declarations as written in the headers.  Read this
-section as applying to every registered type: the WCS itself (``gwcs``), steps
-(``gwcs_step``), each frame type, and each transform type.
+below, which show only the declarations as written in the headers.  This
+section is the only place they are documented; :ref:`reading-writing` shows
+them in use.
 
 Two conventions are worth restating:
 
