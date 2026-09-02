@@ -130,6 +130,31 @@ static void asdf_gwcs_divide_deinit_impl(void *value) {
 }
 
 
+/* A divide keeps its two operands in named members rather than a list, so its
+ * sub-transforms are reported by role. */
+static uint32_t asdf_gwcs_divide_children(
+    const asdf_gwcs_transform_t *transform, uint32_t index, asdf_gwcs_transform_iter_t *out) {
+    const asdf_gwcs_divide_t *divide = (const asdf_gwcs_divide_t *)transform;
+
+    if (out) {
+        switch (index) {
+        case 0:
+            out->value = divide->numerator;
+            out->role = "numerator";
+            break;
+        case 1:
+            out->value = divide->denominator;
+            out->role = "denominator";
+            break;
+        default:
+            break;
+        }
+    }
+
+    return 2;
+}
+
+
 static const asdf_extension_vtab_t asdf_gwcs_divide_vtab = {
     .serialize = asdf_gwcs_divide_serialize,
     .deserialize = asdf_gwcs_divide_deserialize,
@@ -144,12 +169,13 @@ static const asdf_extension_vtab_t asdf_gwcs_divide_vtab = {
  * NOTE: The only differences so far between divide schema versions is in the
  * base transform schema version; nominally all versions are supported.
  */
-ASDF_GWCS_REGISTER_TRANSFORM(
+ASDF_GWCS_REGISTER_TRANSFORM_WITH_CHILDREN(
     divide,
     DIVIDE,
     asdf_gwcs_divide_t,
     &libasdf_gwcs_software,
     &asdf_gwcs_divide_vtab,
+    asdf_gwcs_divide_children,
     NULL,
     ASDF_GWCS_TRANSFORM_TAG_PREFIX "divide-1.4.0",
     ASDF_GWCS_TRANSFORM_TAG_PREFIX "divide-1.3.0",

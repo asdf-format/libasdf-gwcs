@@ -74,8 +74,11 @@ AS_IF([test "x$enable_logging" = "xyes"],
 )
 
 # Submodule initialization (required dependencies)
-AX_SUBMODULE_INIT([third_party/STC])
-AX_SUBMODULE_INIT([tests/munit])
+# Use a distributed file as the sentinel rather than the default PATH/.git:
+# a release tarball has no .git anywhere, so keying on it would make the
+# tarball impossible to configure.
+AX_SUBMODULE_INIT([third_party/STC], [third_party/STC/include/stc/common.h])
+AX_SUBMODULE_INIT([tests/munit], [tests/munit/munit.h])
 
 # --enable-ast (default: yes)
 # Uses vendored submodule at third_party/ast; falls back to system libast.
@@ -131,10 +134,16 @@ AS_IF([test "x$enable_ast" = "xyes"], [
     dnl installs libyaml may live outside those paths.  Pass it
     dnl CPPFLAGS/LDFLAGS with our pkg-config findings so AST's configure sees
     dnl it.
+    dnl AST is absorbed into libasdf-gwcs.so, so build it with hidden
+    dnl visibility: otherwise its ~2500 symbols are re-exported from our shared
+    dnl library and would collide with any program that links its own libast.
+    dnl (Same hazard as the vendored STC; see third_party/Makefile.am.)  These
+    dnl are merged into any CFLAGS the user passed rather than replacing them.
     AX_SUBDIRS_CONFIGURE(
       [[third_party/ast]],
       [[--disable-shared], [--enable-static], [--with-pic], [--with-simd], [--with-yaml=fyaml]],
-      [[FYAML_CFLAGS=$FYAML_CFLAGS], [FYAML_LIBS=$FYAML_LIBS]],
+      [[FYAML_CFLAGS=$FYAML_CFLAGS], [FYAML_LIBS=$FYAML_LIBS],
+       [CFLAGS=-fvisibility=hidden]],
       [], [])
     dnl ast.h is generated in the top of the AST build directory
     AST_CFLAGS="-I\$(top_builddir)/third_party/ast"
@@ -190,10 +199,21 @@ LIBASDF_LIBS=$(printf '%s\n' "$LIBASDF_LIBS" | sed 's/none required//g')
 STC_CPPFLAGS="-I\$(top_srcdir)/third_party/STC/include"
 AC_SUBST([STC_CPPFLAGS])
 
+# --- Optional features -------------------------------------------------------
+
+# Enable/check doc build requirements
+ASDF_CHECK_SPHINX
+
+# Python is used to extract the testable examples from the documentation
+AC_PATH_PROG([PYTHON3], [python3], [no])
+AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON3" != "no"])
+AC_SUBST([PYTHON3])
+
 AC_SUBST([ASDF_GWCS_CFLAGS])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([
   Makefile
+  docs/Makefile
   include/Makefile
   libasdf-gwcs.pc
   tests/Makefile

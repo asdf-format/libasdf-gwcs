@@ -57,6 +57,9 @@ asdf_gwcs_err_t asdf_gwcs_eval_2d(
 
 
 void asdf_gwcs_eval_destroy(asdf_gwcs_eval_t *eval) {
+    if (!eval)
+        return;
+
     eval->destroy(eval);
 }
 

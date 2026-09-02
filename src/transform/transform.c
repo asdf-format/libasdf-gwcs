@@ -20,6 +20,19 @@
 #include "util.h"
 
 
+#include <asdf/error.h>
+#include <asdf/extension.h>
+#include <asdf/extension_util.h>
+#include <asdf/log.h>
+#include <asdf/value.h>
+
+#include "gwcs.h"
+#include "transform.h"
+#include "types/asdf_gwcs_transform_map.h"
+#include "util.h"
+
+
+
 static const asdf_gwcs_transform_type_t ASDF_GWCS_TRANSFORM_INVALID = NULL;
 static asdf_gwcs_transform_map_t g_transform_map = {0};
 static atomic_bool g_transform_map_initialized = false;
@@ -52,6 +65,7 @@ static void asdf_gwcs_transform_deinit_base(asdf_gwcs_transform_t *transform) {
         free((void *)transform->outputs);
     }
 
+    free((char *)transform->tag);
     free((char *)transform->name);
     asdf_gwcs_bounding_box_destroy((asdf_gwcs_bounding_box_t *)transform->bounding_box);
     asdf_gwcs_transform_destroy((asdf_gwcs_transform_t *)transform->inverse);
@@ -74,11 +88,19 @@ static bool asdf_gwcs_transform_copy_base(
      * transforms), so clear the base heap pointers before taking deep copies;
      * this keeps the deinit-on-failure path free of shared (double-freed)
      * pointers. */
+    dst->tag = NULL;
     dst->name = NULL;
     dst->inputs = NULL;
     dst->outputs = NULL;
     dst->bounding_box = NULL;
     dst->inverse = NULL;
+
+    if (src->tag) {
+        dst->tag = strdup(src->tag);
+
+        if (UNLIKELY(!dst->tag))
+            return false;
+    }
 
     if (src->name) {
         dst->name = strdup(src->name);
@@ -141,12 +163,30 @@ static bool asdf_gwcs_transform_copy_shallow(
 }
 
 
+/* A transform's type token is the address of its extension registration.
+ *
+ * Taking a transform rather than a void * keeps callers honest, while still
+ * accepting the void * an extension vtab method is handed, since C converts
+ * that implicitly. */
+static inline const asdf_extension_t *transform_ext(const asdf_gwcs_transform_t *transform) {
+    return (const asdf_extension_t *)transform->type;
+}
+
+
 /* Recover the shim vtab (and hence the type's own methods) from an object's
  * extension.  The libasdf vtab is the first member of
  * asdf_gwcs_transform_shim_vtab_t, so ext->vtab points straight at it. */
-static const asdf_gwcs_transform_shim_vtab_t *transform_shim_of(const void *obj) {
-    const asdf_extension_t *ext = (const asdf_extension_t *)((const asdf_gwcs_transform_t *)obj)->type;
-    return (const asdf_gwcs_transform_shim_vtab_t *)ext->vtab;
+static inline const asdf_gwcs_transform_shim_vtab_t *transform_shim_of(const void *obj) {
+    return (const asdf_gwcs_transform_shim_vtab_t *)transform_ext(obj)->vtab;
+}
+
+
+/* The extension userdata libasdf hands the shims is the per-type
+ * asdf_gwcs_transform_data_t; a transform's own methods expect the pointer its
+ * registration passed, which lives inside it. */
+static inline const void *transform_own_userdata(const void *userdata) {
+    const asdf_gwcs_transform_data_t *data = userdata;
+    return data ? data->userdata : NULL;
 }
 
 
@@ -162,8 +202,7 @@ static bool asdf_gwcs_transform_copy_shim(asdf_file_t *file, const void *src, vo
         return shim->orig->copy(file, src, dst);
     }
 
-    const asdf_extension_t *ext = (const asdf_extension_t *)((const asdf_gwcs_transform_t *)src)->type;
-    return asdf_gwcs_transform_copy_shallow(file, src, dst, ext->size);
+    return asdf_gwcs_transform_copy_shallow(file, src, dst, transform_ext(src)->size);
 }
 
 
@@ -197,7 +236,7 @@ static asdf_value_t *asdf_gwcs_transform_serialize_shim(
     asdf_mapping_t *map = NULL;
 
     if (shim->orig->serialize) {
-        value = shim->orig->serialize(file, obj, userdata);
+        value = shim->orig->serialize(file, obj, transform_own_userdata(userdata));
 
         if (!value)
             return NULL;
@@ -360,11 +399,23 @@ static asdf_value_err_t asdf_gwcs_transform_deserialize_shim(
     if (ASDF_IS_ERR(err))
         return err;
 
+    /* Record the tag as it actually appeared in the file, version included;
+     * ext->tags[0] is only the preferred (write) tag.  asdf_value_tag returns
+     * a pointer into libfyaml token memory, so it must be copied. */
+    ((asdf_gwcs_transform_t *)*out)->tag = strdup(tag);
+
+    if (UNLIKELY(!((asdf_gwcs_transform_t *)*out)->tag)) {
+        asdf_gwcs_transform_deinit(*out);
+        free(*out);
+        *out = NULL;
+        return ASDF_VALUE_ERR_OOM;
+    }
+
     const asdf_gwcs_transform_shim_vtab_t *shim =
         (const asdf_gwcs_transform_shim_vtab_t *)ext->vtab;
 
     if (shim->orig->deserialize) {
-        err = shim->orig->deserialize(value, userdata, out);
+        err = shim->orig->deserialize(value, transform_own_userdata(userdata), out);
 
         if (ASDF_IS_ERR(err)) {
             asdf_gwcs_transform_deinit(*out);
@@ -375,6 +426,193 @@ static asdf_value_err_t asdf_gwcs_transform_deserialize_shim(
     }
 
     return ASDF_VALUE_OK;
+}
+
+
+const char *asdf_gwcs_transform_tag(const asdf_gwcs_transform_t *transform) {
+    if (!transform)
+        return NULL;
+
+    if (transform->tag)
+        return transform->tag;
+
+    /* Constructed in memory rather than read from a file: fall back to the
+     * tag its type would be serialized with. */
+    const asdf_extension_t *ext = transform_ext(transform);
+
+    if (!ext || !ext->tags)
+        return NULL;
+
+    return ext->tags[0];
+}
+
+
+const char *asdf_gwcs_transform_type_name(const asdf_gwcs_transform_t *transform) {
+    if (!transform || !transform->type)
+        return NULL;
+
+    const asdf_extension_t *ext = transform_ext(transform);
+    const asdf_gwcs_transform_data_t *data = ext->userdata;
+
+    if (!data || !data->name[0])
+        return NULL;
+
+    return data->name;
+}
+
+
+/* The children method, or NULL for a transform that has none (including one
+ * with no type at all). */
+static asdf_gwcs_transform_children_t transform_children_method(
+    const asdf_gwcs_transform_t *transform) {
+    if (!transform || !transform->type)
+        return NULL;
+
+    return transform_shim_of(transform)->children;
+}
+
+
+uint32_t asdf_gwcs_transform_n_children(const asdf_gwcs_transform_t *transform) {
+    asdf_gwcs_transform_children_t children = transform_children_method(transform);
+
+    if (!children)
+        return 0;
+
+    return children(transform, 0, NULL);
+}
+
+
+bool asdf_gwcs_transform_get_child(
+    const asdf_gwcs_transform_t *transform, uint32_t index, asdf_gwcs_transform_iter_t *out) {
+    if (!out)
+        return false;
+
+    asdf_gwcs_transform_children_t children = transform_children_method(transform);
+
+    if (!children)
+        return false;
+
+    out->value = NULL;
+    out->role = NULL;
+
+    uint32_t n_children = children(transform, index, out);
+
+    /* A children method that reports a count above index must also have filled
+     * in the child, but do not hand back a half-populated iterator if not. */
+    if (index >= n_children || !out->value)
+        return false;
+
+    out->index = index;
+    out->size = n_children;
+    out->depth = 0;
+    return true;
+}
+
+
+/* One level of the depth-first walk: which transform's children are being
+ * visited, how far through them the walk is, and how many there are. */
+typedef struct {
+    const asdf_gwcs_transform_t *parent;
+    uint32_t pos;
+    uint32_t size;
+} transform_iter_frame_t;
+
+
+/* The iterator's real contents.  The public struct is the first member, so a
+ * pointer to one converts to the other; everything the walk needs to keep
+ * between calls stays out of the public API. */
+typedef struct {
+    asdf_gwcs_transform_iter_t pub;
+    int max_depth;
+    int height;
+    int capacity;
+    transform_iter_frame_t *stack;
+} transform_iter_impl_t;
+
+
+static bool transform_iter_push(transform_iter_impl_t *impl, const asdf_gwcs_transform_t *parent) {
+    if (impl->height == impl->capacity) {
+        int capacity = impl->capacity ? impl->capacity * 2 : 8;
+        transform_iter_frame_t *stack = realloc(
+            impl->stack, (size_t)capacity * sizeof(transform_iter_frame_t));
+
+        if (UNLIKELY(!stack))
+            return false;
+
+        impl->stack = stack;
+        impl->capacity = capacity;
+    }
+
+    impl->stack[impl->height++] = (transform_iter_frame_t){
+        .parent = parent, .pos = 0, .size = asdf_gwcs_transform_n_children(parent)};
+    return true;
+}
+
+
+asdf_gwcs_transform_iter_t *asdf_gwcs_transform_iter_init(
+    const asdf_gwcs_transform_t *transform, int max_depth) {
+    transform_iter_impl_t *impl = calloc(1, sizeof(transform_iter_impl_t));
+
+    if (UNLIKELY(!impl))
+        return NULL;
+
+    impl->max_depth = max_depth;
+
+    if (UNLIKELY(!transform_iter_push(impl, transform))) {
+        free(impl);
+        return NULL;
+    }
+
+    return &impl->pub;
+}
+
+
+bool asdf_gwcs_transform_iter_next(asdf_gwcs_transform_iter_t **iter) {
+    if (!iter || !*iter)
+        return false;
+
+    transform_iter_impl_t *impl = (transform_iter_impl_t *)*iter;
+
+    /* Pre-order: having just reported a transform, descend into it before
+     * moving on to its siblings, so long as the depth limit allows. */
+    bool may_descend = impl->max_depth == ASDF_GWCS_DEPTH_UNLIMITED ||
+                       impl->pub.depth < impl->max_depth;
+
+    if (impl->pub.value && may_descend && asdf_gwcs_transform_n_children(impl->pub.value) > 0 &&
+        UNLIKELY(!transform_iter_push(impl, impl->pub.value)))
+        goto exhausted;
+
+    while (impl->height > 0) {
+        transform_iter_frame_t *frame = &impl->stack[impl->height - 1];
+
+        if (frame->pos >= frame->size) {
+            impl->height--;
+            continue;
+        }
+
+        if (UNLIKELY(!asdf_gwcs_transform_get_child(frame->parent, frame->pos, &impl->pub)))
+            goto exhausted;
+
+        impl->pub.index = frame->pos++;
+        impl->pub.size = frame->size;
+        impl->pub.depth = impl->height - 1;
+        return true;
+    }
+
+exhausted:
+    asdf_gwcs_transform_iter_destroy(*iter);
+    *iter = NULL;
+    return false;
+}
+
+
+void asdf_gwcs_transform_iter_destroy(asdf_gwcs_transform_iter_t *iter) {
+    if (!iter)
+        return;
+
+    transform_iter_impl_t *impl = (transform_iter_impl_t *)iter;
+    free(impl->stack);
+    free(impl);
 }
 
 
@@ -393,7 +631,7 @@ bool asdf_gwcs_transform_copy_into(
     if (!transform || !copy)
         return false;
 
-    const asdf_extension_t *ext = (const asdf_extension_t *)transform->type;
+    const asdf_extension_t *ext = transform_ext(transform);
 
     /* The registered vtab copy method is a shim that copies the base fields
      * and then the concrete type's own fields (see ASDF_GWCS_REGISTER_TRANSFORM).
@@ -418,7 +656,7 @@ asdf_gwcs_transform_t *asdf_gwcs_transform_copy(
     if (!transform)
         return NULL;
 
-    const asdf_extension_t *ext = (const asdf_extension_t *)transform->type;
+    const asdf_extension_t *ext = transform_ext(transform);
 
     if (UNLIKELY(!ext))
         return NULL;
@@ -474,7 +712,7 @@ void asdf_gwcs_transform_deinit(asdf_gwcs_transform_t *transform) {
     if (!transform)
         return;
 
-    const asdf_extension_t *ext = (const asdf_extension_t *)transform->type;
+    const asdf_extension_t *ext = transform_ext(transform);
 
     if (ext && ext->vtab && ext->vtab->deinit) {
         ext->vtab->deinit(transform);
@@ -605,8 +843,7 @@ asdf_value_t *asdf_value_of_gwcs_transform(
     if (!transform)
         return NULL;
 
-    const asdf_extension_t *ext = (asdf_extension_t *)transform->type;
-    return asdf_value_of_extension_type(file, transform, ext);
+    return asdf_value_of_extension_type(file, transform, transform_ext(transform));
 }
 
 
@@ -650,7 +887,15 @@ void asdf_gwcs_transform_register(asdf_gwcs_transform_type_t type) {
     /* TODO: Handle tag overlaps on registration */
     // Ensure extension map initialized
     asdf_gwcs_transform_map_create();
-    const char *const *tags = ((asdf_extension_t *)type)->tags;
+    asdf_extension_t *ext = (asdf_extension_t *)type;
+    const char *const *tags = ext->tags;
+
+    /* The type name is the same for every version of the tag, so derive it
+     * once from the preferred one. */
+    asdf_gwcs_transform_data_t *data = ext->userdata;
+
+    if (data)
+        tag_type_name(data->name, sizeof(data->name), tags[0]);
 
     for (const char *const *tag = tags; *tag; tag++) {
         char *full_tag = tag_canonicalize(*tag);

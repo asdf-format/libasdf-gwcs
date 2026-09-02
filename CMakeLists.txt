@@ -58,13 +58,17 @@ include_directories(${CMAKE_BINARY_DIR}/include)
 
 if(ASDF_GWCS_ENABLE_AST)
     find_package(PkgConfig REQUIRED)
-    pkg_check_modules(YAML REQUIRED yaml-0.1)
+    # AST's YamlChan is what the ast_yaml backend drives, so both build
+    # systems configure it against libfyaml (the autotools build passes
+    # --with-yaml=fyaml).  libfyaml is already a transitive dependency via
+    # libasdf, so this adds nothing new to the dependency set.
+    pkg_check_modules(FYAML REQUIRED libfyaml)
 
     if(EXISTS "${CMAKE_SOURCE_DIR}/third_party/ast/CMakeLists.txt")
         include(ExternalProject)
         set(AST_INSTALL_DIR ${CMAKE_BINARY_DIR}/ast-install)
         # Pass through our prefix path so AST's find_library/find_path can
-        # locate libyaml on non-standard installs (e.g. Homebrew on macOS).
+        # locate libfyaml on non-standard installs (e.g. Homebrew on macOS).
         ExternalProject_Add(ast_vendored
             SOURCE_DIR ${CMAKE_SOURCE_DIR}/third_party/ast
             CMAKE_ARGS
@@ -77,6 +81,19 @@ if(ASDF_GWCS_ENABLE_AST)
                 -DBUILD_TESTING=OFF
                 -DAST_BUILD_FORTRAN=OFF
                 -DAST_WITH_YAML=ON
+                -DAST_YAML_BACKEND=fyaml
+                # libfyaml's headers only use C11 <stdatomic.h> when
+                # __STDC_VERSION__ >= 201112L; under AST's default C99 they
+                # fall back to a hand-rolled atomics path that does not
+                # compile.  The autotools build gets C11+ from the compiler
+                # default, so ask for it explicitly here too, which the
+                # AST CI also does I think.
+                -DAST_C_STANDARD=11
+                # AST is absorbed into libasdf-gwcs, so keep its ~2500 symbols
+                # out of our exported ABI; they would otherwise collide with a
+                # program linking its own libast.  ExternalProject does not
+                # inherit the top-level add_compile_options.
+                -DCMAKE_C_VISIBILITY_PRESET=hidden
             INSTALL_DIR ${AST_INSTALL_DIR}
         )
         set(AST_INCLUDE_DIR ${AST_INSTALL_DIR}/include)
@@ -91,7 +108,7 @@ if(ASDF_GWCS_ENABLE_AST)
             ${_ast_lib_dir}/libast_grf_5.6.a
             ${_ast_lib_dir}/libast_grf3d.a
             ${_ast_lib_dir}/libast_err.a
-            ${YAML_LIBRARIES}
+            ${FYAML_LINK_LIBRARIES}
         )
         set(AST_LIBRARY ${AST_LIBRARIES})
     else()
@@ -106,6 +123,9 @@ add_subdirectory(include)
 if(ENABLE_TESTING)
     enable_testing()
     add_subdirectory(tests)
+endif()
+if(ENABLE_DOCS)
+    add_subdirectory(docs)
 endif()
 
 # Generate and install pkg-config file

@@ -1,3 +1,5 @@
+#include <stddef.h>
+#include <assert.h>
 #include <stdatomic.h>
 #include <stdlib.h>
 
@@ -10,6 +12,28 @@
 #include "../gwcs.h"
 #include "../types/asdf_gwcs_coordinate_frame_map.h"
 #include "../util.h"
+
+
+/* ASDF_GWCS_COORDINATE_FRAME_BASE restates asdf_gwcs_baseframe_t's fields so
+ * that concrete coordinate frames can be initialized flatly.  Reordering or
+ * retyping a field silently misaligns the flat spelling from the .base
+ * spelling; appending one leaves it unreachable flatly.  Both are caught
+ * here rather than at runtime. */
+#define ASDF_GWCS_ASSERT_COORDINATE_FRAME_BASE(type_) \
+    static_assert( \
+        offsetof(type_, type) == offsetof(asdf_gwcs_baseframe_t, type), \
+        #type_ " type offset does not match asdf_gwcs_baseframe_t"); \
+    static_assert( \
+        offsetof(type_, base) == 0, #type_ " base must come first")
+
+static_assert(
+    sizeof(asdf_gwcs_baseframe_t)
+        == offsetof(asdf_gwcs_baseframe_t, type)
+            + sizeof(((asdf_gwcs_baseframe_t *)0)->type),
+    "asdf_gwcs_baseframe_t gained a field the base macro does not mirror");
+
+ASDF_GWCS_ASSERT_COORDINATE_FRAME_BASE(asdf_gwcs_fk4_t);
+ASDF_GWCS_ASSERT_COORDINATE_FRAME_BASE(asdf_gwcs_fk5_t);
 
 
 static asdf_gwcs_coordinate_frame_map_t g_coordinate_frame_map = {0};
@@ -47,7 +71,17 @@ ASDF_DESTRUCTOR static void coordinate_frame_map_destroy(void) {
 
 void asdf_gwcs_coordinate_frame_register(asdf_gwcs_coordinate_frame_type_t type) {
     coordinate_frame_map_ensure_init();
-    const char *const *tags = ((asdf_extension_t *)type)->tags;
+    asdf_extension_t *ext = (asdf_extension_t *)type;
+    const char *const *tags = ext->tags;
+
+    /* The type name is the same for every version of the tag, so derive it
+     * once from the preferred one. */
+    asdf_gwcs_coordinate_frame_data_t *data = ext->userdata;
+
+    if (data) {
+        tag_type_name(data->name, sizeof(data->name), tags[0]);
+        data->type = type;
+    }
 
     for (const char *const *tag = tags; *tag; tag++) {
         char *full_tag = tag_canonicalize(*tag);
@@ -61,6 +95,20 @@ void asdf_gwcs_coordinate_frame_register(asdf_gwcs_coordinate_frame_type_t type)
         (void)res;
         free(full_tag);
     }
+}
+
+
+const char *asdf_gwcs_coordinate_frame_type_name(const asdf_gwcs_baseframe_t *frame) {
+    if (!frame || !frame->type)
+        return NULL;
+
+    const asdf_extension_t *ext = (const asdf_extension_t *)frame->type;
+    const asdf_gwcs_coordinate_frame_data_t *data = ext->userdata;
+
+    if (!data || !data->name[0])
+        return NULL;
+
+    return data->name;
 }
 
 
@@ -196,10 +244,18 @@ static asdf_value_t *empty_frame_serialize(
 
 
 static asdf_value_err_t empty_frame_deserialize(
-    UNUSED(asdf_value_t *value), UNUSED(const void *userdata), void **out) {
+    UNUSED(asdf_value_t *value), const void *userdata, void **out) {
+    const asdf_gwcs_coordinate_frame_data_t *data = userdata;
+    asdf_gwcs_baseframe_t *frame = calloc(1, sizeof(asdf_gwcs_baseframe_t));
 
-    *out = calloc(1, sizeof(asdf_gwcs_baseframe_t));
-    return *out ? ASDF_VALUE_OK : ASDF_VALUE_ERR_OOM;
+    if (!frame)
+        return ASDF_VALUE_ERR_OOM;
+
+    if (data)
+        frame->type = data->type;
+
+    *out = frame;
+    return ASDF_VALUE_OK;
 }
 
 

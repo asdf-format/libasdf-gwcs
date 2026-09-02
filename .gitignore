@@ -66,6 +66,7 @@ tests/tmp
 
 # doc build outputs
 docs/_build
+__pycache__
 
 # coverage outputs
 *-coverage.info

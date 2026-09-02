@@ -157,6 +157,21 @@ static void asdf_gwcs_concatenate_deinit_impl(void *value) {
 }
 
 
+/* The sub-transforms of a concatenate act on disjoint input ranges in order,
+ * so they have no individual roles. */
+static uint32_t asdf_gwcs_concatenate_children(
+    const asdf_gwcs_transform_t *transform, uint32_t index, asdf_gwcs_transform_iter_t *out) {
+    const asdf_gwcs_concatenate_t *cat = (const asdf_gwcs_concatenate_t *)transform;
+
+    if (out && index < cat->n_forward) {
+        out->value = cat->forward[index];
+        out->role = NULL;
+    }
+
+    return cat->n_forward;
+}
+
+
 static const asdf_extension_vtab_t asdf_gwcs_concatenate_vtab = {
     .serialize = asdf_gwcs_concatenate_serialize,
     .deserialize = asdf_gwcs_concatenate_deserialize,
@@ -171,12 +186,13 @@ static const asdf_extension_vtab_t asdf_gwcs_concatenate_vtab = {
  * NOTE: The only differences so far between concatenate schema versions is in
  * the base transform schema version; nominally all versions are supported.
  */
-ASDF_GWCS_REGISTER_TRANSFORM(
+ASDF_GWCS_REGISTER_TRANSFORM_WITH_CHILDREN(
     concatenate,
     CONCATENATE,
     asdf_gwcs_concatenate_t,
     &libasdf_gwcs_software,
     &asdf_gwcs_concatenate_vtab,
+    asdf_gwcs_concatenate_children,
     NULL,
     ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate-1.4.0",
     ASDF_GWCS_TRANSFORM_TAG_PREFIX "concatenate-1.3.0",

@@ -7,11 +7,20 @@
 
 ASDF_BEGIN_DECLS
 
+/**
+ * A general affine transformation
+ *
+ * Implements the :transform-schema:`transform/affine <affine-1.3.0>` schema.
+ *
+ * ``out = matrix * in + translation``
+ */
 typedef struct {
     ASDF_GWCS_TRANSFORM_BASE;
-    /** row-major, base.n_inputs * base.n_inputs elements */
+
+    /** row-major, ``n_inputs * n_inputs`` elements */
     double *matrix;
-    /** base.n_inputs elements */
+
+    /** ``n_inputs`` elements */
     double *translation;
 } asdf_gwcs_affine_t;
 

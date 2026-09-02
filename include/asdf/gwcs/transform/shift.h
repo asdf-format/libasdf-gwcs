@@ -6,9 +6,10 @@
 ASDF_BEGIN_DECLS
 
 /**
- * Representation of the ``transform/shift-1.3.0`` schema.
+ * Applies a scalar offset to a single axis
  *
- * Applies a scalar offset to a single axis: out = in + offset.
+ * Implements up to version 1.3.0 of the :transform-schema:`transform/shift
+ * <shift-1.2.0>` schema: ``out = in + offset``.
  */
 typedef struct {
     ASDF_GWCS_TRANSFORM_BASE;

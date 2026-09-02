@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -9,6 +10,34 @@
 #include "frame.h"
 #include "gwcs.h"
 #include "util.h"
+
+
+/* ASDF_GWCS_FRAME_BASE restates asdf_gwcs_frame_t's fields so that concrete
+ * frames can be initialized flatly.  Two ways that can drift, both caught
+ * here rather than at runtime:
+ *
+ *  - Reordering or retyping a field silently misaligns the flat spelling from
+ *    the .base spelling.  The offset assertions catch that.
+ *  - Appending a field to the struct alone is harmless to layout, but leaves
+ *    it unreachable flatly.  The size assertion below pins the struct to end
+ *    exactly where the macro does, so an addition has to be mirrored. */
+#define ASDF_GWCS_ASSERT_FRAME_BASE(type_) \
+    static_assert( \
+        offsetof(type_, type) == offsetof(asdf_gwcs_frame_t, type), \
+        #type_ " type offset does not match asdf_gwcs_frame_t"); \
+    static_assert( \
+        offsetof(type_, name) == offsetof(asdf_gwcs_frame_t, name), \
+        #type_ " name offset does not match asdf_gwcs_frame_t"); \
+    static_assert( \
+        offsetof(type_, base) == 0, #type_ " base must come first")
+
+static_assert(
+    sizeof(asdf_gwcs_frame_t)
+        == offsetof(asdf_gwcs_frame_t, name) + sizeof(((asdf_gwcs_frame_t *)0)->name),
+    "asdf_gwcs_frame_t gained a field ASDF_GWCS_FRAME_BASE does not mirror");
+
+ASDF_GWCS_ASSERT_FRAME_BASE(asdf_gwcs_frame2d_t);
+ASDF_GWCS_ASSERT_FRAME_BASE(asdf_gwcs_frame_celestial_t);
 
 #ifdef ASDF_LOGGING_ENABLED
 static inline void warn_invalid_frame_axes_param(
@@ -434,6 +463,28 @@ asdf_value_err_t asdf_value_as_gwcs_frame(asdf_value_t *value, asdf_gwcs_frame_t
     }
 
     return ASDF_VALUE_ERR_TYPE_MISMATCH;
+}
+
+
+/*
+ * Frames are dispatched on an enum rather than an extension token, so unlike
+ * transforms and coordinate frames there is nowhere to hang a tag-derived name;
+ * the schema names are spelled out here until frames get the registration
+ * system asdf_value_as_gwcs_frame's TODO describes.
+ */
+const char *asdf_gwcs_frame_type_name(const asdf_gwcs_frame_t *frame) {
+    if (!frame)
+        return NULL;
+
+    switch (frame->type) {
+    case ASDF_GWCS_FRAME_2D:
+        return "frame2d";
+    case ASDF_GWCS_FRAME_CELESTIAL:
+        return "celestial_frame";
+    case ASDF_GWCS_FRAME_GENERIC:
+    default:
+        return "frame";
+    }
 }
 
 

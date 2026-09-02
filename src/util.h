@@ -10,12 +10,22 @@
 
 
 /**
- * Return a heap-allocated canonical tag string (always "tag:..." form).
+ * Return a heap-allocated canonical tag string (always "tag:..." form)
  * Prepends "tag:" if absent.  Caller must free.  Returns NULL on OOM.
  *
  * TODO: This duplicates logic in libasdf; add to its public API someday.
  */
 ASDF_LOCAL char *tag_canonicalize(const char *tag);
+
+
+/**
+ * Write into dest the type name a schema tag denotes
+ *
+ * The type name is the last path element of the tag with its version suffix
+ * removed, so "tag:stsci.edu:asdf/transform/affine-1.5.0" yields "affine".
+ * dest is always NUL-terminated; a name longer than size - 1 is truncated.
+ */
+ASDF_LOCAL void tag_type_name(char *dest, size_t size, const char *tag);
 
 
 #if defined(__GNUC__) || defined(__clang__)
