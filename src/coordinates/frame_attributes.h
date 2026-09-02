@@ -16,7 +16,7 @@
 
 
 /**
- * Read frame_attributes into the given equinox and (optional) obstime.
+ * Read frame_attributes into the given equinox and (optional) obstime
  *
  * ``obstime`` may be NULL for a schema that does not define one, in which case
  * the property is not looked for.  ``equinox`` is required: its absence is a
@@ -27,7 +27,7 @@ ASDF_LOCAL asdf_value_err_t asdf_gwcs_frame_attributes_parse(
 
 
 /**
- * Build the mapping a frame with frame_attributes serializes to.
+ * Build the mapping a frame with frame_attributes serializes to
  *
  * ``obstime`` may be NULL, in which case it is omitted; ``equinox`` is written
  * whenever it is non-NULL.

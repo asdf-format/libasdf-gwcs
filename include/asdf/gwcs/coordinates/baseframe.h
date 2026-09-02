@@ -30,7 +30,7 @@ typedef struct {
 } asdf_gwcs_coordinate_frame_ext_t;
 
 /**
- * Opaque type token identifying a concrete coordinate frame schema.
+ * Opaque type token identifying a concrete coordinate frame schema
  *
  * Plays the same role as `asdf_gwcs_transform_type_t` in the transform
  * subsystem: each registered coordinate frame schema gets a unique constant
@@ -75,7 +75,7 @@ typedef struct {
 
 
 /**
- * Base struct for all astropy coordinate frame objects.
+ * Base struct for all astropy coordinate frame objects
  *
  * Concrete frames whose schema defines no additional ``frame_attributes``
  * (ICRS, Galactic, Supergalactic, BarycentricMeanEcliptic) may be
@@ -88,7 +88,7 @@ typedef struct {
 
 
 /**
- * Helper macro for embedding the base frame fields inside a concrete type.
+ * Helper macro for embedding the base frame fields inside a concrete type
  */
 #define ASDF_GWCS_COORDINATE_FRAME_BASE \
     union { \
@@ -98,7 +98,7 @@ typedef struct {
 
 
 /**
- * Register a concrete coordinate frame schema.
+ * Register a concrete coordinate frame schema
  *
  * Mirrors ``ASDF_GWCS_REGISTER_TRANSFORM``.  The ``extname`` is
  * prefixed with ``coordinates_`` internally so there is no collision with
@@ -119,7 +119,7 @@ typedef struct {
 
 
 /**
- * Declare an already-registered coordinate frame type (for use in headers).
+ * Declare an already-registered coordinate frame type (for use in headers)
  */
 #define ASDF_GWCS_DECLARE_COORDINATE_FRAME(extname, ttype, ctype) \
     ASDF_DECLARE_EXTENSION(coordinates_##extname, ctype); \
@@ -161,19 +161,19 @@ ASDF_EXPORT const char *asdf_gwcs_coordinate_frame_type_name(
     const asdf_gwcs_baseframe_t *frame);
 
 /**
- * Deserialize any recognized coordinate frame value into its C representation.
+ * Deserialize any recognized coordinate frame value into its C representation
  */
 ASDF_EXPORT asdf_value_err_t asdf_value_as_gwcs_coordinate_frame(
     asdf_value_t *value, asdf_gwcs_baseframe_t **out);
 
 /**
- * Serialize a coordinate frame to a tagged ASDF value.
+ * Serialize a coordinate frame to a tagged ASDF value
  */
 ASDF_EXPORT asdf_value_t *asdf_gwcs_coordinate_frame_value_of(
     asdf_file_t *file, const asdf_gwcs_baseframe_t *frame);
 
 /**
- * Deep-copy any recognized coordinate frame, dispatching on its type.
+ * Deep-copy any recognized coordinate frame, dispatching on its type
  */
 ASDF_EXPORT asdf_gwcs_baseframe_t *asdf_gwcs_coordinate_frame_copy(
     asdf_file_t *file, const asdf_gwcs_baseframe_t *frame);

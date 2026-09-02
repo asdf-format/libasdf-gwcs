@@ -37,7 +37,7 @@ The two are not independent: ``make distcheck`` runs the CMake build *from the
 distribution tarball* (the ``distcheck-cmake`` target in the top-level
 ``Makefile.am``), so a change that breaks CMake, or that forgets to distribute
 a file CMake needs, fails the autotools release check.  Both are also built and
-tested in CI.
+tested in CI, by the ``Build`` and ``CMake Build`` workflows respectively.
 
 The practical consequences:
 
@@ -46,13 +46,12 @@ The practical consequences:
   ``libasdf_gwcs_sources`` in ``src/CMakeLists.txt``.
 
 * **When you add a public header, add it to both install lists**--
-  ``include/Makefile.am`` and ``include/CMakeLists.txt``.  These have drifted
-  apart before, with the result that a header included by
-  ``asdf/gwcs/gwcs.h`` was missing from one of the two installs and the
-  umbrella header would not compile against it.
+  ``include/Makefile.am`` and ``include/CMakeLists.txt``.  Drift between these
+  two breaks the *installed* library without breaking the build tree, so it
+  tends to be noticed late.
 
-* **When you add a documentation page, add it to ``EXTRA_DIST`` in
-  ``docs/Makefile.am``**, or it will be missing from the release tarball and
+* **When you add a documentation page, add it to EXTRA_DIST in
+  docs/Makefile.am**, or it will be missing from the release tarball and
   the documentation build inside ``make distcheck`` will fail.
 
 
@@ -86,11 +85,14 @@ YAML library libasdf itself uses.
 Building with autotools
 =======================
 
-libasdf-gwcs is a libasdf extension, so libasdf must be findable.  If it is not
-installed system-wide, point pkg-config at it.
+libasdf-gwcs is a libasdf extension, so ``configure`` has to be able to find
+libasdf.  It looks with ``pkg-config``, which needs no help when libasdf is
+installed somewhere standard.  When it is installed under a prefix of its
+own--as it will be when developing against a side-by-side build--set
+``PKG_CONFIG_PATH`` to the directory holding its ``libasdf.pc``, as below.
 
 A git checkout has no ``configure`` script; generate it first with
-``autogen.sh`` (a one-line wrapper around ``autoreconf --install``).  This is
+``autogen.sh`` (a wrapper script around ``autoreconf --install``).  This is
 normally only needed once, or again after editing ``configure.ac`` or any
 ``Makefile.am``, though the generated makefiles normally re-run the necessary
 steps by themselves:
@@ -100,7 +102,7 @@ steps by themselves:
     $ git clone --recurse-submodules https://github.com/asdf-format/libasdf-gwcs.git
     $ cd libasdf-gwcs
     $ ./autogen.sh
-    $ ./configure PKG_CONFIG_PATH=/path/to/libasdf/lib/pkgconfig
+    $ ./configure PKG_CONFIG_PATH=/path/to/libasdf/lib/pkgconfig  # if needed
     $ make
     $ make check
 
@@ -183,10 +185,9 @@ from ``make dist`` under autotools.
     ``~/.local/lib``, be aware that CMake links test binaries with
     ``DT_RUNPATH`` rather than ``DT_RPATH``, and the dynamic loader searches
     ``LD_LIBRARY_PATH`` *before* ``DT_RUNPATH``.  An installed copy can
-    therefore shadow the freshly built one and cause confusing failures--
-    including crashes rather than clean link errors, when the installed copy is
-    old enough that a struct layout has changed since.  If you hit something
-    inexplicable, check for a stale install first.
+    therefore shadow the freshly built one and cause confusing failures. Unset
+    ``LD_LIBRARY_PATH`` before running ``ctest`` if you hit this.
+
 
 
 Running the tests
@@ -282,6 +283,15 @@ Formatting is enforced by ``clang-format``; the rules live in
 
 from a build directory before committing.  It rewrites all library sources and
 headers in place.
+
+libasdf has a ``pre-commit`` hook that applies this automatically on commit;
+this project does not ship one yet, so ``make format`` has to be run by hand.
+
+.. note::
+
+    Formatting can differ between major ``clang-format`` versions, so a tree
+    formatted with a different one than the rest of the project will show
+    spurious diffs.
 
 
 Documentation
@@ -388,6 +398,10 @@ at `Telling Git about your signing key`_.
 
 Cutting the release
 -------------------
+
+.. This isn't accurate yet, as the release workflow hasn't been integrated
+   yet here.  But it will be possible to copy, more-or-less, straight from
+   libasdf so leave here for now.
 
 #. Make sure ``main`` is up to date, the working tree is clean, and CI is
    passing.

@@ -23,7 +23,7 @@ ASDF_BEGIN_DECLS
  */
 typedef struct {
     /**
-     * Create an evaluation context for the given WCS.
+     * Create an evaluation context for the given WCS
      *
      * :param file: Source file handle (may be NULL).
      * :param wcs: The WCS to load into the backend.

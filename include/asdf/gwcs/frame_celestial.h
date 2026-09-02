@@ -32,7 +32,7 @@ typedef struct {
     const char *unit[3];
     const char *axis_physical_types[3];
     /**
-     * Astropy coordinate reference frame, or NULL if absent/unrecognized.
+     * Astropy coordinate reference frame, or NULL if absent/unrecognized
      *
      * Ownership: the celestial frame owns this pointer; it is freed by
      * ``asdf_gwcs_frame_celestial_destroy``.

@@ -49,7 +49,7 @@ ASDF_LOCAL asdf_value_err_t asdf_gwcs_frame_serialize_common(
 
 
 /**
- * Free the heap-allocated per-axis string arrays owned by a concrete frame.
+ * Free the heap-allocated per-axis string arrays owned by a concrete frame
  *
  * Frees up to ``naxes`` elements of each of ``axes_names``, ``unit``, and
  * ``axis_physical_types`` (any of which may be NULL).  Does not free the
@@ -60,7 +60,7 @@ ASDF_LOCAL void asdf_gwcs_frame_cleanup_axes(
 
 
 /**
- * Copy / deinitialize just the base frame fields (name, type).
+ * Copy / deinitialize just the base frame fields (name, type)
  *
  * Frames have no registry/shim like transforms yet, so concrete frame copy and
  * deinit methods call these explicitly to handle the embedded base frame.

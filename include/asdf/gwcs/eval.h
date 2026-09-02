@@ -19,7 +19,7 @@ ASDF_BEGIN_DECLS
 
 
 /**
- * Opaque per-WCS evaluation context created by `asdf_gwcs_eval_create`.
+ * Opaque per-WCS evaluation context created by `asdf_gwcs_eval_create`
  *
  * Concrete backends embed this struct as their first member, enabling safe
  * casting between the base type and the backend-specific type.
@@ -27,13 +27,13 @@ ASDF_BEGIN_DECLS
 typedef struct asdf_gwcs_eval asdf_gwcs_eval_t;
 
 /**
- * Backend descriptor; see :doc:`asdf/gwcs/backend.h </api/backend.h>`.
+ * Backend descriptor; see :doc:`asdf/gwcs/backend.h </api/backend.h>`
  */
 typedef struct asdf_gwcs_backend asdf_gwcs_backend_t;
 
 
 /**
- * Create an evaluation context for the given WCS.
+ * Create an evaluation context for the given WCS
  *
  * :param file: The `asdf_file_t` from which *wcs* was read (may be NULL for
  *   synthetic WCS objects).
@@ -48,11 +48,17 @@ ASDF_EXPORT asdf_gwcs_eval_t *asdf_gwcs_eval_create(
     const asdf_gwcs_backend_t *backend, asdf_gwcs_err_t *err_out);
 
 /**
- * Evaluate a 2-D WCS transform at *n* pixel positions.
+ * Evaluate a 2-D WCS transform at *n* pixel positions
  *
  * The input arrays *xin* and *yin* must each contain *n* elements.  On
  * success *xout* and *yout* are filled with the corresponding world
  * coordinates.
+ *
+ * Evaluating many points in one call is far cheaper than calling this once
+ * per point, since each call carries the backend's own per-call overhead.
+ * To sample a regular grid, prefer `asdf_gwcs_eval_grid2d`, which does that
+ * batching for you and does not require materializing the full set of input
+ * coordinates in memory.
  *
  * :param eval: Evaluation context from `asdf_gwcs_eval_create`.
  * :param xin: Pixel x-coordinates (length *n*).
@@ -68,7 +74,7 @@ ASDF_EXPORT asdf_gwcs_err_t asdf_gwcs_eval_2d(
     double *xout, double *yout, size_t n);
 
 /**
- * Release all resources held by an evaluation context.
+ * Release all resources held by an evaluation context
  *
  * Passing ``NULL`` is a no-op.
  *

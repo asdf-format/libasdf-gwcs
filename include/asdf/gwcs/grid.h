@@ -65,7 +65,7 @@ typedef struct {
 
 
 /**
- * Fill coordinate arrays for a 2-D grid.
+ * Fill coordinate arrays for a 2-D grid
  *
  * If ``*xout`` is NULL the function allocates an array of ``nx * ny``
  * doubles and stores the pointer in ``*xout``; otherwise it writes into
@@ -85,7 +85,7 @@ ASDF_EXPORT asdf_gwcs_err_t asdf_gwcs_grid2d_fill(
 
 
 /**
- * Evaluate a 2-D WCS transform over a rectangular pixel grid.
+ * Evaluate a 2-D WCS transform over a rectangular pixel grid
  *
  * Processes one row at a time so peak working memory is ``O(nx)`` rather
  * than ``O(nx * ny)``.  The NULL-means-allocate convention of
