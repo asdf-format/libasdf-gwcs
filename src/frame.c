@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -9,6 +10,34 @@
 #include "frame.h"
 #include "gwcs.h"
 #include "util.h"
+
+
+/* ASDF_GWCS_FRAME_BASE restates asdf_gwcs_frame_t's fields so that concrete
+ * frames can be initialized flatly.  Two ways that can drift, both caught
+ * here rather than at runtime:
+ *
+ *  - Reordering or retyping a field silently misaligns the flat spelling from
+ *    the .base spelling.  The offset assertions catch that.
+ *  - Appending a field to the struct alone is harmless to layout, but leaves
+ *    it unreachable flatly.  The size assertion below pins the struct to end
+ *    exactly where the macro does, so an addition has to be mirrored. */
+#define ASDF_GWCS_ASSERT_FRAME_BASE(type_) \
+    static_assert( \
+        offsetof(type_, type) == offsetof(asdf_gwcs_frame_t, type), \
+        #type_ " type offset does not match asdf_gwcs_frame_t"); \
+    static_assert( \
+        offsetof(type_, name) == offsetof(asdf_gwcs_frame_t, name), \
+        #type_ " name offset does not match asdf_gwcs_frame_t"); \
+    static_assert( \
+        offsetof(type_, base) == 0, #type_ " base must come first")
+
+static_assert(
+    sizeof(asdf_gwcs_frame_t)
+        == offsetof(asdf_gwcs_frame_t, name) + sizeof(((asdf_gwcs_frame_t *)0)->name),
+    "asdf_gwcs_frame_t gained a field ASDF_GWCS_FRAME_BASE does not mirror");
+
+ASDF_GWCS_ASSERT_FRAME_BASE(asdf_gwcs_frame2d_t);
+ASDF_GWCS_ASSERT_FRAME_BASE(asdf_gwcs_frame_celestial_t);
 
 #ifdef ASDF_LOGGING_ENABLED
 static inline void warn_invalid_frame_axes_param(

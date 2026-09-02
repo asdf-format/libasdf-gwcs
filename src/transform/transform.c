@@ -20,6 +20,19 @@
 #include "util.h"
 
 
+#include <asdf/error.h>
+#include <asdf/extension.h>
+#include <asdf/extension_util.h>
+#include <asdf/log.h>
+#include <asdf/value.h>
+
+#include "gwcs.h"
+#include "transform.h"
+#include "types/asdf_gwcs_transform_map.h"
+#include "util.h"
+
+
+
 static const asdf_gwcs_transform_type_t ASDF_GWCS_TRANSFORM_INVALID = NULL;
 static asdf_gwcs_transform_map_t g_transform_map = {0};
 static atomic_bool g_transform_map_initialized = false;

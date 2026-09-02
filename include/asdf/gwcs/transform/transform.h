@@ -16,6 +16,8 @@
 #ifndef ASDF_GWCS_TRANSFORM_TRANSFORM_H
 #define ASDF_GWCS_TRANSFORM_TRANSFORM_H
 
+#include <stddef.h>
+
 #include <asdf/core/asdf.h>
 #include <asdf/extension.h>
 #include <asdf/gwcs/core.h>
@@ -552,13 +554,55 @@ ASDF_EXPORT void asdf_gwcs_transform_install_shim(
         extname, ttype, type, software, ext_vtab, NULL, _children, userdata, __VA_ARGS__)
 
 
-#define ASDF_GWCS_DECLARE_TRANSFORM(extname, ttype, type) \
+/* Assert that a concrete transform's base fields line up with the base struct.
+ *
+ * ASDF_GWCS_TRANSFORM_BASE restates asdf_gwcs_transform_t's fields so that
+ * concrete transforms can be initialized flatly, which means the two can drift
+ * apart.  Reordering or retyping a field silently misaligns the flat spelling
+ * from the .base spelling; appending one leaves it unreachable flatly.  Both
+ * become build failures here rather than bugs at runtime.
+ *
+ * Applied automatically by ASDF_GWCS_DECLARE_TRANSFORM, so a concrete
+ * transform type cannot be declared without being checked. */
+#define ASDF_GWCS_ASSERT_TRANSFORM_BASE(type_) \
+    ASDF_STATIC_ASSERT( \
+        offsetof(type_, type) == offsetof(asdf_gwcs_transform_t, type), \
+        #type_ " type offset does not match asdf_gwcs_transform_t"); \
+    ASDF_STATIC_ASSERT( \
+        offsetof(type_, n_outputs) == offsetof(asdf_gwcs_transform_t, n_outputs), \
+        #type_ " n_outputs offset does not match asdf_gwcs_transform_t"); \
+    ASDF_STATIC_ASSERT( \
+        offsetof(type_, input_units_equivalencies) \
+            == offsetof(asdf_gwcs_transform_t, input_units_equivalencies), \
+        #type_ " input_units_equivalencies offset does not match"); \
+    ASDF_STATIC_ASSERT( \
+        offsetof(type_, base) == 0, #type_ " base must come first")
+
+
+/* Pins asdf_gwcs_transform_t to end exactly where ASDF_GWCS_TRANSFORM_BASE
+ * does, so a field appended to one and not the other fails to build. */
+ASDF_STATIC_ASSERT(
+    sizeof(asdf_gwcs_transform_t)
+        == offsetof(asdf_gwcs_transform_t, input_units_equivalencies)
+            + sizeof(((asdf_gwcs_transform_t *)0)->input_units_equivalencies),
+    "asdf_gwcs_transform_t gained a field ASDF_GWCS_TRANSFORM_BASE does not mirror");
+
+
+/* Shared by the concrete and generic declarations below.  Generic transforms
+ * are declared as plain asdf_gwcs_transform_t, which has no ``base`` member of
+ * its own, so only the concrete form carries the layout assertions. */
+#define ASDF_GWCS__DECLARE_TRANSFORM_COMMON(extname, ttype, type) \
     ASDF_DECLARE_EXTENSION(gwcs_##extname, type); \
-    ASDF_EXPORT extern const asdf_gwcs_transform_type_t ASDF_GWCS_TRANSFORM_##ttype;
+    ASDF_EXPORT extern const asdf_gwcs_transform_type_t ASDF_GWCS_TRANSFORM_##ttype
+
+
+#define ASDF_GWCS_DECLARE_TRANSFORM(extname, ttype, type) \
+    ASDF_GWCS__DECLARE_TRANSFORM_COMMON(extname, ttype, type); \
+    ASDF_GWCS_ASSERT_TRANSFORM_BASE(type)
 
 
 #define ASDF_GWCS_DECLARE_TRANSFORM_GENERIC(extname, ttype) \
-    ASDF_GWCS_DECLARE_TRANSFORM(extname, ttype, asdf_gwcs_transform_t);
+    ASDF_GWCS__DECLARE_TRANSFORM_COMMON(extname, ttype, asdf_gwcs_transform_t)
 
 
 ASDF_GWCS_DECLARE_TRANSFORM_GENERIC(transform_generic, GENERIC);

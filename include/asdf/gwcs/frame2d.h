@@ -24,7 +24,7 @@ ASDF_BEGIN_DECLS
  */
 typedef struct {
     /** Common frame fields; `asdf_gwcs_frame_t.type` is ``ASDF_GWCS_FRAME_2D`` */
-    asdf_gwcs_frame_t base;
+    ASDF_GWCS_FRAME_BASE;
     const char *axes_names[2];
     uint32_t axes_order[2];
     // TODO: Should be an asdf_unit_t but right now that is just a string

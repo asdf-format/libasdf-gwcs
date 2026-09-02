@@ -1,3 +1,5 @@
+#include <stddef.h>
+#include <assert.h>
 #include <stdatomic.h>
 #include <stdlib.h>
 
@@ -10,6 +12,28 @@
 #include "../gwcs.h"
 #include "../types/asdf_gwcs_coordinate_frame_map.h"
 #include "../util.h"
+
+
+/* ASDF_GWCS_COORDINATE_FRAME_BASE restates asdf_gwcs_baseframe_t's fields so
+ * that concrete coordinate frames can be initialized flatly.  Reordering or
+ * retyping a field silently misaligns the flat spelling from the .base
+ * spelling; appending one leaves it unreachable flatly.  Both are caught
+ * here rather than at runtime. */
+#define ASDF_GWCS_ASSERT_COORDINATE_FRAME_BASE(type_) \
+    static_assert( \
+        offsetof(type_, type) == offsetof(asdf_gwcs_baseframe_t, type), \
+        #type_ " type offset does not match asdf_gwcs_baseframe_t"); \
+    static_assert( \
+        offsetof(type_, base) == 0, #type_ " base must come first")
+
+static_assert(
+    sizeof(asdf_gwcs_baseframe_t)
+        == offsetof(asdf_gwcs_baseframe_t, type)
+            + sizeof(((asdf_gwcs_baseframe_t *)0)->type),
+    "asdf_gwcs_baseframe_t gained a field the base macro does not mirror");
+
+ASDF_GWCS_ASSERT_COORDINATE_FRAME_BASE(asdf_gwcs_fk4_t);
+ASDF_GWCS_ASSERT_COORDINATE_FRAME_BASE(asdf_gwcs_fk5_t);
 
 
 static asdf_gwcs_coordinate_frame_map_t g_coordinate_frame_map = {0};

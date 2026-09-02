@@ -56,6 +56,36 @@ typedef struct {
     const char *name;
 } asdf_gwcs_frame_t;
 
+
+/**
+ * Embed the common frame fields in a concrete frame type
+ *
+ * Mirrors ``ASDF_GWCS_TRANSFORM_BASE`` and
+ * ``ASDF_GWCS_COORDINATE_FRAME_BASE``.  The fields are reachable both
+ * directly and through an explicit ``.base``, so a concrete frame can be
+ * initialized flatly::
+ *
+ *   asdf_gwcs_frame2d_t detector = {
+ *       .type = ASDF_GWCS_FRAME_2D, .name = "detector",
+ *       .axes_names = {"x", "y"},
+ *   };
+ *
+ * while ``&detector.base`` still yields an `asdf_gwcs_frame_t` pointer, which
+ * is how a concrete frame is stored in an `asdf_gwcs_step_t` without a cast.
+ *
+ * The field list must match `asdf_gwcs_frame_t` exactly; static assertions in
+ * ``src/frame.c`` fail the build if the two drift apart.
+ */
+#define ASDF_GWCS_FRAME_BASE \
+    union { \
+        asdf_gwcs_frame_t base; \
+        struct { \
+            asdf_gwcs_frame_type_t type; \
+            const char *name; \
+        }; \
+    }
+
+
 /* Extension name kept as gwcs_base_frame to avoid colliding with the
  * polymorphic asdf_gwcs_frame_destroy. */
 ASDF_DECLARE_EXTENSION(gwcs_base_frame, asdf_gwcs_frame_t);

@@ -307,7 +307,8 @@ all be ordinary stack values, and there is nothing to destroy afterwards.
 
        // Step 0's frame: the detector, in pixels.
        asdf_gwcs_frame2d_t detector = {
-           .base = {.type = ASDF_GWCS_FRAME_2D, .name = "detector"},
+           .type = ASDF_GWCS_FRAME_2D,
+           .name = "detector",
            .axes_names = {"x", "y"},
            .axes_order = {0, 1},
            .unit = {"pixel", "pixel"},
@@ -318,7 +319,7 @@ all be ordinary stack values, and there is nothing to destroy afterwards.
        // the familiar FITS keywords plus the projection to apply.
        asdf_gwcs_transform_t gnomonic = {.type = ASDF_GWCS_TRANSFORM_GNOMONIC};
        asdf_gwcs_fits_t fits = {
-           .base = {.type = ASDF_GWCS_TRANSFORM_FITSWCS_IMAGING},
+           .type = ASDF_GWCS_TRANSFORM_FITSWCS_IMAGING,
            .crpix = {1024.5, 1024.5},
            .crval = {5.63, -72.05},
            .cdelt = {-1.0e-5, 1.0e-5},
@@ -330,7 +331,8 @@ all be ordinary stack values, and there is nothing to destroy afterwards.
        // reference frame its coordinates are expressed in.
        asdf_gwcs_baseframe_t icrs = {.type = ASDF_GWCS_COORDINATE_FRAME_ICRS};
        asdf_gwcs_frame_celestial_t sky = {
-           .base = {.type = ASDF_GWCS_FRAME_CELESTIAL, .name = "world"},
+           .type = ASDF_GWCS_FRAME_CELESTIAL,
+           .name = "world",
            .axes_names = {"lon", "lat", NULL},
            .axes_order = {0, 1, 0},
            .unit = {"deg", "deg", NULL},
@@ -341,9 +343,8 @@ all be ordinary stack values, and there is nothing to destroy afterwards.
        // The last step has no transform: it only names the frame the
        // pipeline ends in.
        asdf_gwcs_step_t steps[2] = {
-           {.frame = (asdf_gwcs_frame_t *)&detector,
-            .transform = (const asdf_gwcs_transform_t *)&fits},
-           {.frame = (asdf_gwcs_frame_t *)&sky, .transform = NULL},
+           {.frame = &detector.base, .transform = &fits.base},
+           {.frame = &sky.base},
        };
 
        uint64_t shape[2] = {2048, 2048};
@@ -439,11 +440,21 @@ A few things are worth knowing when building a WCS this way:
   pipeline, so everything a `asdf_gwcs_t` points at must outlive the
   ``asdf_set_gwcs`` call.  Stack values in the same scope, as above, satisfy
   that.
+
+* When adding a transform or to a step, the generic type `asdf_gwcs_transform_t`
+  is expected--here you can pass ``&transform.base`` as in the example--as this
+  is the same structure as `asdf_gwcs_transform_t`.  Equivalently you may make
+  this assignment via a cast like ``(asdf_gwcs_transform_t *)&transform`` which
+  is safe because the "base" fields come first in every transform struct.
+
+  Likewise for frames and other libasdf-gwcs types.
+
 * ``ctype`` on `asdf_gwcs_fits_t` is *derived*, not set by you.  It is filled
   in on read, from the terminal frame's ``axis_physical_types``, which is why
   those matter even though they look like documentation: get them wrong and
   the CTYPEs come out wrong or empty.  See :ref:`known-limitations` for why it
   works that way.
+
 * The FITS keyword arrays are written as ``core/ndarray`` values rather than
   bare YAML sequences, but stored *inline*, so a file built this way stays
   YAML-only with no binary blocks.  The other transforms that carry arrays,
