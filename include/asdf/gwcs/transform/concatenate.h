@@ -10,9 +10,9 @@ ASDF_BEGIN_DECLS
 /**
  * Parallel composition of N transforms over disjoint input ranges
  *
- * Implements version 1.3.0 of the
- * :external+asdf-transform-schemas:doc:`transform/concatenate <generated/schemas/concatenate-1.2.0>`
- * schema: ``(out0, out1, ...) = (forward[0](in0), forward[1](in1), ...)``.
+ * Implements up to version 1.3.0 of the
+ * :transform-schema:`transform/concatenate <concatenate-1.2.0>` schema:
+ * ``(out0, out1, ...) = (forward[0](in0), forward[1](in1), ...)``.
  */
 typedef struct {
     ASDF_GWCS_TRANSFORM_BASE;

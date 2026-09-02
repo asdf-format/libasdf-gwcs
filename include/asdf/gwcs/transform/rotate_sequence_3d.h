@@ -20,8 +20,8 @@ typedef enum {
 /**
  * A sequence of 3-D rotations about named axes
  *
- * Implements version 1.1.0 of the
- * :external+asdf-transform-schemas:doc:`transform/rotate_sequence_3d <generated/schemas/rotate_sequence_3d-1.0.0>`
+ * Implements up to version 1.1.0 of the
+ * :transform-schema:`transform/rotate_sequence_3d <rotate_sequence_3d-1.0.0>`
  * schema.  Each rotation is specified by an angle in degrees; the axes are
  * given by a string like ``"zyx"`` or ``"xyz"``.
  */

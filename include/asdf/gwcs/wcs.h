@@ -1,6 +1,6 @@
 /**
- * Partial implementation of version 1.4.0 of the
- * :external+asdf-wcs-schemas:doc:`gwcs/wcs <generated/gwcs/wcs-1.1.0>` schema
+ * Partial implementation of version 1.4.0 of the :gwcs-schema:`gwcs/wcs
+ * <wcs-1.1.0>` schema
  */
 
 //
@@ -18,8 +18,8 @@ ASDF_BEGIN_DECLS
 
 
 /**
- * Represents an instance of the
- * :external+asdf-wcs-schemas:doc:`gwcs/wcs <generated/gwcs/wcs-1.1.0>` schema, version 1.4.0
+ * Represents an instance of the :gwcs-schema:`gwcs/wcs <wcs-1.1.0>` schema,
+ * up to version 1.4.0
  *
  * .. note::
  *

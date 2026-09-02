@@ -24,12 +24,11 @@ ASDF_BEGIN_DECLS
 /**
  * An FK4 or FK4NoETerms coordinate frame
  *
- * Implements the :external+asdf-coordinates-schemas:doc:`coordinates/frames/fk4 <generated/schemas/frames/fk4-1.0.0>`
- * and
- * :external+asdf-coordinates-schemas:doc:`coordinates/frames/fk4noeterms <generated/schemas/frames/fk4noeterms-1.0.0>`
- * schemas, which are identical; the distinct tags exist only to name
- * different frame identities.  Which one a frame is can be told from its
- * ``type``, or read as a string with `asdf_gwcs_coordinate_frame_type_name`.
+ * Implements the :frame-schema:`coordinates/frames/fk4 <fk4-1.0.0>` and
+ * :frame-schema:`coordinates/frames/fk4noeterms <fk4noeterms-1.0.0>` schemas,
+ * which are identical; the distinct tags exist only to name different frame
+ * identities.  Which one a frame is can be told from its ``type``, or read as
+ * a string with `asdf_gwcs_coordinate_frame_type_name`.
  */
 typedef struct {
     ASDF_GWCS_COORDINATE_FRAME_BASE;
@@ -49,7 +48,7 @@ typedef struct {
 /**
  * An FK5 coordinate frame
  *
- * Implements the :external+asdf-coordinates-schemas:doc:`coordinates/frames/fk5 <generated/schemas/frames/fk5-1.0.0>` schema.
+ * Implements the :frame-schema:`coordinates/frames/fk5 <fk5-1.0.0>` schema.
  * Unlike FK4, it defines no ``obstime``.
  */
 typedef struct {

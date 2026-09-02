@@ -10,8 +10,7 @@ ASDF_BEGIN_DECLS
 /**
  * A general affine transformation
  *
- * Implements the :external+asdf-transform-schemas:doc:`transform/affine <generated/schemas/affine-1.3.0>`
- * schema.
+ * Implements the :transform-schema:`transform/affine <affine-1.3.0>` schema.
  *
  * ``out = matrix * in + translation``
  */

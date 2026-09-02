@@ -12,10 +12,8 @@ as generic mappings.
 
 Three families of schema are implemented:
 
-* ``tag:stsci.edu:gwcs/`` --- the
-  :external+asdf-wcs-schemas:doc:`WCS object <generated/gwcs/wcs-1.1.0>`
-  itself, its :external+asdf-wcs-schemas:doc:`steps
-  <generated/gwcs/step-1.1.0>`, and its coordinate frames.
+* ``tag:stsci.edu:gwcs/`` --- the :gwcs-schema:`WCS object <wcs-1.1.0>` itself,
+  its :gwcs-schema:`steps <step-1.1.0>`, and its coordinate frames.
 * ``tag:stsci.edu:asdf/transform/`` --- the
   :external+asdf-transform-schemas:doc:`transform (model) types <transforms>`.
 * ``tag:stsci.edu:asdf/coordinates/frames/`` --- the
@@ -132,9 +130,8 @@ Frames
 `asdf_gwcs_frame_t` is a base struct carrying a ``type`` discriminant and a
 ``name``.  As with transforms, ``name`` is the file author's label for this
 particular frame, while `asdf_gwcs_frame_type_name` reports the schema name of
-its type---``frame``, ``frame2d`` or
-:external+asdf-wcs-schemas:doc:`celestial_frame
-<generated/gwcs/celestial_frame-1.0.0>`.
+its type---``frame``, ``frame2d`` or :gwcs-schema:`celestial_frame
+<celestial_frame-1.0.0>`.
 
 Downcast on the discriminant to reach the concrete type:
 
@@ -158,14 +155,11 @@ Downcast on the discriminant to reach the concrete type:
    }
 
 Most reference frames carry no ``frame_attributes`` and are represented
-directly as `asdf_gwcs_baseframe_t`.  The equinox-based ones are the
-exception: `asdf_gwcs_fk5_t` adds a required ``equinox``, and
-`asdf_gwcs_fk4_t`--shared by
-:external+asdf-coordinates-schemas:doc:`FK4 <generated/schemas/frames/fk4-1.0.0>`
-and
-:external+asdf-coordinates-schemas:doc:`FK4NoETerms <generated/schemas/frames/fk4noeterms-1.0.0>`,
-whose schemas are identical--adds an optional ``obstime`` alongside it.  Both
-are :external+asdf-standard:doc:`time/time
+directly as `asdf_gwcs_baseframe_t`.  The equinox-based ones are the exception:
+`asdf_gwcs_fk5_t` adds a required ``equinox``, and `asdf_gwcs_fk4_t`--shared by
+:frame-schema:`FK4 <fk4-1.0.0>` and :frame-schema:`FK4NoETerms
+<fk4noeterms-1.0.0>`, whose schemas are identical--adds an optional ``obstime``
+alongside it.  Both are :external+asdf-standard:doc:`time/time
 <generated/stsci.edu/asdf/time/time-1.2.0>` values, read as libasdf's
 `asdf_time_t`, and both round-trip:
 
@@ -179,13 +173,11 @@ are :external+asdf-standard:doc:`time/time
 Transforms
 ----------
 
-`asdf_gwcs_transform_t` corresponds to the
-:external+asdf-transform-schemas:doc:`base transform schema
-<generated/schemas/transform-1.2.0>`, from which every transform type derives,
-and is the base of a tagged union.  Concrete transform types embed it via the
-``ASDF_GWCS_TRANSFORM_BASE`` macro, which makes the
-base fields directly accessible on the derived struct as well as through an
-explicit ``.base``:
+`asdf_gwcs_transform_t` corresponds to the :transform-schema:`base transform
+schema <transform-1.2.0>`, from which every transform type derives, and is the
+base of a tagged union.  Concrete transform types embed it via the
+``ASDF_GWCS_TRANSFORM_BASE`` macro, which makes the base fields directly
+accessible on the derived struct as well as through an explicit ``.base``:
 
 .. code:: c
 
@@ -211,13 +203,10 @@ in future releases.
 Composite transforms
 ~~~~~~~~~~~~~~~~~~~~
 
-Some transforms are built out of other transforms.
-:external+asdf-transform-schemas:doc:`compose <generated/schemas/compose-1.2.0>`
-and
-:external+asdf-transform-schemas:doc:`concatenate <generated/schemas/concatenate-1.2.0>`
-hold an ordered list of them;
-:external+asdf-transform-schemas:doc:`divide <generated/schemas/divide-1.2.0>`
-holds transforms applied for a numerator and a denominator.  Since each stores its
+Some transforms are built out of other transforms. :transform-schema:`compose
+<compose-1.2.0>` and :transform-schema:`concatenate <concatenate-1.2.0>` hold
+an ordered list of them; :transform-schema:`divide <divide-1.2.0>` holds
+transforms applied for a numerator and a denominator.  Since each stores its
 sub-transforms differently in their associated C structs; thus they are reached
 through an iterator rather than through any one struct member:
 
@@ -231,10 +220,10 @@ through an iterator rather than through any one struct member:
               asdf_gwcs_transform_type_name(iter->value));
 
 The iterator follows the same conventions as libasdf's
-``asdf_sequence_iter``: it is freed automatically when iteration is
+`asdf_sequence_iter_next`: it is freed automatically when iteration is
 exhausted, and `asdf_gwcs_transform_iter_destroy` releases it if you break out
-early.  ``iter->size`` is the total number of sub-transforms, also available
-on its own from `asdf_gwcs_transform_n_children`, which returns ``0`` for a
+early. ``iter->size`` is the total number of sub-transforms, also available on
+its own from `asdf_gwcs_transform_n_children`, which returns ``0`` for a
 transform that is not a composite.  Iterating a non-composite is not an error;
 it simply yields nothing.
 

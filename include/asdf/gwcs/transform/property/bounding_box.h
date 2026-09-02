@@ -1,7 +1,7 @@
 /**
  * Partial implementation of version 1.2.0 of the
- * :external+asdf-transform-schemas:doc:`transform/property/bounding_box <generated/schemas/property/bounding_box-1.0.0>`
- * schema
+ * :transform-schema:`transform/property/bounding_box
+ * <property/bounding_box-1.0.0>` schema
  */
 
 //

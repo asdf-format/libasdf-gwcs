@@ -1,7 +1,7 @@
 /**
  * Representation of version 1.4.0 of the
- * :external+asdf-transform-schemas:doc:`transform/transform <generated/schemas/transform-1.2.0>` base
- * schema, from which all GWCS transforms derive.
+ * :transform-schema:`transform/transform <transform-1.2.0>` base schema, from
+ * which all GWCS transforms derive.
  *
  * .. todo::
  *

@@ -1,7 +1,6 @@
 /**
- * Representation of the
- * :external+asdf-coordinates-schemas:doc:`coordinates/frames/baseframe <generated/schemas/frames/baseframe-1.0.0>`
- * schema and its derived concrete coordinate frame types.
+ * Representation of the :frame-schema:`coordinates/frames/baseframe
+ * <baseframe-1.0.0>` schema and its derived concrete coordinate frame types.
  */
 
 //

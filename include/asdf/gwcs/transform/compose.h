@@ -10,9 +10,8 @@ ASDF_BEGIN_DECLS
 /**
  * Serial composition of two transforms, applied right-to-left
  *
- * Implements version 1.3.0 of the
- * :external+asdf-transform-schemas:doc:`transform/compose <generated/schemas/compose-1.2.0>`
- * schema: ``out = forward[0](forward[1](in))``.
+ * Implements up to version 1.3.0 of the :transform-schema:`transform/compose
+ * <compose-1.2.0>` schema: ``out = forward[0](forward[1](in))``.
  *
  * ``forward`` always has exactly two elements.
  */

@@ -31,8 +31,7 @@ requires and, for the FK4 frames, an optional ``obstime``.
 
    In the case of celestial frame the API reverses the words relative to its
    schema: the tag is
-   :external+asdf-wcs-schemas:doc:`gwcs/celestial_frame
-   <generated/gwcs/celestial_frame-1.0.0>`, while the header is
+   :gwcs-schema:`gwcs/celestial_frame <celestial_frame-1.0.0>`, while the header is
    :doc:`frame_celestial.h </api/frame_celestial.h>` and the C type is
    `asdf_gwcs_frame_celestial_t`.
 

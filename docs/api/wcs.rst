@@ -3,12 +3,10 @@
 The WCS object
 ==============
 
-`asdf_gwcs_t` is the top-level type, implementing the
-:external+asdf-wcs-schemas:doc:`gwcs/wcs <generated/gwcs/wcs-1.1.0>` schema: a
-named pipeline of steps.  Each `asdf_gwcs_step_t` implements
-:external+asdf-wcs-schemas:doc:`gwcs/step <generated/gwcs/step-1.1.0>`, pairing
-a coordinate frame with the transform mapping out of that frame into the next
-step's frame.
+`asdf_gwcs_t` is the top-level type, implementing the :gwcs-schema:`gwcs/wcs
+<wcs-1.1.0>` schema: a named pipeline of steps.  Each `asdf_gwcs_step_t`
+implements :gwcs-schema:`gwcs/step <step-1.1.0>`, pairing a coordinate frame
+with the transform mapping out of that frame into the next step's frame.
 
 .. important::
 

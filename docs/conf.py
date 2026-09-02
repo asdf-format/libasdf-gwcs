@@ -125,6 +125,7 @@ extensions = [
     # Local; see docs/_ext/
     'c_autosummary',
     'index_grouping',
+    'schema_roles',
 ]
 
 # -- Options for hawkmoth extension --------------------------------------------
@@ -203,6 +204,14 @@ latex_logo = "_static/images/logo-light-mode.png"
 # inlined here so that they can be copied between projects as whole files.
 index_strip_prefixes = ['asdf_gwcs_', 'ASDF_GWCS_', 'asdf_', 'ASDF_']
 c_autosummary_headers = ['include/asdf/gwcs/**/*.h']
+
+# Short roles for the schema documentation, e.g. :transform-schema:`affine-1.5.0`
+# in place of the full :external+asdf-transform-schemas:doc:`...` form
+schema_roles = {
+    'transform-schema': ('asdf-transform-schemas', 'generated/schemas/'),
+    'frame-schema': ('asdf-coordinates-schemas', 'generated/schemas/frames/'),
+    'gwcs-schema': ('asdf-wcs-schemas', 'generated/gwcs/'),
+}
 
 
 # -- Doc-example test directive options ----------------------------------------

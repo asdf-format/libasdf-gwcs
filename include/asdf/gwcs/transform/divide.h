@@ -8,8 +8,7 @@ ASDF_BEGIN_DECLS
 /**
  * The quotient of two transforms evaluated on the same input
  *
- * Implements the :external+asdf-transform-schemas:doc:`transform/divide <generated/schemas/divide-1.2.0>`
- * schema.
+ * Implements the :transform-schema:`transform/divide <divide-1.2.0>` schema.
  *
  * ``out = numerator(in) / denominator(in)``
  */

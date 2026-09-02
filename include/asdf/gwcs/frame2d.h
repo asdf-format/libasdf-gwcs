@@ -1,6 +1,6 @@
 /**
- * Partial implementation of version 1.2.0 of the
- * :external+asdf-wcs-schemas:doc:`gwcs/frame2d <generated/gwcs/frame2d-1.0.0>` schema
+ * Partial implementation of version 1.2.0 of the :gwcs-schema:`gwcs/frame2d
+ * <frame2d-1.0.0>` schema
  */
 
 //
