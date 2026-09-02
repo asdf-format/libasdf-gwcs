@@ -16,18 +16,51 @@ ASDF_BEGIN_DECLS
 
 
 /**
- * Parameters for a 2-D rectangular pixel sampling grid.
+ * Parameters for a 2-D rectangular pixel sampling grid
  *
- * ``x0``/``y0`` are the first sample coordinates (inclusive);
- * ``x1``/``y1`` are the last (inclusive).  ``nx`` and ``ny`` are the
- * number of evenly-spaced sample points along each axis.  For a
- * dense pixel grid (unit spacing) set ``x1 = x0 + nx - 1`` and
+ * The grid is the product of two evenly spaced sequences of sample
+ * coordinates, one per axis, with both endpoints included.  For a dense pixel
+ * grid---one sample per pixel, unit spacing---set ``x1 = x0 + nx - 1`` and
  * ``y1 = y0 + ny - 1``.
+ *
+ * A grid2d can be initialized directly like::
+ *
+ *   // 32x32 samples spanning a 4088x4088 detector, corners included.
+ *   asdf_gwcs_grid2d_t grid = {
+ *       .x0 = 0.0, .y0 = 0.0,
+ *       .x1 = 4087.0, .y1 = 4087.0,
+ *       .nx = 32, .ny = 32
+ *   };
+ *
+ * Samples are ordered row-major with x varying fastest, so the sample at
+ * ``(ix, iy)`` is at index ``iy * nx + ix``.
  */
 typedef struct {
-    double x0, y0;
-    double x1, y1;
-    uint32_t nx, ny;
+    /** First sample coordinate along x, inclusive */
+    double x0;
+
+    /** First sample coordinate along y, inclusive */
+    double y0;
+
+    /** Last sample coordinate along x, inclusive */
+    double x1;
+
+    /** Last sample coordinate along y, inclusive */
+    double y1;
+
+    /**
+     * Number of samples along x
+     *
+     * ``1`` gives a single column at ``x0``, and ``x1`` is then unused.
+     */
+    uint32_t nx;
+
+    /**
+     * Number of samples along y
+     *
+     * ``1`` gives a single row at ``y0``, and ``y1`` is then unused.
+     */
+    uint32_t ny;
 } asdf_gwcs_grid2d_t;
 
 
@@ -39,8 +72,8 @@ typedef struct {
  * the existing buffer.  The same rule applies to ``*yout`` independently.
  * The caller is responsible for freeing any array allocated here.
  *
- * Layout is row-major: index ``iy * nx + ix``.  If ``nx == 1`` the
- * x-step is zero (single column); likewise for ``ny == 1``.
+ * The arrays follow the grid's own sample order, described on
+ * `asdf_gwcs_grid2d_t`.
  *
  * :param grid: Grid descriptor.
  * :param xout: Address of x-coordinate array pointer (allocated if ``*xout`` is NULL).
