@@ -217,7 +217,8 @@ unambiguous today because ``ast_yaml`` is the only backend built.
 
 .. warning::
 
-   The backend interface (``asdf/gwcs/backend.h``) is **experimental**.  It is
+   The backend interface (:doc:`asdf/gwcs/backend.h </api/backend.h>`) is
+   **experimental**.  It is
    not yet supported for third-party plugins: the interface is still being
    worked out and will change, so it is deliberately not usable from outside
    the library for now.  Third-party evaluation backends are planned for a

@@ -18,7 +18,8 @@ checked:
 
 .. note::
 
-   The header is ``frame_celestial.h`` and the C type
+   The header is :doc:`frame_celestial.h </api/frame_celestial.h>` and the
+   C type
    `asdf_gwcs_frame_celestial_t`, but the schema tag reverses the words:
    :external+asdf-wcs-schemas:doc:`gwcs/celestial_frame
    <generated/gwcs/celestial_frame-1.0.0>`.

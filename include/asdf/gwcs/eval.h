@@ -27,7 +27,7 @@ ASDF_BEGIN_DECLS
 typedef struct asdf_gwcs_eval asdf_gwcs_eval_t;
 
 /**
- * Backend descriptor; see ``asdf/gwcs/backend.h``.
+ * Backend descriptor; see :doc:`asdf/gwcs/backend.h </api/backend.h>`.
  */
 typedef struct asdf_gwcs_backend asdf_gwcs_backend_t;
 

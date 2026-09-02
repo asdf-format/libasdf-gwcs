@@ -20,12 +20,13 @@ Only the pipeline's **forward** transformation is evaluated; there is no
 reverse evaluation, and no N-dimensional counterpart, yet, to
 `asdf_gwcs_eval_2d`.
 
-``grid.h`` adds helpers for the common case of sampling a regular 2-D grid
-without materializing the input coordinates yourself.
+:doc:`grid.h </api/grid.h>` adds helpers for the common case of sampling a
+regular 2-D grid without materializing the input coordinates yourself.
 
 .. warning::
 
-   The backend interface in ``backend.h`` is **experimental** and is not yet
+   The backend interface in :doc:`backend.h </api/backend.h>` is
+   **experimental** and is not yet
    supported for third-party plugins.  It will change.  Support for
    third-party evaluation backends is planned once the design has settled.
 

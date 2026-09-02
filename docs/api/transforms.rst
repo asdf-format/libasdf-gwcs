@@ -131,15 +131,15 @@ Each header's page documents its structs, its generated accessors and its
 ``ASDF_GWCS_TRANSFORM_<NAME>`` type constant in full.  Besides one page per
 concrete transform, there are three that are not transform types themselves:
 
-``transform/transform.h``
+:doc:`transform/transform.h </api/transform/transform.h>`
     The base type shared by every transform, and the registration machinery
     concrete types are declared through.
 
-``transform/property/bounding_box.h``
+:doc:`transform/property/bounding_box.h </api/transform/property/bounding_box.h>`
     The ``bounding_box`` property that any transform may carry, giving the
     domain over which it is valid.
 
-``transform.h``
+:doc:`transform.h </api/transform.h>`
     The umbrella header, which pulls in all of the above.
 
 .. toctree::
