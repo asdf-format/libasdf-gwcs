@@ -10,3 +10,6 @@
 .. _transform schemas: https://www.asdf-format.org/projects/asdf-transform-schemas/en/latest/transforms.html
 .. _coordinates schemas: https://www.asdf-format.org/projects/asdf-coordinates-schemas/en/latest/frames.html
 .. _Starlink AST: https://starlink.eao.hawaii.edu/starlink/AST
+.. _astTran2: https://starlink.eao.hawaii.edu/devdocs/sun211.htx/sun211ss243.html
+.. _AST FrameSet: https://starlink.eao.hawaii.edu/devdocs/sun211.htx/sun211ss500.html
+.. _AST YamlChan: https://starlink.eao.hawaii.edu/devdocs/sun211.htx/sun211ss549.html

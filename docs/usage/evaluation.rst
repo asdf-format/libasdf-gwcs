@@ -67,7 +67,8 @@ the default.
    here that multiplies by it.  Evaluation is delegated to a backend, and
    handing a WCS to one is not free.  The ``ast_yaml`` backend, for instance,
    re-serializes the entire WCS to YAML in memory, feeds that to AST's YAML
-   channel to build an ``AstFrameSet``, and extracts the mapping from its base
+   channel to build an `AstFrameSet <AST FrameSet_>`_, and extracts the
+   mapping from its base
    frame to its current one---a full write-and-parse round trip, once per
    WCS.
 
@@ -232,9 +233,9 @@ The AST backend
 and works in a way worth understanding because it has visible consequences: it
 does not walk the parsed `asdf_gwcs_t` structure at all.  Instead it
 re-serializes the WCS to YAML in memory---forcing all arrays inline so no
-binary blocks are needed---and hands that to AST's YAML channel (``YamlChan``),
-which reconstructs it as an ``AstFrameSet``.  Evaluation is then AST's
-``astTran2``.
+binary blocks are needed---and hands that to AST's YAML channel
+(`YamlChan <AST YamlChan_>`_), which reconstructs it as an
+`AstFrameSet <AST FrameSet_>`_.  Evaluation is then AST's `astTran2`_.
 
 Three things follow from this:
 

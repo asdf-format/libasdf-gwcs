@@ -511,10 +511,12 @@ A copy of AST is vendored with the libasdf-gwcs source, as a git submodule
 under ``third_party/ast``.  There are a few things to know about it:
 
 * **It is a fork.** AST support presently works only with the custom fork that
-  is vendored here, which carries updates to ``YamlChan`` and other changes
-  not yet available in upstream AST.  Building against an external AST is
-  supported—both build systems fall back to searching the system for it when
-  the submodule is not present—but a stock upstream AST will not work yet.
+  is vendored here, which carries updates to `YamlChan
+  <https://starlink.eao.hawaii.edu/devdocs/sun211.htx/sun211ss549.html>`__ and
+  other changes not yet available in upstream AST.  Building against an
+  external AST is supported—both build systems fall back to searching the
+  system for it when the submodule is not present—but a stock upstream AST will
+  not work yet.
 
 * **It is linked statically by default.** The vendored AST is built as a static
   library and linked into ``libasdf-gwcs``, so there is no separate AST shared
