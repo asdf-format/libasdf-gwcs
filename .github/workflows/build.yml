@@ -19,6 +19,9 @@ jobs:
   build-and-test:
     name: Build and run `make check`
     runs-on: ${{ matrix.os }}
+    # Where libasdf is installed below
+    env:
+      PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
     strategy:
       fail-fast: false
       matrix:
@@ -92,12 +95,11 @@ jobs:
 
       - name: Configure
         run: |
-          CONFIGURE_FLAGS=""
+          CONFIGURE_FLAGS="--with-ast"
           if [ "${{ matrix.asan }}" = "yes" ]; then
-            CONFIGURE_FLAGS="--with-asan"
+            CONFIGURE_FLAGS="$CONFIGURE_FLAGS --with-asan"
           fi
-          PKG_CONFIG_PATH=/tmp/libasdf-inst/lib/pkgconfig \
-            ./configure CC=${{ matrix.cc }} $CONFIGURE_FLAGS
+          ./configure CC=${{ matrix.cc }} $CONFIGURE_FLAGS
 
       # If make fails re-run with V=1 so we can inspect
       - name: Build
