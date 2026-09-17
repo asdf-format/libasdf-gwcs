@@ -6,7 +6,9 @@ AC_INIT(
   [https://github.com/asdf-format/libasdf-gwcs],
 )
 AC_CONFIG_AUX_DIR([build-aux])
-AM_INIT_AUTOMAKE([foreign subdir-objects])
+dnl tar-ustar: some of the vendored AST's fixture paths are too long for
+dnl automake's default v7 tar format, which drops them from the tarball.
+AM_INIT_AUTOMAKE([foreign subdir-objects tar-ustar])
 AC_USE_SYSTEM_EXTENSIONS
 
 LT_INIT([disable-static])
