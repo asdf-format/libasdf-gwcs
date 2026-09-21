@@ -69,7 +69,10 @@ target_link_directories(libasdf-gwcs PUBLIC ${LIBASDF_LIBRARY_DIRS})
 set_target_properties(libasdf-gwcs PROPERTIES
     BUILD_RPATH "${LIBASDF_LIBRARY_DIRS}")
 
+# OUTPUT_NAME avoids generating "liblibasdf-gwcs".  VERSION and SOVERSION must
+# match what libtool derives from -version-info in configure.ac.
 set_target_properties(libasdf-gwcs PROPERTIES
+    VERSION ${PROJECT_LIBVERSION}
     SOVERSION ${PROJECT_SOVERSION}
     OUTPUT_NAME "asdf-gwcs"
 )

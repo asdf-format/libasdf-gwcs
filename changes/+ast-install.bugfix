@@ -1,0 +1,6 @@
+Fix accidental installation of AST build artifacts when running
+``make install``.
+
+AST is only included as a vendored dependency statically linked into
+libasdf-gwcs: this package's build tools should not install anything from AST
+itself.
