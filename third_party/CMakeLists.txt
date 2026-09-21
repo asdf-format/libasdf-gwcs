@@ -17,7 +17,7 @@ target_include_directories(stc PRIVATE
 )
 install(
     FILES STC/LICENSE
-    RENAME LICENSE_STC.txt DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}
+    RENAME LICENSE_STC.txt DESTINATION ${CMAKE_INSTALL_DOCDIR}
 )
 
 # AST is LGPL-3.0-or-later and is statically linked into libasdf-gwcs, so its
@@ -25,6 +25,6 @@ install(
 if (ASDF_GWCS_WITH_AST AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/ast/COPYING)
     install(
         FILES ast/COPYING
-        RENAME LICENSE_AST.txt DESTINATION ${CMAKE_INSTALL_DATADIR}/${CMAKE_PROJECT_NAME}
+        RENAME LICENSE_AST.txt DESTINATION ${CMAKE_INSTALL_DOCDIR}
     )
 endif()

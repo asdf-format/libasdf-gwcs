@@ -5,6 +5,31 @@ AC_INIT(
   [],
   [https://github.com/asdf-format/libasdf-gwcs],
 )
+# Shared library interface version, for libtool's -version-info, as
+# current:revision:age.  This is deliberately NOT the package version: it
+# describes the library's ABI, not its release.
+#
+# On GNU/Linux libtool derives from it:
+#
+#   soname   = libasdf-gwcs.so.(current - age)
+#   filename = libasdf-gwcs.so.(current - age).(age).(revision)
+#
+# Update it at each release, applying these in order:
+#
+#   - source changed at all:               revision++
+#   - any interface added/removed/changed: current++, revision = 0
+#   - interfaces added, none removed:      age++
+#   - any interface removed or changed:    age = 0
+#
+# Keep in sync with PROJECT_SOVERSION and PROJECT_LIBVERSION in CMakeLists.txt;
+# see "Shared library versioning" in docs/development.rst.
+#
+# History:
+#
+#   - 0:0:0 (0.1.0):  initial release
+LIBASDF_GWCS_VERSION_INFO=0:0:0
+AC_SUBST([LIBASDF_GWCS_VERSION_INFO])
+
 AC_CONFIG_AUX_DIR([build-aux])
 dnl tar-ustar: some of the vendored AST's fixture paths are too long for
 dnl automake's default v7 tar format, which drops them from the tarball.

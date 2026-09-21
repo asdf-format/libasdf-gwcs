@@ -67,6 +67,7 @@ noinst_HEADERS = $(src_headers)
 lib_LTLIBRARIES = libasdf-gwcs.la
 libasdf_gwcs_la_SOURCES = $(src_files)
 libasdf_gwcs_la_CFLAGS = $(AM_CFLAGS)
+libasdf_gwcs_la_LDFLAGS = $(AM_LDFLAGS) -version-info $(LIBASDF_GWCS_VERSION_INFO)
 libasdf_gwcs_la_LIBADD = third_party/libstc.la $(LIBASDF_LIBS)
 
 if HAVE_AST
@@ -109,23 +110,31 @@ format:
 
 # CMake-related files to include in the distribution
 EXTRA_DIST = \
-    README.rst \
-    CHANGES.rst \
-    LICENSE \
-    autogen.sh \
-    towncrier.toml \
     .clang-format \
+    CHANGES.rst \
     CMakeLists.txt \
-    config.h.cmake \
-    cmake/AddressAnalyzer.cmake \
+    LICENSE \
+    README.rst \
+    autogen.sh \
     cmake/ASDFGWCSOptions.cmake \
+    cmake/AddressAnalyzer.cmake \
     cmake/SubmoduleInit.cmake \
-    src/CMakeLists.txt
+    config.h.cmake \
+    scripts/check-soversion.sh \
+    src/CMakeLists.txt \
+    towncrier.toml
 
 CMAKE_EXTRA_FLAGS=
 
 # Try building and running tests with cmake to ensure the cmake build works
 # from the distribution tarball
+#
+# Also checks that the library CMake produced carries the soname implied by
+# LIBASDF_GWCS_VERSION_INFO.  CMake takes PROJECT_SOVERSION and
+# PROJECT_LIBVERSION as independent inputs and cross-checks nothing, so it is
+# the side that can drift away from configure.ac; libtool derives both names
+# from the triple and cannot.  See "Shared library versioning" in
+# docs/development.rst.
 distcheck-cmake:
 	@echo "=== Running CMake build inside distcheck ==="
 	rm -rf $(distdir)/_build/cmake
@@ -137,6 +146,15 @@ distcheck-cmake:
                 $(CMAKE_EXTRA_FLAGS) && \
             $(MAKE) && \
             $(MAKE) test
+	@echo "=== Checking the CMake build's soname against -version-info ==="
+	$(SHELL) $(top_srcdir)/scripts/check-soversion.sh \
+	    '$(LIBASDF_GWCS_VERSION_INFO)' '$(distdir)/_build/cmake/src'; \
+	    ret=$$?; \
+	    if [ $$ret -eq 77 ]; then \
+	        true; \
+	    elif [ $$ret -ne 0 ]; then \
+	        exit $$ret; \
+	    fi
 
 .PHONY: distcheck-cmake
 

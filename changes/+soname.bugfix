@@ -1,0 +1,4 @@
+Fixed inconsistency in the SONAME written by CMake versus autotools.
+
+This is the same as a similar fix made to libasdf in
+https://github.com/asdf-format/libasdf/pull/264 .

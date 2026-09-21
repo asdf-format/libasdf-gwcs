@@ -9,8 +9,10 @@ set(PROJECT_VERSION 0.1.0)
 set(PACKAGE_URL https://github.com/asdf-format/libasdf-gwcs)
 set(PACKAGE_BUGREPORT https://github.com/asdf-format/libasdf-gwcs/issues)
 
-# Shared library compatibility version
-set(PROJECT_SOVERSION 0.0.0)
+# Shared library interface version: see configure.ac and please keep
+# these in sync.
+set(PROJECT_SOVERSION 0)
+set(PROJECT_LIBVERSION 0.0.0)
 
 project(libasdf-gwcs
     VERSION ${PROJECT_VERSION}
@@ -142,5 +144,5 @@ install(
     FILES
         LICENSE
         CHANGES.rst
-    DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME}
+    DESTINATION ${CMAKE_INSTALL_DOCDIR}
 )
