@@ -1,3 +1,23 @@
+libasdf-gwcs 0.1.0rc1 (2026-09-21)
+==================================
+
+Bugfix
+------
+
+- Fix accidental installation of AST build artifacts when running ``make
+  install``.
+
+  AST is only included as a vendored dependency statically linked into
+  libasdf-gwcs: this package's build tools should not install anything from AST
+  itself.
+- Fixed inconsistency in the SONAME written by CMake versus autotools.
+
+  This is the same as a similar fix made to libasdf in
+  https://github.com/asdf-format/libasdf/pull/264 .
+- Incorporated fixes to AST's build system needed for building within
+  Homebrew's sandboxed build environment.
+
+
 libasdf-gwcs 0.1.0rc0 (2026-09-18)
 ==================================
 
