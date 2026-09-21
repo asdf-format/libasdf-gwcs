@@ -99,6 +99,8 @@ distcheck-docs:
 endif
 .PHONY: docs distcheck-docs
 
+dist_doc_DATA = LICENSE CHANGES.rst
+
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libasdf-gwcs.pc
 CLEANFILES = libasdf-gwcs.pc
@@ -111,9 +113,7 @@ format:
 # CMake-related files to include in the distribution
 EXTRA_DIST = \
     .clang-format \
-    CHANGES.rst \
     CMakeLists.txt \
-    LICENSE \
     README.rst \
     autogen.sh \
     cmake/ASDFGWCSOptions.cmake \

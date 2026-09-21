@@ -1,3 +1,13 @@
+# Vendored code is compiled into libasdf-gwcs, so its licenses have to
+# accompany binaries.  Copied under distinct names because docdir also holds
+# libasdf-gwcs's own LICENSE.  STC is MIT; AST, added below, is LGPL.
+stc_dir = STC
+doc_DATA = LICENSE_STC.txt
+CLEANFILES = LICENSE_STC.txt
+
+LICENSE_STC.txt: $(stc_dir)/LICENSE
+	$(AM_V_GEN)cp "$(srcdir)/$(stc_dir)/LICENSE" $@
+
 if HAVE_AST
 SUBDIRS = ast
 
@@ -8,8 +18,12 @@ DIST_SUBDIRS = ast
 
 # AST is LGPL-3.0-or-later and is statically linked into libasdf-gwcs, so its
 # license text must accompany any binary distribution (LGPLv3 section 4b).
-ast_licensedir = $(docdir)
-ast_license_DATA = ast/COPYING
+# Copied under a distinct name for the same reason as STC above.
+doc_DATA += LICENSE_AST.txt
+CLEANFILES += LICENSE_AST.txt
+
+LICENSE_AST.txt: ast/COPYING
+	$(AM_V_GEN)cp "$(srcdir)/ast/COPYING" $@
 
 # AST is a build-only dependency; nothing of its own should be installed.
 # Emptying SUBDIRS for just these targets skips the recursion into ast while
@@ -32,8 +46,6 @@ dist-hook:
 endif
 
 # third_party headers to include
-stc_dir = STC
-
 # The minimal subset of STC needed to build libasdf-gwcs, which uses STC only
 # for its cstr-keyed hashmaps (see src/types/).  Everything else is unused for
 #now.
