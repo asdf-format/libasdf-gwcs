@@ -74,6 +74,14 @@ src_files += src/backends/ast_yaml.c
 libasdf_gwcs_la_SOURCES += src/backends/ast_yaml.c
 libasdf_gwcs_la_CFLAGS  += $(AST_CFLAGS)
 libasdf_gwcs_la_LIBADD  += $(AST_LIBS) $(FYAML_LIBS)
+
+# AST reaches the link through @AST_LIBS@, which automake cannot see into, so
+# make is never told the library depends on it.  Building libast.la builds
+# AST's other libraries along with it.
+EXTRA_libasdf_gwcs_la_DEPENDENCIES = third_party/ast/libast.la
+
+third_party/ast/libast.la:
+	cd third_party/ast && $(MAKE) $(AM_MAKEFLAGS) all
 endif
 
 if BUILD_DOCS

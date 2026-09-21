@@ -10,6 +10,15 @@ DIST_SUBDIRS = ast
 # license text must accompany any binary distribution (LGPLv3 section 4b).
 ast_licensedir = $(docdir)
 ast_license_DATA = ast/COPYING
+
+# AST is a build-only dependency; nothing of its own should be installed.
+# Emptying SUBDIRS for just these targets skips the recursion into ast while
+# still running this directory's install-am, which installs AST's license.
+install-recursive install-exec-recursive install-data-recursive \
+uninstall-recursive: SUBDIRS =
+
+# Don't recurse into AST's test suite
+check-recursive: ;
 else
 
 # With AST disabled its sources are not distributed at all, so the tarball
@@ -21,9 +30,6 @@ dist-hook:
 	@echo "Configure with AST enabled to build a distribution." >&2
 	@exit 1
 endif
-
-# AST is a build-only dependency; don't recurse into its test suite
-check-recursive: ;
 
 # third_party headers to include
 stc_dir = STC
