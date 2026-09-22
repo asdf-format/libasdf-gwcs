@@ -59,7 +59,7 @@ src_headers = \
 
 AM_CFLAGS = $(ASDF_GWCS_CFLAGS) $(LIBASDF_CFLAGS) -fvisibility=hidden -fmacro-prefix-map=$(top_srcdir)/=
 AM_CPPFLAGS = $(STC_CPPFLAGS) -I$(top_srcdir)/include -I$(top_srcdir)/src
-AM_LDFLAGS =
+AM_LDFLAGS = $(ASDF_GWCS_LDFLAGS)
 ACLOCAL_AMFLAGS = -Im4
 
 noinst_HEADERS = $(src_headers)
