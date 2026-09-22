@@ -132,6 +132,8 @@ $(DOC_EXAMPLES_DIR)/test-doc-examples.sh: $(DOC_EXAMPLE_DEPS)
 	      $$f $(top_builddir)/libasdf-gwcs.la $(LIBASDF_LIBS) \
 	      -o $$exe $(QUIET_OUT); \
 	done
+
+CLEANFILES += $(DOC_EXAMPLES_DIR)/*
 endif
 
 QUIET_OUT = $(if $(filter 1,$(V)),, > /dev/null)

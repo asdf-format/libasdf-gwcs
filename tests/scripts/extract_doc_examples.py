@@ -113,6 +113,8 @@ def write_runner_script(out_dir, tests, prog):
 
     ``tests`` is a list of ``(test_name, argv)`` pairs where ``argv`` is the
     resolved fixture path (or ``None``).
+
+    TODO: Rewrite this as a TAP driver.
     """
     shell_file = out_dir / 'test-doc-examples.sh'
 
