@@ -115,7 +115,12 @@ if (ENABLE_TESTING_CPP)
     )
 
     add_executable(test-cpp-headers ${CPP_HEADER_TEST})
-    target_link_libraries(test-cpp-headers PRIVATE libasdf)
+    # The project's own headers must precede any installed copy.
+    target_include_directories(test-cpp-headers BEFORE PRIVATE
+        ${CMAKE_SOURCE_DIR}/include)
+    target_include_directories(test-cpp-headers SYSTEM PRIVATE
+        ${LIBASDF_INCLUDE_DIRS})
+    target_link_libraries(test-cpp-headers PRIVATE libasdf-gwcs ${LIBASDF_LIBRARIES})
     target_compile_features(test-cpp-headers PRIVATE cxx_std_17)
     add_test(NAME test-cpp-headers COMMAND test-cpp-headers)
     set_tests_properties(test-cpp-headers PROPERTIES
