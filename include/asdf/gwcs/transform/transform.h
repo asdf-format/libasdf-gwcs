@@ -79,9 +79,6 @@ typedef struct {
 } asdf_gwcs_transform_data_t;
 
 
-static const asdf_gwcs_transform_type_t ASDF_GWCS_TRANSFORM_INVALID;
-
-
 /**
  * Base type for all transforms
  *

@@ -88,6 +88,31 @@ roman_build21_refs = \
     fixtures/roman/build21/ast_wcs_results.csv \
     fixtures/roman/build21/gwcs_wcs_results.csv
 
+
+# Test headers on C++
+asdf_gwcs_public_headers = \
+    $(wildcard $(top_srcdir)/include/asdf/gwcs/*.h) \
+    $(wildcard $(top_srcdir)/include/asdf/coordinates/*.h) \
+    $(wildcard $(top_srcdir)/include/asdf/transform/*.h) \
+    $(wildcard $(top_srcdir)/include/asdf/transform/property/*.h)
+
+cpp_header_test = $(builddir)/test-cpp-headers.cpp
+# Generate the C++ header test file
+$(cpp_header_test): $(asdf_gwcs_public_headers) $(srcdir)/scripts/generate_test_cpp_headers.sh
+	$(AM_V_at)$(srcdir)/scripts/generate_test_cpp_headers.sh \
+	    $(top_srcdir)/include $@ $(asdf_gwcs_public_headers) \
+	    $(QUIET_OUT)
+
+test-cpp-headers$(EXEEXT): $(cpp_header_test) $(top_builddir)/libasdf-gwcs.la
+	$(AM_V_at)$(LIBTOOL) --mode=link $(CXX) -std=c++17 -I$(top_srcdir)/include \
+	    -I$(top_builddir)/include $(LIBASDF_CFLAGS) \
+	    $(ASDF_GWCS_LDFLAGS) $(unit_test_ldflags) $(LDFLAGS) \
+	    $(cpp_header_test) $(top_builddir)/libasdf-gwcs.la $(ASDF_GWCS_LIBS) \
+	    -o $@ $(QUIET_OUT)
+
+TESTS += test-cpp-headers
+CLEANFILES = test-cpp-headers.cpp test-cpp-headers$(EXEEXT)
+
 # Check the examples in the documentation
 #
 # The example programs embedded in README.rst and the usage pages are marked
@@ -132,6 +157,8 @@ $(DOC_EXAMPLES_DIR)/test-doc-examples.sh: $(DOC_EXAMPLE_DEPS)
 	      $$f $(top_builddir)/libasdf-gwcs.la $(LIBASDF_LIBS) \
 	      -o $$exe $(QUIET_OUT); \
 	done
+
+CLEANFILES += $(DOC_EXAMPLES_DIR)/*
 endif
 
 QUIET_OUT = $(if $(filter 1,$(V)),, > /dev/null)
@@ -150,6 +177,7 @@ EXTRA_DIST = \
     $(roman_build21_fixtures) \
     $(roman_build21_refs) \
     scripts/create_roman_fixture.py \
+    scripts/generate_test_cpp_headers.sh \
     scripts/extract_doc_examples.py
 
 # Clean up extracted doc examples, and the per-run temp directories the test

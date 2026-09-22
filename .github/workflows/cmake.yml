@@ -124,7 +124,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
           -DCMAKE_INSTALL_PREFIX=${{ env.LIBASDF_PREFIX }} \
           -DCMAKE_PREFIX_PATH=${{ env.LIBASDF_PREFIX }} \
-          -DENABLE_TESTING=YES \
+          -DENABLE_TESTING_ALL=YES \
           ${{ matrix.cmake_options }} \
           ${{ github.event.inputs.cmake_flags }}
         make VERBOSE=1 ${{ github.event.inputs.make_flags }}
@@ -143,7 +143,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
           -DCMAKE_INSTALL_PREFIX=${{ env.LIBASDF_PREFIX }} \
           -DCMAKE_PREFIX_PATH=${{ env.LIBASDF_PREFIX }} \
-          -DENABLE_TESTING=YES \
+          -DENABLE_TESTING_ALL=YES \
           ${{ matrix.cmake_options }} \
           ${{ github.event.inputs.cmake_flags }}
         make VERBOSE=1 ${{ github.event.inputs.make_flags }}

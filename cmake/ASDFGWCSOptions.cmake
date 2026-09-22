@@ -10,11 +10,13 @@ endif ()
 
 # Testing
 option(ENABLE_TESTING "Enable unit tests" OFF)
+option(ENABLE_TESTING_CPP "Enable testing linkage with C++" OFF)
 option(ENABLE_TESTING_DOCS "Enable testing doc examples" OFF)
 option(ENABLE_TESTING_ALL "Enable all tests (unit, doc examples, etc.)" OFF)
 
 if(ENABLE_TESTING_ALL)
     set(ENABLE_TESTING YES CACHE BOOL "" FORCE)
+    set(ENABLE_TESTING_CPP YES CACHE BOOL "" FORCE)
     set(ENABLE_TESTING_DOCS YES CACHE BOOL "" FORCE)
 endif()
 

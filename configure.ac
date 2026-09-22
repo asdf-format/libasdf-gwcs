@@ -249,6 +249,9 @@ LIBASDF_LIBS=$(printf '%s\n' "$LIBASDF_LIBS" | sed 's/none required//g')
 STC_CPPFLAGS="-I\$(top_srcdir)/third_party/STC/include"
 AC_SUBST([STC_CPPFLAGS])
 
+ASDF_GWCS_LIBS="$FYAML_LIBS $LIBASDF_LIBS $AST_LIBS"
+AC_SUBST([ASDF_GWCS_LIBS])
+
 # --- Optional features -------------------------------------------------------
 
 # Enable/check doc build requirements
@@ -260,6 +263,7 @@ AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON3" != "no"])
 AC_SUBST([PYTHON3])
 
 AC_SUBST([ASDF_GWCS_CFLAGS])
+AC_SUBST([ASDF_GWCS_LDFLAGS])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([
   Makefile

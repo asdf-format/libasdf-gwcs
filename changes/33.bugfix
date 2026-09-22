@@ -1,0 +1,6 @@
+Fixed the use of the public asdf/gwcs headers in C++ sources.
+
+This deletes the accidental ``static const ... ASDF_GWCS_TRANSFORM_INVALID``
+from the public headers--it was never meant to be there (maybe accidental
+paste).  C accepted it anyways, but C++ does not accept the uninitialized
+static const.

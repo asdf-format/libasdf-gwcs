@@ -89,6 +89,45 @@ if(ASDF_GWCS_WITH_AST)
 endif()
 
 
+# -------- Build and run optional C++ header test ----------------------------
+if (ENABLE_TESTING_CPP)
+    enable_language(CXX)
+
+    if (NOT CMAKE_CXX_COMPILER)
+        message(FATAL_ERROR "C++ compiler required for ENABLE_TESTING_CPP but none found")
+    endif()
+
+    set(GENERATE_CPP_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_test_cpp_headers.sh)
+    set(CPP_HEADER_TEST ${CTEST_BINARY_DIRECTORY}/test-cpp-headers.cpp)
+    file(GLOB ASDF_GWCS_PUBLIC_HEADERS
+        ${CMAKE_SOURCE_DIR}/include/asdf/gwcs/*.h
+        ${CMAKE_SOURCE_DIR}/include/asdf/gwcs/coordinates/*.h
+        ${CMAKE_SOURCE_DIR}/include/asdf/gwcs/transform/*.h
+        ${CMAKE_SOURCE_DIR}/include/asdf/gwcs/transform/property/*.h
+    )
+
+    add_custom_command(
+        OUTPUT ${CPP_HEADER_TEST}
+        COMMAND ${GENERATE_CPP_HEADERS} ${CMAKE_SOURCE_DIR}/include ${CPP_HEADER_TEST} ${ASDF_GWCS_PUBLIC_HEADERS}
+        DEPENDS ${ASDF_GWCS_PUBLIC_HEADERS} ${GENERATE_CPP_HEADERS}
+        COMMENT "Generating C++ header test file"
+        VERBATIM
+    )
+
+    add_executable(test-cpp-headers ${CPP_HEADER_TEST})
+    # The project's own headers must precede any installed copy.
+    target_include_directories(test-cpp-headers BEFORE PRIVATE
+        ${CMAKE_SOURCE_DIR}/include)
+    target_include_directories(test-cpp-headers SYSTEM PRIVATE
+        ${LIBASDF_INCLUDE_DIRS})
+    target_link_libraries(test-cpp-headers PRIVATE libasdf-gwcs ${LIBASDF_LIBRARIES})
+    target_compile_features(test-cpp-headers PRIVATE cxx_std_17)
+    add_test(NAME test-cpp-headers COMMAND test-cpp-headers)
+    set_tests_properties(test-cpp-headers PROPERTIES
+        ENVIRONMENT_MODIFICATION "LD_LIBRARY_PATH=path_list_prepend:${CMAKE_BINARY_DIR}/src")
+endif()
+
+
 # -------- Build and run optional doc tests ----------------------------------
 # The example programs embedded in README.rst and the usage pages are marked
 # with the ``:test:`` option; each is extracted, compiled against the freshly
