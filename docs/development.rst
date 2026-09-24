@@ -412,13 +412,13 @@ the set of interfaces the library implements:
 ``current``
     A monotonically increasing number of the newest interface.
 
-``age``
-    How many older consecutive interfaces are still supported.  The library
-    implements interfaces ``current - age`` through ``current``.
-
 ``revision``
     The implementation serial within ``current``: changes that alter no
     interface at all.
+
+``age``
+    How many older consecutive interfaces are still supported.  The library
+    implements interfaces ``current - age`` through ``current``.
 
 From which::
 

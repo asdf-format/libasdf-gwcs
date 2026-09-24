@@ -29,6 +29,7 @@
 #include <asdf/gwcs/transform/concatenate.h>
 #include <asdf/gwcs/transform/polynomial.h>
 #include <asdf/gwcs/transform/remap_axes.h>
+#include <asdf/gwcs/transform/rotate3d.h>
 #include <asdf/gwcs/transform/rotate_sequence_3d.h>
 #include <asdf/gwcs/transform/shift.h>
 #include <asdf/gwcs/wcs.h>

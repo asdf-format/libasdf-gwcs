@@ -24,6 +24,7 @@ src_files = \
     src/transform/spherical_cartesian.c \
     src/transform/property/bounding_box.c \
     src/transform/remap_axes.c \
+    src/transform/rotate3d.c \
     src/transform/rotate_sequence_3d.c \
     src/transform/scale.c \
     src/transform/shift.c \
@@ -47,6 +48,7 @@ src_headers = \
     src/transform/identity.h \
     src/transform/polynomial.h \
     src/transform/remap_axes.h \
+    src/transform/rotate3d.h \
     src/transform/rotate_sequence_3d.h \
     src/transform/scale.h \
     src/transform/shift.h \
