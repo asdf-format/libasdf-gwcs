@@ -9,7 +9,7 @@ ASDF_BEGIN_DECLS
  * A rotation in 3-D space given by three Euler angles
  *
  * Implements up to version 1.5.0 of the
- * :transform-schema:`transform/rotate3d <rotate3d-1.5.0>` schema.  The three
+ * :transform-schema:`transform/rotate3d <rotate3d-1.3.0>` schema.  The three
  * angles are in degrees, and ``direction`` gives either the order of the
  * axes they are applied about (``"zxz"``, ``"xyz"``, ...) or one of the two
  * spherical conventions, ``"native2celestial"`` and ``"celestial2native"``.
