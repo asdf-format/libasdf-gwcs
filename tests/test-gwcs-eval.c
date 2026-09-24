@@ -133,7 +133,9 @@ static double angular_sep_arcsec(
 #define IMAGE_NX        4088
 #define IMAGE_NY        4088
 #define NPTS            (NGRID * NGRID)
-#define MAX_SEP_ARCSEC  0.001   /* 1 mas -- EXCELLENT threshold */
+
+/* 1 mas -- EXCELLENT threshold same as the Roman benchmarks */
+#define MAX_SEP_ARCSEC  0.001
 
 
 MU_TEST(test_asdf_gwcs_grid2d) {
@@ -363,6 +365,130 @@ MU_TEST(test_asdf_gwcs_eval_roman_build21_vs_gwcs) {
 }
 
 
+/* rotate3d
+ *
+ * This transform didn't appear in any of the reference files so add explicit
+ * tests for it
+ */
+
+/**
+ * Build a two-step WCS wrapping a single transform and evaluate it
+ *
+ * Both frames are plain 2-D frames holding longitude/latitude in degrees, so
+ * the values that come back are the transform's own outputs with no unit
+ * conversion applied (`ast_eval_2d` converts from radians only for a
+ * SkyFrame output).
+ */
+static asdf_gwcs_err_t eval_lonlat_transform(
+        const asdf_gwcs_transform_t *transform,
+        const double *xin, const double *yin,
+        double *xout, double *yout, size_t n) {
+    const asdf_gwcs_backend_t *backend = asdf_gwcs_backend_get("ast_yaml");
+
+    asdf_gwcs_frame2d_t in_frame = {
+        .base = {.type = ASDF_GWCS_FRAME_2D, .name = "native"},
+        .axes_names = {"lon", "lat"},
+        .axes_order = {0, 1},
+        .axis_physical_types = {"pos.eq.ra", "pos.eq.dec"},
+    };
+    asdf_gwcs_frame2d_t out_frame = {
+        .base = {.type = ASDF_GWCS_FRAME_2D, .name = "celestial"},
+        .axes_names = {"lon", "lat"},
+        .axes_order = {0, 1},
+        .axis_physical_types = {"pos.eq.ra", "pos.eq.dec"},
+    };
+    asdf_gwcs_step_t steps[2] = {
+        {.frame = (asdf_gwcs_frame_t *)&in_frame, .transform = transform},
+        {.frame = (asdf_gwcs_frame_t *)&out_frame, .transform = NULL},
+    };
+    asdf_gwcs_t wcs = {.name = "rotate3d_test", .n_steps = 2, .steps = steps};
+
+    asdf_file_t *file = asdf_open(NULL);
+    assert_not_null(file);
+
+    asdf_gwcs_err_t err = ASDF_GWCS_OK;
+    asdf_gwcs_eval_t *eval = asdf_gwcs_eval_create(file, &wcs, backend, &err);
+
+    if (eval) {
+        err = asdf_gwcs_eval_2d(eval, xin, yin, xout, yout, n);
+        asdf_gwcs_eval_destroy(eval);
+    }
+
+    asdf_close(file);
+    return err;
+}
+
+
+/**
+ * Under native2celestial, phi and theta are by definition the celestial
+ * coordinates of the native pole, so the native pole must map to them.
+ */
+MU_TEST(test_asdf_gwcs_eval_rotate3d_native_pole) {
+    if (!asdf_gwcs_backend_get("ast_yaml"))
+        return MUNIT_SKIP;
+
+    static const double phi = 270.0, theta = 66.0, psi = 180.0;
+    asdf_gwcs_rotate3d_t rot = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_ROTATE3D},
+        .phi = phi,
+        .theta = theta,
+        .psi = psi,
+        .direction = "native2celestial",
+    };
+
+    double xin = 0.0, yin = 90.0;
+    double xout = 0.0, yout = 0.0;
+
+    assert_int(eval_lonlat_transform((const asdf_gwcs_transform_t *)&rot,
+        &xin, &yin, &xout, &yout, 1), ==, ASDF_GWCS_OK);
+    assert_double(angular_sep_arcsec(xout, yout, phi, theta), <, MAX_SEP_ARCSEC);
+    return MUNIT_OK;
+}
+
+
+/**
+ * celestial2native inverts native2celestial, so composing the two with the
+ * same angles is the identity.
+ */
+MU_TEST(test_asdf_gwcs_eval_rotate3d_round_trip) {
+    if (!asdf_gwcs_backend_get("ast_yaml"))
+        return MUNIT_SKIP;
+
+    asdf_gwcs_rotate3d_t native2celestial = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_ROTATE3D},
+        .phi = 270.0,
+        .theta = 66.0,
+        .psi = 180.0,
+        .direction = "native2celestial",
+    };
+    asdf_gwcs_rotate3d_t celestial2native = native2celestial;
+    celestial2native.direction = "celestial2native";
+
+    asdf_gwcs_transform_t *forward[2] = {
+        (asdf_gwcs_transform_t *)&native2celestial,
+        (asdf_gwcs_transform_t *)&celestial2native,
+    };
+    asdf_gwcs_compose_t compose = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_COMPOSE},
+        .n_forward = 2,
+        .forward = forward,
+    };
+
+    static const double xin[4] = {0.0, 30.0, 123.4, -45.0};
+    static const double yin[4] = {0.0, 10.0, -60.0, 80.0};
+    double xout[4], yout[4];
+
+    assert_int(eval_lonlat_transform((const asdf_gwcs_transform_t *)&compose,
+        xin, yin, xout, yout, 4), ==, ASDF_GWCS_OK);
+
+    for (size_t idx = 0; idx < 4; idx++)
+        assert_double(angular_sep_arcsec(xout[idx], yout[idx], xin[idx], yin[idx]),
+            <, MAX_SEP_ARCSEC);
+
+    return MUNIT_OK;
+}
+
+
 MU_TEST_SUITE(
     gwcs_eval,
     MU_RUN_TEST(test_asdf_gwcs_grid2d),
@@ -370,7 +496,9 @@ MU_TEST_SUITE(
     MU_RUN_TEST(test_asdf_gwcs_backend_get_ast_yaml),
     MU_RUN_TEST(test_asdf_gwcs_eval_2d_roman_l2),
     MU_RUN_TEST(test_asdf_gwcs_eval_roman_build21_vs_ast),
-    MU_RUN_TEST(test_asdf_gwcs_eval_roman_build21_vs_gwcs)
+    MU_RUN_TEST(test_asdf_gwcs_eval_roman_build21_vs_gwcs),
+    MU_RUN_TEST(test_asdf_gwcs_eval_rotate3d_native_pole),
+    MU_RUN_TEST(test_asdf_gwcs_eval_rotate3d_round_trip)
 );
 
 

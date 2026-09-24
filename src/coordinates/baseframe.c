@@ -1,6 +1,6 @@
-#include <stddef.h>
 #include <assert.h>
 #include <stdatomic.h>
+#include <stddef.h>
 #include <stdlib.h>
 
 #include <asdf/error.h>

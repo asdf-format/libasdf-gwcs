@@ -15,6 +15,7 @@
 #include <asdf/gwcs/transform/polynomial.h>
 #include <asdf/gwcs/transform/property/bounding_box.h>
 #include <asdf/gwcs/transform/remap_axes.h>
+#include <asdf/gwcs/transform/rotate3d.h>
 #include <asdf/gwcs/transform/rotate_sequence_3d.h>
 #include <asdf/gwcs/transform/scale.h>
 #include <asdf/gwcs/transform/shift.h>

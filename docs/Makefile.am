@@ -21,6 +21,7 @@ api_header_pages = \
     api/transform/polynomial.h.rst \
     api/transform/property/bounding_box.h.rst \
     api/transform/remap_axes.h.rst \
+    api/transform/rotate3d.h.rst \
     api/transform/rotate_sequence_3d.h.rst \
     api/transform/scale.h.rst \
     api/transform/shift.h.rst \

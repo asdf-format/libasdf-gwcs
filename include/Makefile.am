@@ -20,6 +20,7 @@ nobase_include_HEADERS = \
     asdf/gwcs/transform/identity.h \
     asdf/gwcs/transform/polynomial.h \
     asdf/gwcs/transform/remap_axes.h \
+    asdf/gwcs/transform/rotate3d.h \
     asdf/gwcs/transform/rotate_sequence_3d.h \
     asdf/gwcs/transform/scale.h \
     asdf/gwcs/transform/shift.h \

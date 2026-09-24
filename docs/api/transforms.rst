@@ -66,6 +66,7 @@ type-specific fields are populated on read and written back out:
    identity <asdf_gwcs_identity_t>
    polynomial <asdf_gwcs_polynomial_t>
    remap_axes <asdf_gwcs_remap_axes_t>
+   rotate3d <asdf_gwcs_rotate3d_t>
    rotate_sequence_3d <asdf_gwcs_rotate_sequence_3d_t>
    scale <asdf_gwcs_scale_t>
    shift <asdf_gwcs_shift_t>
@@ -212,6 +213,7 @@ concrete transform, there are three that are not transform types themselves:
   transform/identity.h
   transform/polynomial.h
   transform/remap_axes.h
+  transform/rotate3d.h
   transform/rotate_sequence_3d.h
   transform/scale.h
   transform/shift.h

@@ -545,6 +545,94 @@ MU_TEST(test_asdf_get_gwcs_rotate_sequence_3d_from_fixture) {
 }
 
 
+/* rotate3d */
+
+static void check_rotate3d_values(
+    const asdf_gwcs_rotate3d_t *rot,
+    double phi, double theta, double psi,
+    const char *expected_direction) {
+    assert_not_null(rot);
+    assert_ptr(((const asdf_gwcs_transform_t *)rot)->type, ==,
+        ASDF_GWCS_TRANSFORM_ROTATE3D);
+    assert_double_equal(rot->phi, phi, 10);
+    assert_double_equal(rot->theta, theta, 10);
+    assert_double_equal(rot->psi, psi, 10);
+    assert_string_equal(rot->direction, expected_direction);
+    assert_uint32(rot->n_inputs, ==, 2);
+    assert_uint32(rot->n_outputs, ==, 2);
+}
+
+
+/* Write a rotate3d with the given direction, read it back, and check it */
+static void check_rotate3d_round_trip(const char *path, const char *direction) {
+    asdf_file_t *file = asdf_open(NULL);
+    assert_not_null(file);
+
+    asdf_gwcs_rotate3d_t rot = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_ROTATE3D},
+        .phi = 12.3,
+        .theta = 34.0,
+        .psi = -1.2,
+        .direction = direction,
+    };
+
+    assert_int(asdf_set_gwcs_rotate3d(file, "transform", &rot), ==, ASDF_VALUE_OK);
+    assert_int(asdf_write_to(file, path), ==, 0);
+    asdf_close(file);
+
+    file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_rotate3d_t *rot_out = NULL;
+    assert_int(asdf_get_gwcs_rotate3d(file, "transform", &rot_out), ==, ASDF_VALUE_OK);
+    check_rotate3d_values(rot_out, 12.3, 34.0, -1.2, direction);
+
+    asdf_gwcs_rotate3d_destroy(rot_out);
+    asdf_close(file);
+}
+
+
+MU_TEST(test_asdf_set_gwcs_rotate3d) {
+    /* The two shapes `direction` can take: a spherical convention, and one
+     * of the Euler axis orders. */
+    check_rotate3d_round_trip(
+        get_temp_file_path(fixture->tempfile_prefix, ".asdf"), "native2celestial");
+    check_rotate3d_round_trip(
+        get_temp_file_path(fixture->tempfile_prefix, ".asdf"), "zxz");
+    return MUNIT_OK;
+}
+
+
+MU_TEST(test_asdf_get_gwcs_rotate3d_default_direction) {
+    /* `direction` is nominally required, but defaults to native2celestial */
+    const char *path = get_temp_file_path(fixture->tempfile_prefix, ".asdf");
+    asdf_file_t *file = asdf_open(NULL);
+    assert_not_null(file);
+
+    asdf_gwcs_rotate3d_t rot = {
+        .base = {.type = ASDF_GWCS_TRANSFORM_ROTATE3D},
+        .phi = 12.3,
+        .theta = 34.0,
+        .psi = -1.2,
+    };
+
+    assert_int(asdf_set_gwcs_rotate3d(file, "transform", &rot), ==, ASDF_VALUE_OK);
+    assert_int(asdf_write_to(file, path), ==, 0);
+    asdf_close(file);
+
+    file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_rotate3d_t *rot_out = NULL;
+    assert_int(asdf_get_gwcs_rotate3d(file, "transform", &rot_out), ==, ASDF_VALUE_OK);
+    check_rotate3d_values(rot_out, 12.3, 34.0, -1.2, "native2celestial");
+
+    asdf_gwcs_rotate3d_destroy(rot_out);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
 /* compose */
 
 MU_TEST(test_asdf_set_gwcs_compose) {
@@ -1194,6 +1282,8 @@ MU_TEST_SUITE(
     MU_RUN_TEST(test_asdf_get_gwcs_polynomial_from_fixture),
     MU_RUN_TEST(test_asdf_set_gwcs_rotate_sequence_3d),
     MU_RUN_TEST(test_asdf_get_gwcs_rotate_sequence_3d_from_fixture),
+    MU_RUN_TEST(test_asdf_set_gwcs_rotate3d),
+    MU_RUN_TEST(test_asdf_get_gwcs_rotate3d_default_direction),
     MU_RUN_TEST(test_asdf_set_gwcs_compose),
     MU_RUN_TEST(test_asdf_get_gwcs_compose_from_fixture),
     MU_RUN_TEST(test_asdf_set_gwcs_concatenate),
