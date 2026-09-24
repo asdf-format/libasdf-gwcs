@@ -12,7 +12,7 @@ set(PACKAGE_BUGREPORT https://github.com/asdf-format/libasdf-gwcs/issues)
 # Shared library interface version: see configure.ac and please keep
 # these in sync.
 set(PROJECT_SOVERSION 0)
-set(PROJECT_LIBVERSION 0.0.0)
+set(PROJECT_LIBVERSION 0.1.0)
 
 project(libasdf-gwcs
     VERSION ${PROJECT_VERSION}

@@ -26,8 +26,10 @@ AC_INIT(
 #
 # History:
 #
-#   - 0:0:0 (0.1.0):  initial release
-LIBASDF_GWCS_VERSION_INFO=0:0:0
+#   - 0:0:0 (0.1.0):  Initial release
+#   - 1:0:1 (0.2.0):  Support for asdf_gwcs_rotate3d_t adds new generated
+#                     extension methods
+LIBASDF_GWCS_VERSION_INFO=1:0:1
 AC_SUBST([LIBASDF_GWCS_VERSION_INFO])
 
 AC_CONFIG_AUX_DIR([build-aux])
