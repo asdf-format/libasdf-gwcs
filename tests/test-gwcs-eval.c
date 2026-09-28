@@ -12,6 +12,12 @@
 #include <asdf/gwcs/grid.h>
 #include <asdf/gwcs/gwcs.h>
 
+#include "config.h"
+
+#ifdef HAVE_PTHREAD
+#include <pthread.h>
+#endif
+
 #include "munit.h"
 #include "util.h"
 
@@ -489,6 +495,301 @@ MU_TEST(test_asdf_gwcs_eval_rotate3d_round_trip) {
 }
 
 
+/* asdf_gwcs_eval_copy
+ *
+ * An eval context belongs to the thread that created it; copying is how one
+ * WCS gets evaluated from a worker pool.
+ */
+
+#define COPY_N_POINTS 64
+#define COPY_N_THREADS 8
+#define COPY_N_ITERS 500
+
+
+/** A fixture WCS and its eval context, held open together */
+typedef struct {
+    asdf_file_t *file;
+    asdf_gwcs_t *wcs;
+    asdf_gwcs_eval_t *eval;
+} copy_fixture_t;
+
+
+/**
+ * Open the simplest GWCS fixture and create an eval context for it
+ *
+ * Returns false when no evaluation backend is registered, so the caller can
+ * skip.
+ */
+static bool copy_fixture_open(copy_fixture_t *fx) {
+    const asdf_gwcs_backend_t *backend = asdf_gwcs_backend_get("ast_yaml");
+
+    if (!backend)
+        return false;
+
+    *fx = (copy_fixture_t){0};
+    fx->file = asdf_open(get_fixture_file_path("roman_l3_wcs.asdf"), "r");
+    assert_not_null(fx->file);
+
+    assert_int(asdf_get_gwcs(fx->file, "wcs", &fx->wcs), ==, ASDF_VALUE_OK);
+    assert_not_null(fx->wcs);
+
+    asdf_gwcs_err_t err = ASDF_GWCS_OK;
+    fx->eval = asdf_gwcs_eval_create(fx->file, fx->wcs, backend, &err);
+    assert_int(err, ==, ASDF_GWCS_OK);
+    assert_not_null(fx->eval);
+
+    return true;
+}
+
+
+static void copy_fixture_close(copy_fixture_t *fx) {
+    asdf_gwcs_eval_destroy(fx->eval);
+    asdf_gwcs_destroy(fx->wcs);
+    asdf_close(fx->file);
+}
+
+
+/** Fill the input arrays with a spread of pixel positions, some out of bounds */
+static void copy_inputs(double *xin, double *yin) {
+    for (size_t idx = 0; idx < COPY_N_POINTS; idx++) {
+        xin[idx] = -100.0 + (double)idx * 97.0;
+        yin[idx] = 5100.0 - (double)idx * 83.0;
+    }
+}
+
+
+/**
+ * Evaluate on *eval* and assert the results are bit-identical to the reference
+ *
+ * Bitwise rather than approximate: a copy is a copy, and anything short of
+ * identical means the copied AST objects are not the same transform.
+ */
+static void assert_eval_matches(
+    asdf_gwcs_eval_t *eval, const double *xref, const double *yref) {
+
+    double xin[COPY_N_POINTS], yin[COPY_N_POINTS];
+    double xout[COPY_N_POINTS], yout[COPY_N_POINTS];
+
+    copy_inputs(xin, yin);
+    assert_int(asdf_gwcs_eval_2d(eval, xin, yin, xout, yout, COPY_N_POINTS),
+               ==, ASDF_GWCS_OK);
+    assert_memory_equal(sizeof(xout), xout, xref);
+    assert_memory_equal(sizeof(yout), yout, yref);
+}
+
+
+/** Reference results for the fixture, evaluated on *eval* itself */
+static void copy_reference(asdf_gwcs_eval_t *eval, double *xref, double *yref) {
+    double xin[COPY_N_POINTS], yin[COPY_N_POINTS];
+
+    copy_inputs(xin, yin);
+    assert_int(asdf_gwcs_eval_2d(eval, xin, yin, xref, yref, COPY_N_POINTS),
+               ==, ASDF_GWCS_OK);
+}
+
+
+MU_TEST(test_asdf_gwcs_eval_copy) {
+    copy_fixture_t fx;
+    double xref[COPY_N_POINTS];
+    double yref[COPY_N_POINTS];
+
+    if (!copy_fixture_open(&fx))
+        return MUNIT_SKIP;
+
+    copy_reference(fx.eval, xref, yref);
+
+    asdf_gwcs_err_t err = ASDF_GWCS_ERR_OOM;
+    asdf_gwcs_eval_t *copy = asdf_gwcs_eval_copy(fx.eval, &err);
+    assert_int(err, ==, ASDF_GWCS_OK);
+    assert_not_null(copy);
+    assert_ptr_not_equal(copy, fx.eval);
+    assert_eval_matches(copy, xref, yref);
+
+    /* A copy of a copy is just as good, and the original stays usable */
+    asdf_gwcs_eval_t *copy2 = asdf_gwcs_eval_copy(copy, &err);
+    assert_int(err, ==, ASDF_GWCS_OK);
+    assert_not_null(copy2);
+    assert_eval_matches(copy2, xref, yref);
+    assert_eval_matches(fx.eval, xref, yref);
+
+    /* Copies are independent of their source in either direction */
+    asdf_gwcs_eval_destroy(copy);
+    assert_eval_matches(copy2, xref, yref);
+    copy_fixture_close(&fx);
+    assert_eval_matches(copy2, xref, yref);
+    asdf_gwcs_eval_destroy(copy2);
+
+    return MUNIT_OK;
+}
+
+
+MU_TEST(test_asdf_gwcs_eval_copy_invalid) {
+    asdf_gwcs_err_t err = ASDF_GWCS_OK;
+
+    assert_null(asdf_gwcs_eval_copy(NULL, &err));
+    assert_int(err, ==, ASDF_GWCS_ERR_INVAL);
+
+    /* err_out is optional */
+    assert_null(asdf_gwcs_eval_copy(NULL, NULL));
+    return MUNIT_OK;
+}
+
+
+#ifdef HAVE_PTHREAD
+/* Utilities for the multi-threaded copy tests */
+
+/**
+ * Release all worker threads at once
+ *
+ * pthread_barrier_t is not available on macOS, and overlapping the copies is
+ * the entire point of the test, so instead block all threads on a condition
+ * variable until ready.
+ */
+typedef struct {
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
+    bool open;
+} gate_t;
+
+
+static void gate_init(gate_t *gate) {
+    pthread_mutex_init(&gate->mutex, NULL);
+    pthread_cond_init(&gate->cond, NULL);
+    gate->open = false;
+}
+
+
+static void gate_destroy(gate_t *gate) {
+    pthread_mutex_destroy(&gate->mutex);
+    pthread_cond_destroy(&gate->cond);
+}
+
+
+static void gate_wait(gate_t *gate) {
+    pthread_mutex_lock(&gate->mutex);
+
+    while (!gate->open)
+        pthread_cond_wait(&gate->cond, &gate->mutex);
+
+    pthread_mutex_unlock(&gate->mutex);
+}
+
+
+static void gate_open(gate_t *gate) {
+    pthread_mutex_lock(&gate->mutex);
+    gate->open = true;
+    pthread_cond_broadcast(&gate->cond);
+    pthread_mutex_unlock(&gate->mutex);
+}
+
+
+typedef struct {
+    gate_t *gate;
+    asdf_gwcs_eval_t *shared;
+    const double *xref;
+    const double *yref;
+    /** evaluations that returned an error or the wrong answer */
+    size_t failures;
+} worker_t;
+
+
+/** Entrypoint for worker threads that copy an asdf_gwcs_eval_t context */
+static void *copy_worker(void *arg) {
+    worker_t *w = arg;
+    asdf_gwcs_err_t err = ASDF_GWCS_OK;
+    double xin[COPY_N_POINTS];
+    double yin[COPY_N_POINTS];
+    double xout[COPY_N_POINTS];
+    double yout[COPY_N_POINTS];
+
+    copy_inputs(xin, yin);
+
+    /* Copy only once every worker is ready, so the copies really do overlap */
+    gate_wait(w->gate);
+    asdf_gwcs_eval_t *eval = asdf_gwcs_eval_copy(w->shared, &err);
+
+    if (!eval || err != ASDF_GWCS_OK) {
+        w->failures++;
+        return NULL;
+    }
+
+    for (size_t idx = 0; idx < COPY_N_ITERS; idx++) {
+        if (ASDF_GWCS_OK !=
+            asdf_gwcs_eval_2d(eval, xin, yin, xout, yout, COPY_N_POINTS)) {
+            w->failures++;
+            continue;
+        }
+
+        if (0 != memcmp(xout, w->xref, sizeof(xout)) ||
+            0 != memcmp(yout, w->yref, sizeof(yout)))
+            w->failures++;
+    }
+
+    asdf_gwcs_eval_destroy(eval);
+    return NULL;
+}
+
+
+/** Run COPY_N_THREADS workers against *shared* and assert none failed */
+static void run_workers(asdf_gwcs_eval_t *shared, const double *xref,
+                        const double *yref) {
+
+    pthread_t threads[COPY_N_THREADS];
+    worker_t workers[COPY_N_THREADS];
+    gate_t gate;
+
+    gate_init(&gate);
+
+    for (size_t idx = 0; idx < COPY_N_THREADS; idx++) {
+        workers[idx] = (worker_t){
+            .gate = &gate,
+            .shared = shared,
+            .xref = xref,
+            .yref = yref,
+        };
+        assert_int(pthread_create(&threads[idx], NULL, copy_worker,
+                                  &workers[idx]), ==, 0);
+    }
+
+    /* All workers are started, now unblock them and wait for results */
+    gate_open(&gate);
+
+    for (size_t idx = 0; idx < COPY_N_THREADS; idx++)
+        assert_int(pthread_join(threads[idx], NULL), ==, 0);
+
+    for (size_t idx = 0; idx < COPY_N_THREADS; idx++)
+        assert_size(workers[idx].failures, ==, 0);
+
+    gate_destroy(&gate);
+}
+
+
+MU_TEST(test_asdf_gwcs_eval_copy_threaded) {
+    copy_fixture_t fx;
+    double xref[COPY_N_POINTS], yref[COPY_N_POINTS];
+
+    if (!copy_fixture_open(&fx))
+        return MUNIT_SKIP;
+
+    copy_reference(fx.eval, xref, yref);
+    run_workers(fx.eval, xref, yref);
+
+    /* The original survives having been borrowed by every worker */
+    assert_eval_matches(fx.eval, xref, yref);
+    copy_fixture_close(&fx);
+
+    return MUNIT_OK;
+}
+
+#else /* !HAVE_PTHREAD */
+
+MU_TEST(test_asdf_gwcs_eval_copy_threaded) {
+    return MUNIT_SKIP;
+}
+
+#endif /* HAVE_PTHREAD */
+
+
 MU_TEST_SUITE(
     gwcs_eval,
     MU_RUN_TEST(test_asdf_gwcs_grid2d),
@@ -498,7 +799,10 @@ MU_TEST_SUITE(
     MU_RUN_TEST(test_asdf_gwcs_eval_roman_build21_vs_ast),
     MU_RUN_TEST(test_asdf_gwcs_eval_roman_build21_vs_gwcs),
     MU_RUN_TEST(test_asdf_gwcs_eval_rotate3d_native_pole),
-    MU_RUN_TEST(test_asdf_gwcs_eval_rotate3d_round_trip)
+    MU_RUN_TEST(test_asdf_gwcs_eval_rotate3d_round_trip),
+    MU_RUN_TEST(test_asdf_gwcs_eval_copy),
+    MU_RUN_TEST(test_asdf_gwcs_eval_copy_invalid),
+    MU_RUN_TEST(test_asdf_gwcs_eval_copy_threaded)
 );
 
 

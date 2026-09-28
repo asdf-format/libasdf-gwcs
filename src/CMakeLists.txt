@@ -57,6 +57,13 @@ target_link_libraries(libasdf-gwcs PUBLIC
     stc
     ${LIBASDF_LIBRARIES}
 )
+
+# The OBJECT library needs the -pthread compile flag, which only reaches it
+# via Threads::Threads' usage requirements.
+if(CMAKE_USE_PTHREADS_INIT)
+    target_link_libraries(libasdf_gwcs_objs PUBLIC Threads::Threads)
+    target_link_libraries(libasdf-gwcs PUBLIC Threads::Threads)
+endif()
 target_link_directories(libasdf-gwcs PUBLIC ${LIBASDF_LIBRARY_DIRS})
 
 # pkg_check_modules yields a bare "-lasdf", so CMake records no RPATH for it.

@@ -40,6 +40,8 @@ typedef enum {
     ASDF_GWCS_OK = 0,
     /** Out of memory */
     ASDF_GWCS_ERR_OOM,
+    /** An argument was NULL or otherwise invalid */
+    ASDF_GWCS_ERR_INVAL,
     /** The requested operation is not yet implemented */
     ASDF_GWCS_ERR_NOT_IMPLEMENTED,
     /** No backend is available to evaluate the WCS */

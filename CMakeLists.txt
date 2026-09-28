@@ -53,6 +53,16 @@ add_compile_definitions(ASDF_LOG_ENABLED)
 # Find libasdf via pkg-config
 pkg_check_modules(LIBASDF libasdf REQUIRED)
 
+# POSIX threads.  Used to guard the ownership-transfer window in
+# asdf_gwcs_eval_copy; without them the library still builds and works
+# single-threaded (and the vendored AST is not THREAD_SAFE either, so there
+# is nothing to guard).
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads)
+if(CMAKE_USE_PTHREADS_INIT)
+    set(HAVE_PTHREAD 1)
+endif()
+
 # Generate config.h
 configure_file(${CMAKE_SOURCE_DIR}/config.h.cmake
     ${CMAKE_BINARY_DIR}/include/config.h @ONLY)

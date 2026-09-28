@@ -67,6 +67,10 @@ foreach(source_file ${source_files})
         ${LIBASDF_LIBRARIES}
     )
 
+    if(CMAKE_USE_PTHREADS_INIT)
+        target_link_libraries(${test_executable} PRIVATE Threads::Threads)
+    endif()
+
     add_test(${test_executable} ${test_executable})
     set_tests_properties(${test_executable}
         PROPERTIES TIMEOUT 240)

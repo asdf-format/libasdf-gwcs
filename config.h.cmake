@@ -7,6 +7,9 @@
 /* Define if AST evaluation backend is available */
 #cmakedefine HAVE_AST
 
+/* Define if POSIX threads are available */
+#cmakedefine HAVE_PTHREAD
+
 /* Name of package */
 #define PACKAGE "@PACKAGE_NAME@"
 

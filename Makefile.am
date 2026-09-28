@@ -73,7 +73,7 @@ lib_LTLIBRARIES = libasdf-gwcs.la
 libasdf_gwcs_la_SOURCES = $(src_files)
 libasdf_gwcs_la_CFLAGS = $(AM_CFLAGS)
 libasdf_gwcs_la_LDFLAGS = $(AM_LDFLAGS) -version-info $(LIBASDF_GWCS_VERSION_INFO)
-libasdf_gwcs_la_LIBADD = third_party/libstc.la $(LIBASDF_LIBS)
+libasdf_gwcs_la_LIBADD = third_party/libstc.la $(LIBASDF_LIBS) $(PTHREAD_LIBS)
 
 if HAVE_AST
 src_files += src/backends/ast_yaml.c
