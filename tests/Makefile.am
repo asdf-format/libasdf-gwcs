@@ -21,6 +21,7 @@ TESTS_ENVIRONMENT = top_builddir=$(top_builddir) top_srcdir=$(top_srcdir)
 TESTS = $(check_PROGRAMS)
 
 unit_test_cppflags = \
+    $(AST_CFLAGS) \
     $(AM_CPPFLAGS) \
     -DREFERENCE_FILES_DIR=\"$(abs_srcdir)/fixtures\" \
     -DFIXTURES_DIR=\"$(abs_srcdir)/fixtures\" \
@@ -54,7 +55,7 @@ test_gwcs_unit_LDADD = $(unit_test_ldadd)
 
 # test-gwcs-eval.unit
 test_gwcs_eval_unit_SOURCES = test-gwcs-eval.c
-test_gwcs_eval_unit_CFLAGS = $(unit_test_cflags) $(AST_CFLAGS)
+test_gwcs_eval_unit_CFLAGS = $(unit_test_cflags)
 test_gwcs_eval_unit_LDFLAGS = $(unit_test_ldflags)
 test_gwcs_eval_unit_LDADD = $(unit_test_ldadd) $(AST_LIBS)
 

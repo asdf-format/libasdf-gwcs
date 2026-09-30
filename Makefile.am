@@ -60,7 +60,10 @@ src_headers = \
     src/util.h
 
 AM_CFLAGS = $(ASDF_GWCS_CFLAGS) $(LIBASDF_CFLAGS) -fvisibility=hidden -fmacro-prefix-map=$(top_srcdir)/=
-AM_CPPFLAGS = $(STC_CPPFLAGS) -I$(top_srcdir)/include -I$(top_srcdir)/src
+# AST_CFLAGS goes in CPPFLAGS, which automake emits before CFLAGS, so the
+# vendored AST's generated ast.h wins over any copy installed into a
+# prefix that LIBASDF_CFLAGS also points at.
+AM_CPPFLAGS = $(AST_CFLAGS) $(STC_CPPFLAGS) -I$(top_srcdir)/include -I$(top_srcdir)/src
 AM_LDFLAGS = $(ASDF_GWCS_LDFLAGS)
 ACLOCAL_AMFLAGS = -Im4
 
@@ -75,7 +78,6 @@ libasdf_gwcs_la_LIBADD = third_party/libstc.la $(LIBASDF_LIBS)
 if HAVE_AST
 src_files += src/backends/ast_yaml.c
 libasdf_gwcs_la_SOURCES += src/backends/ast_yaml.c
-libasdf_gwcs_la_CFLAGS  += $(AST_CFLAGS)
 libasdf_gwcs_la_LIBADD  += $(AST_LIBS) $(FYAML_LIBS)
 
 # AST reaches the link through @AST_LIBS@, which automake cannot see into, so
