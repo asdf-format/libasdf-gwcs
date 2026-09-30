@@ -100,11 +100,10 @@ if(ASDF_GWCS_WITH_AST)
         )
         set(AST_INCLUDE_DIR ${AST_INSTALL_DIR}/include)
         set(_ast_lib_dir ${AST_INSTALL_DIR}/lib)
-        # AST's CMake build compiles ast_pal and ast_cminpack as OBJECT
-        # libraries embedded directly into libast.a, so they don't need to
-        # be listed separately here (unlike the autotools build).
         set(AST_LIBRARIES
             ${_ast_lib_dir}/libast.a
+            ${_ast_lib_dir}/libast_pal.a
+            ${_ast_lib_dir}/libast_cminpack.a
             ${_ast_lib_dir}/libast_grf_2.0.a
             ${_ast_lib_dir}/libast_grf_3.2.a
             ${_ast_lib_dir}/libast_grf_5.6.a
