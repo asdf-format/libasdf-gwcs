@@ -101,12 +101,21 @@ if(ASDF_GWCS_WITH_AST)
                 # default, so ask for it explicitly here too, which the
                 # AST CI also does I think.
                 -DAST_C_STANDARD=11
+                # AST installs ast.h under include/star by default; we
+                # include it as <ast.h>, so ask for the top-level copy
+                # too.  Without it the include falls through to whatever
+                # other ast.h happens to be on the search path.
+                -DAST_WITH_TOPINCLUDE=ON
                 # AST is absorbed into libasdf-gwcs, so keep its ~2500 symbols
                 # out of our exported ABI; they would otherwise collide with a
                 # program linking its own libast.  ExternalProject does not
                 # inherit the top-level add_compile_options.
                 -DCMAKE_C_VISIBILITY_PRESET=hidden
             INSTALL_DIR ${AST_INSTALL_DIR}
+            # Always rebuild vendored AST, otherwise it's stamped as already
+            # built and can go stale.  The sub-build remains incremental so
+            # this remains almost a no-op if there are no changes to AST.
+            BUILD_ALWAYS ON
         )
         set(AST_INCLUDE_DIR ${AST_INSTALL_DIR}/include)
         set(_ast_lib_dir ${AST_INSTALL_DIR}/lib)
