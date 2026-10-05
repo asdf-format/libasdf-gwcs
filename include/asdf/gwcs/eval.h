@@ -23,6 +23,11 @@ ASDF_BEGIN_DECLS
  *
  * Concrete backends embed this struct as their first member, enabling safe
  * casting between the base type and the backend-specific type.
+ *
+ * An evaluation context belongs to the thread that created it and must not
+ * be used from any other thread.  To evaluate one WCS from several threads,
+ * create the context once and give each thread its own
+ * `asdf_gwcs_eval_copy`.
  */
 typedef struct asdf_gwcs_eval asdf_gwcs_eval_t;
 
@@ -72,6 +77,28 @@ ASDF_EXPORT asdf_gwcs_err_t asdf_gwcs_eval_2d(
     asdf_gwcs_eval_t *eval,
     const double *xin, const double *yin,
     double *xout, double *yout, size_t n);
+
+/**
+ * Create an independent copy of an evaluation context for use by another
+ * thread
+ *
+ * An `asdf_gwcs_eval_t` may only be used by the thread that created it.  To
+ * evaluate the same WCS from several threads, create it once and give each
+ * thread its own copy.  The returned context is independent of the original
+ * and requires no further synchronization: evaluate on it at full speed,
+ * and destroy it with `asdf_gwcs_eval_destroy` like any other context.
+ *
+ * May be called from any thread, on the original or on another copy, and
+ * concurrently from several threads at once.  The original and the copy may
+ * be destroyed in either order.
+ *
+ * :param eval: The context to copy.
+ * :param err_out: If non-NULL, receives the error code on failure.  Backends
+ *   that cannot copy a context yield `ASDF_GWCS_ERR_NOT_IMPLEMENTED`.
+ * :return: A new `asdf_gwcs_eval_t`, or NULL on error.
+ */
+ASDF_EXPORT asdf_gwcs_eval_t *asdf_gwcs_eval_copy(
+    asdf_gwcs_eval_t *eval, asdf_gwcs_err_t *err_out);
 
 /**
  * Release all resources held by an evaluation context

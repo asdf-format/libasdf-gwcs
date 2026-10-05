@@ -56,6 +56,25 @@ asdf_gwcs_err_t asdf_gwcs_eval_2d(
 }
 
 
+asdf_gwcs_eval_t *asdf_gwcs_eval_copy(asdf_gwcs_eval_t *eval, asdf_gwcs_err_t *err_out) {
+    asdf_gwcs_err_t err = ASDF_GWCS_OK;
+
+    if (!eval)
+        err = ASDF_GWCS_ERR_INVAL;
+    else if (!eval->copy)
+        err = ASDF_GWCS_ERR_NOT_IMPLEMENTED;
+
+    if (err != ASDF_GWCS_OK) {
+        if (err_out)
+            *err_out = err;
+
+        return NULL;
+    }
+
+    return eval->copy(eval, err_out);
+}
+
+
 void asdf_gwcs_eval_destroy(asdf_gwcs_eval_t *eval) {
     if (!eval)
         return;

@@ -7,6 +7,8 @@ const char *asdf_gwcs_strerror(asdf_gwcs_err_t err) {
         return "no error";
     case ASDF_GWCS_ERR_OOM:
         return "out of memory";
+    case ASDF_GWCS_ERR_INVAL:
+        return "invalid argument";
     case ASDF_GWCS_ERR_NOT_IMPLEMENTED:
         return "operation not implemented";
     case ASDF_GWCS_ERR_BACKEND_NOT_AVAILABLE:

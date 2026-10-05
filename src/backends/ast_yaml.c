@@ -20,7 +20,9 @@
 
 typedef struct {
     asdf_gwcs_eval_t base;
+    /** unowned at rest; the object other threads borrow in order to copy */
     AstFrameSet *frameset;
+    /** stays locked to the thread that owns this context; what eval_2d uses */
     AstMapping *mapping;
     /** output frame is a SkyFrame -> outputs are in radians */
     bool is_sky_frame;
@@ -28,6 +30,28 @@ typedef struct {
 
 
 static const double R2D = 180.0 / M_PI;
+
+
+/* Give up the frameset, leaving it owned by no thread.
+ *
+ * Everything arrives locked to the calling thread, since that is how astRead
+ * and astCopy hand objects back.  Releasing the frameset is what makes it
+ * reachable by ast_eval_copy from another thread: a copier queues for it with
+ * astLock, and a frameset this thread never released would block that copier
+ * forever.  So this is required for liveness, not tidiness, and every path
+ * that builds a context has to end here.
+ */
+static void ast_eval_rest(asdf_gwcs_ast_eval_t *ctx) {
+    if (ctx->frameset)
+        astUnlock(ctx->frameset, 1);
+}
+
+
+/* Reclaim what ast_eval_rest gave up, so the objects can be annulled. */
+static void ast_eval_reacquire(asdf_gwcs_ast_eval_t *ctx) {
+    if (ctx->frameset)
+        astLock(ctx->frameset, 1);
+}
 
 
 static asdf_gwcs_err_t ast_eval_2d(
@@ -62,13 +86,104 @@ static asdf_gwcs_err_t ast_eval_2d(
 static void ast_eval_destroy(asdf_gwcs_eval_t *self) {
     asdf_gwcs_ast_eval_t *ctx = (asdf_gwcs_ast_eval_t *)self;
 
+    /* astAnnul itself tolerates an object this thread does not own, but
+     * deleting the last reference to one does not (upstream bug).
+     *
+     * Waiting for other threads to finish and reacquiring the lock allows
+     * safe deletion.
+     */
+    ast_eval_reacquire(ctx);
+
     if (ctx->mapping)
         ctx->mapping = astAnnul(ctx->mapping);
 
     if (ctx->frameset)
         ctx->frameset = astAnnul(ctx->frameset);
 
+    astClearStatus;
     free(ctx);
+}
+
+
+/* astGetMapping normally hands back an independent astCopy, but when the base
+ * and current Frames are the same it returns an astClone of a Frame the
+ * FrameSet contains (frameset.c:5437).  A shared object would be unlocked out
+ * from under the owner the moment the FrameSet is released, so copy
+ * unconditionally.
+ */
+static AstMapping *ast_mapping_of(AstFrameSet *frameset) {
+    AstMapping *shared = astGetMapping(frameset, AST__BASE, AST__CURRENT);
+
+    if (!shared)
+        return NULL;
+
+    AstMapping *mapping = astCopy(shared);
+
+    astAnnul(shared);
+    return mapping;
+}
+
+
+static asdf_gwcs_eval_t *ast_eval_copy(asdf_gwcs_eval_t *self, asdf_gwcs_err_t *err_out) {
+    asdf_gwcs_ast_eval_t *ctx = (asdf_gwcs_ast_eval_t *)self;
+    asdf_gwcs_ast_eval_t *new_ctx = calloc(1, sizeof(*new_ctx));
+    asdf_gwcs_err_t err = ASDF_GWCS_OK;
+
+    if (!new_ctx) {
+        err = ASDF_GWCS_ERR_OOM;
+        goto done;
+    }
+
+    new_ctx->base = ctx->base;
+    new_ctx->is_sky_frame = ctx->is_sky_frame;
+
+    /* Take a handle of our own to the frameset, then wait for the object
+     * through it.  astClone does not require us to own the object (it only
+     * bumps a refcount under the object's secondary mutex), and astLock on
+     * our own handle blocks until whichever thread is mid-copy releases it.
+     * AST does the queueing, so no mutex of ours is involved. */
+    AstFrameSet *handle = astClone(ctx->frameset);
+
+    if (handle) {
+        astLock(handle, 1);
+        /* astCopy hands objects back already locked to the calling thread. */
+        new_ctx->frameset = astCopy(handle);
+        astUnlock(handle, 1);
+        astAnnul(handle);
+    }
+
+    if (new_ctx->frameset)
+        new_ctx->mapping = ast_mapping_of(new_ctx->frameset);
+
+    /* An astCopy failure here is an allocation failure in practice. */
+    if (!astOK || !new_ctx->frameset || !new_ctx->mapping) {
+        astClearStatus;
+        err = ASDF_GWCS_ERR_OOM;
+        goto done;
+    }
+
+    ast_eval_rest(new_ctx);
+
+done:
+    if (err_out)
+        *err_out = err;
+
+    if (err != ASDF_GWCS_OK) {
+        if (new_ctx) {
+            if (new_ctx->mapping)
+                astAnnul(new_ctx->mapping);
+
+            if (new_ctx->frameset)
+                astAnnul(new_ctx->frameset);
+
+            astClearStatus;
+            free(new_ctx);
+        }
+
+        return NULL;
+    }
+
+    return &new_ctx->base;
 }
 
 
@@ -205,9 +320,16 @@ static asdf_gwcs_eval_t *ast_pipeline_create(
 
     ctx->base.eval_2d = ast_eval_2d;
     ctx->base.destroy = ast_eval_destroy;
+    ctx->base.copy = ast_eval_copy;
     ctx->frameset = (AstFrameSet *)obj;
-    ctx->mapping = astGetMapping(ctx->frameset, AST__BASE, AST__CURRENT);
+    ctx->mapping = ast_mapping_of(ctx->frameset);
     obj = NULL;
+
+    if (!ctx->mapping || !astOK) {
+        astClearStatus;
+        err = ASDF_GWCS_ERR_PARSE_FAILED;
+        goto done;
+    }
 
     /* TODO: When dealing with sky frames, by default the units of the AST
      * output are in radians, while the default units in GWCS are degrees.
@@ -222,6 +344,7 @@ static asdf_gwcs_eval_t *ast_pipeline_create(
         astAnnul(frame);
 
     astClearStatus;
+    ast_eval_rest(ctx);
 
 done:
     if (chan)
@@ -247,6 +370,7 @@ done:
             if (ctx->frameset)
                 astAnnul(ctx->frameset);
 
+            astClearStatus;
             free(ctx);
             ctx = NULL;
         }

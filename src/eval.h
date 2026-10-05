@@ -15,4 +15,6 @@ struct asdf_gwcs_eval {
         double *yout,
         size_t n);
     void (*destroy)(asdf_gwcs_eval_t *self);
+    /** Deep-copy for use by another thread; NULL if the backend cannot */
+    asdf_gwcs_eval_t *(*copy)(asdf_gwcs_eval_t *self, asdf_gwcs_err_t *err_out);
 };

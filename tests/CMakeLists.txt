@@ -67,6 +67,10 @@ foreach(source_file ${source_files})
         ${LIBASDF_LIBRARIES}
     )
 
+    if(CMAKE_USE_PTHREADS_INIT)
+        target_link_libraries(${test_executable} PRIVATE Threads::Threads)
+    endif()
+
     add_test(${test_executable} ${test_executable})
     set_tests_properties(${test_executable}
         PROPERTIES TIMEOUT 240)
@@ -81,7 +85,10 @@ endforeach()
 
 if(ASDF_GWCS_WITH_AST)
     target_compile_definitions(test-gwcs-eval PRIVATE HAVE_AST)
-    target_include_directories(test-gwcs-eval PRIVATE ${AST_INCLUDE_DIR})
+    # BEFORE: the vendored AST's generated ast.h must win over any copy
+    # installed into a prefix that LIBASDF_INCLUDE_DIRS also points at,
+    # otherwise we compile against the wrong headers.
+    target_include_directories(test-gwcs-eval BEFORE PRIVATE ${AST_INCLUDE_DIR})
     target_link_libraries(test-gwcs-eval PRIVATE ${AST_LIBRARY})
     if(TARGET ast_vendored)
         add_dependencies(test-gwcs-eval ast_vendored)

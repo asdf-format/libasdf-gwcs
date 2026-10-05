@@ -36,7 +36,8 @@ unit_test_cflags += -DMUNIT_NO_FORK
 unit_test_ldflags += -rdynamic
 endif
 
-unit_test_ldadd = libmunit.a $(top_builddir)/libasdf-gwcs.la $(LIBASDF_LIBS)
+unit_test_ldadd = libmunit.a $(top_builddir)/libasdf-gwcs.la $(LIBASDF_LIBS) \
+    $(PTHREAD_LIBS)
 if HAVE_AST
 unit_test_ldadd += $(AST_LIBS) -lm
 endif

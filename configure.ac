@@ -28,7 +28,8 @@ AC_INIT(
 #
 #   - 0:0:0 (0.1.0):  Initial release
 #   - 1:0:1 (0.2.0):  Support for asdf_gwcs_rotate3d_t adds new generated
-#                     extension methods
+#                     extension methods.
+#                     Added asdf_gwcs_eval_copy API.
 LIBASDF_GWCS_VERSION_INFO=1:0:1
 AC_SUBST([LIBASDF_GWCS_VERSION_INFO])
 
@@ -90,6 +91,19 @@ AS_IF([test "x$with_asan" = "xyes"], [
   ASDF_GWCS_BUILD_MODE="${ASDF_GWCS_BUILD_MODE}asan "
 ])
 
+
+# POSIX threads.  Used to guard the ownership-transfer window in
+# asdf_gwcs_eval_copy; without them the library still builds and works
+# single-threaded (and the vendored AST is not THREAD_SAFE either, so there
+# is nothing to guard).
+AX_PTHREAD(
+  [have_pthread=yes
+   AC_DEFINE([HAVE_PTHREAD], [1], [Define if POSIX threads are available])
+   ASDF_GWCS_CFLAGS="$ASDF_GWCS_CFLAGS $PTHREAD_CFLAGS"],
+  [have_pthread=no]
+)
+
+AM_CONDITIONAL([HAVE_PTHREAD], [test "x$have_pthread" = "xyes"])
 
 # Logging flags
 AC_ARG_ENABLE([logging],
@@ -251,7 +265,7 @@ LIBASDF_LIBS=$(printf '%s\n' "$LIBASDF_LIBS" | sed 's/none required//g')
 STC_CPPFLAGS="-I\$(top_srcdir)/third_party/STC/include"
 AC_SUBST([STC_CPPFLAGS])
 
-ASDF_GWCS_LIBS="$FYAML_LIBS $LIBASDF_LIBS $AST_LIBS"
+ASDF_GWCS_LIBS="$FYAML_LIBS $LIBASDF_LIBS $AST_LIBS $PTHREAD_LIBS"
 AC_SUBST([ASDF_GWCS_LIBS])
 
 # --- Optional features -------------------------------------------------------
@@ -286,6 +300,7 @@ printf "  %22s %s\n" "libfyaml:" "$(pkg-config --modversion libfyaml)"
 AS_IF([test "x$ASDF_GWCS_BACKENDS" != "x"],
   [printf "  %22s %s\n" "backends:" "$ASDF_GWCS_BACKENDS"],
   [printf "  %22s %s\n" "backends:" "(none)"])
+printf "  %22s %s\n" "pthreads:" "$have_pthread"
 AS_IF([test "x$ASDF_GWCS_BUILD_MODE" != "x"], [
   printf "  %22s %s\n" "build:" "$ASDF_GWCS_BUILD_MODE"
 ])
