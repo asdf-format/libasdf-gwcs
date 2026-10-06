@@ -123,8 +123,11 @@ typedef struct asdf_gwcs_transform {
     const char *name;
 
     /**
-     * Not yet implemented, but would be an inverse transform
-     * (currently always `NULL`)
+     * The transform's explicitly declared inverse (may be `NULL`)
+     *
+     * This is only the ``inverse`` property as read from (or to be written
+     * to) the file; it is `NULL` when the file declares none, even if the
+     * transform has an analytic inverse.
      */
     const asdf_gwcs_transform_t *inverse;
 

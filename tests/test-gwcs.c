@@ -1160,6 +1160,102 @@ MU_TEST(test_asdf_gwcs_copy_roman_l3) {
 }
 
 
+/* Count the declared inverses anywhere in a transform tree, including those
+ * nested inside other inverses. */
+static size_t count_transform_inverses(const asdf_gwcs_transform_t *transform) {
+    if (!transform)
+        return 0;
+
+    size_t count = 0;
+
+    if (transform->inverse)
+        count += 1 + count_transform_inverses(transform->inverse);
+
+    uint32_t n_children = asdf_gwcs_transform_n_children(transform);
+
+    for (uint32_t idx = 0; idx < n_children; idx++) {
+        asdf_gwcs_transform_iter_t child = {0};
+
+        if (asdf_gwcs_transform_get_child(transform, idx, &child))
+            count += count_transform_inverses(child.value);
+    }
+
+    return count;
+}
+
+
+static size_t count_gwcs_inverses(const asdf_gwcs_t *gwcs) {
+    size_t count = 0;
+
+    for (uint32_t idx = 0; idx < gwcs->n_steps; idx++)
+        count += count_transform_inverses(gwcs->steps[idx].transform);
+
+    return count;
+}
+
+
+/* The Roman L2 WCS declares three inverses (two on the distortion polynomials,
+ * one on the tangent-plane correction); all must be parsed and survive a
+ * write/read round trip. */
+MU_TEST(test_asdf_gwcs_inverse_roundtrip_roman_l2) {
+    const char *path = get_fixture_file_path("roman_l2_wcs.asdf");
+    asdf_file_t *file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_t *gwcs = NULL;
+    assert_int(asdf_get_gwcs(file, "roman/meta/wcs", &gwcs), ==, ASDF_VALUE_OK);
+    assert_not_null(gwcs);
+    assert_size(count_gwcs_inverses(gwcs), ==, 3);
+
+    /* The tangent-plane correction is the step's top-level transform */
+    const asdf_gwcs_transform_t *tp_correction = NULL;
+
+    for (uint32_t idx = 0; idx < gwcs->n_steps; idx++) {
+        const asdf_gwcs_transform_t *transform = gwcs->steps[idx].transform;
+
+        if (transform && transform->name &&
+            strcmp(transform->name, "JWST tangent-plane linear correction. v1") == 0)
+            tp_correction = transform;
+    }
+
+    assert_not_null(tp_correction);
+    assert_not_null(tp_correction->inverse);
+    assert_string_equal(
+        tp_correction->inverse->name, "Inverse JWST tangent-plane linear correction. v1");
+    assert_string_equal(asdf_gwcs_transform_type_name(tp_correction->inverse), "compose");
+    assert_uint32(tp_correction->inverse->n_inputs, ==, 2);
+    assert_uint32(tp_correction->inverse->n_outputs, ==, 2);
+
+    size_t len = 0;
+    char *buf = serialize_gwcs_to_mem(gwcs, &len);
+    assert_not_null(buf);
+
+    asdf_gwcs_destroy(gwcs);
+    asdf_close(file);
+
+    file = asdf_open_mem(buf, len);
+    assert_not_null(file);
+
+    gwcs = NULL;
+    assert_int(asdf_get_gwcs(file, "wcs", &gwcs), ==, ASDF_VALUE_OK);
+    assert_not_null(gwcs);
+    assert_size(count_gwcs_inverses(gwcs), ==, 3);
+
+    /* Re-serializing what was read back must reproduce the same document */
+    size_t len2 = 0;
+    char *buf2 = serialize_gwcs_to_mem(gwcs, &len2);
+    assert_not_null(buf2);
+    assert_size(len2, ==, len);
+    assert_int(memcmp(buf, buf2, len), ==, 0);
+
+    free(buf2);
+    asdf_gwcs_destroy(gwcs);
+    asdf_close(file);
+    free(buf);
+    return MUNIT_OK;
+}
+
+
 MU_TEST(test_asdf_set_gwcs_fk5) {
     const char *path = get_temp_file_path(fixture->tempfile_prefix, ".asdf");
     asdf_file_t *file = asdf_open(NULL);
@@ -1298,6 +1394,7 @@ MU_TEST_SUITE(
     MU_RUN_TEST(test_asdf_get_roman_l2_gwcs),
     MU_RUN_TEST(test_asdf_gwcs_copy_roman_l2),
     MU_RUN_TEST(test_asdf_gwcs_copy_roman_l3),
+    MU_RUN_TEST(test_asdf_gwcs_inverse_roundtrip_roman_l2),
     MU_RUN_TEST(test_asdf_set_gwcs_fk5),
     MU_RUN_TEST(test_asdf_set_gwcs_fk4),
     MU_RUN_TEST(test_asdf_set_gwcs_fk4_no_obstime)
