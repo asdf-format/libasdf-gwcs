@@ -311,6 +311,26 @@ static asdf_value_err_t asdf_gwcs_transform_deserialize_base(
     if (!ASDF_IS_OPTIONAL_OK(err))
         goto failure;
 
+    /* The inverse may be any transform, so it is fetched untyped and then
+     * dispatched on its tag like any other nested transform. */
+    asdf_value_t *inverse_val = NULL;
+    err = asdf_get_optional_property(
+        transform_map, "inverse", ASDF_VALUE_UNKNOWN, NULL, (void *)&inverse_val);
+
+    if (!ASDF_IS_OPTIONAL_OK(err))
+        goto failure;
+
+    if (inverse_val) {
+        asdf_gwcs_transform_t *inverse = NULL;
+        err = asdf_value_as_gwcs_transform(inverse_val, &inverse);
+        asdf_value_destroy(inverse_val);
+
+        if (ASDF_IS_ERR(err))
+            goto failure;
+
+        transform->inverse = inverse;
+    }
+
     /* Parse optional inputs/outputs name sequences */
     const char *io_keys[2] = {"inputs", "outputs"};
     uint32_t *io_counts[2] = {&transform->n_inputs, &transform->n_outputs};
@@ -830,6 +850,20 @@ static asdf_value_err_t asdf_gwcs_transform_serialize_base(
 
         if (ASDF_IS_ERR(err)) {
             asdf_value_destroy(bb_val);
+            return err;
+        }
+    }
+
+    if (transform->inverse) {
+        asdf_value_t *inverse_val = asdf_value_of_gwcs_transform(file, transform->inverse);
+
+        if (!inverse_val)
+            return ASDF_VALUE_ERR_EMIT_FAILURE;
+
+        err = asdf_mapping_set(map, "inverse", inverse_val);
+
+        if (ASDF_IS_ERR(err)) {
+            asdf_value_destroy(inverse_val);
             return err;
         }
     }
