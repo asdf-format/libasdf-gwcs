@@ -19,6 +19,8 @@ const char *asdf_gwcs_strerror(asdf_gwcs_err_t err) {
         return "backend failed to load the WCS";
     case ASDF_GWCS_ERR_EVALUATION_FAILED:
         return "coordinate evaluation failed";
+    case ASDF_GWCS_ERR_NO_INVERSE:
+        return "the WCS has no inverse available in this backend";
     }
 
     return "unknown error";

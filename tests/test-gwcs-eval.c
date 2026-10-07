@@ -564,17 +564,27 @@ static void copy_inputs(double *xin, double *yin) {
  * Bitwise rather than approximate: a copy is a copy, and anything short of
  * identical means the copied AST objects are not the same transform.
  */
-static void assert_eval_matches(
-    asdf_gwcs_eval_t *eval, const double *xref, const double *yref) {
+static void assert_eval_matches_at(
+    asdf_gwcs_eval_t *eval, const double *xin, const double *yin,
+    const double *xref, const double *yref) {
 
-    double xin[COPY_N_POINTS], yin[COPY_N_POINTS];
     double xout[COPY_N_POINTS], yout[COPY_N_POINTS];
 
-    copy_inputs(xin, yin);
     assert_int(asdf_gwcs_eval_2d(eval, xin, yin, xout, yout, COPY_N_POINTS),
                ==, ASDF_GWCS_OK);
     assert_memory_equal(sizeof(xout), xout, xref);
     assert_memory_equal(sizeof(yout), yout, yref);
+}
+
+
+/** As assert_eval_matches_at, at the pixel positions from copy_inputs */
+static void assert_eval_matches(
+    asdf_gwcs_eval_t *eval, const double *xref, const double *yref) {
+
+    double xin[COPY_N_POINTS], yin[COPY_N_POINTS];
+
+    copy_inputs(xin, yin);
+    assert_eval_matches_at(eval, xin, yin, xref, yref);
 }
 
 
@@ -635,6 +645,208 @@ MU_TEST(test_asdf_gwcs_eval_copy_invalid) {
 }
 
 
+/* asdf_gwcs_eval_invert */
+
+/* Round-trip tolerance in pixels.  The Roman L2 distortion's declared inverse
+ * is an independent polynomial fit, good to a few thousandths of a pixel. */
+#define INVERT_MAX_RESIDUAL_PX 0.01
+
+
+/** Open the Roman L2 WCS and an eval context for it */
+static asdf_gwcs_eval_t *open_roman_l2(asdf_file_t **file, asdf_gwcs_t **wcs) {
+    const asdf_gwcs_backend_t *backend = asdf_gwcs_backend_get("ast_yaml");
+
+    if (!backend)
+        return NULL;
+
+    *file = asdf_open(get_fixture_file_path("roman_l2_wcs.asdf"), "r");
+    assert_not_null(*file);
+    assert_int(asdf_get_gwcs(*file, "roman/meta/wcs", wcs), ==, ASDF_VALUE_OK);
+    assert_not_null(*wcs);
+
+    asdf_gwcs_err_t err = ASDF_GWCS_OK;
+    asdf_gwcs_eval_t *eval = asdf_gwcs_eval_create(*file, *wcs, backend, &err);
+    assert_int(err, ==, ASDF_GWCS_OK);
+    assert_not_null(eval);
+    return eval;
+}
+
+
+/**
+ * Pixels to world and back again through the declared inverse
+ *
+ * The L2 output frame is a sky frame, so this also covers the inverted
+ * context converting its degree inputs to the radians AST works in.
+ */
+MU_TEST(test_asdf_gwcs_eval_invert_roman_l2) {
+    asdf_file_t *file = NULL;
+    asdf_gwcs_t *wcs = NULL;
+    asdf_gwcs_eval_t *eval = open_roman_l2(&file, &wcs);
+
+    if (!eval)
+        return MUNIT_SKIP;
+
+    asdf_gwcs_grid2d_t grid = {
+        .x0 = 0.0, .x1 = IMAGE_NX - 1, .nx = NGRID,
+        .y0 = 0.0, .y1 = IMAGE_NY - 1, .ny = NGRID,
+    };
+    double *xpix = NULL, *ypix = NULL;
+    double *xworld = NULL, *yworld = NULL;
+    double xback[NPTS], yback[NPTS];
+
+    assert_int(asdf_gwcs_grid2d_fill(&grid, &xpix, &ypix), ==, ASDF_GWCS_OK);
+    assert_int(asdf_gwcs_eval_grid2d(eval, &grid, &xworld, &yworld), ==, ASDF_GWCS_OK);
+
+    asdf_gwcs_err_t err = ASDF_GWCS_ERR_OOM;
+    asdf_gwcs_eval_t *inverse = asdf_gwcs_eval_invert(eval, &err);
+    assert_int(err, ==, ASDF_GWCS_OK);
+    assert_not_null(inverse);
+    assert_ptr_not_equal(inverse, eval);
+
+    assert_int(asdf_gwcs_eval_2d(inverse, xworld, yworld, xback, yback, NPTS),
+               ==, ASDF_GWCS_OK);
+
+    for (size_t idx = 0; idx < NPTS; idx++) {
+        assert_double(fabs(xback[idx] - xpix[idx]), <, INVERT_MAX_RESIDUAL_PX);
+        assert_double(fabs(yback[idx] - ypix[idx]), <, INVERT_MAX_RESIDUAL_PX);
+    }
+
+    /* Inverting a copy leaves the original evaluating forward */
+    double xfwd[NPTS], yfwd[NPTS];
+    assert_int(asdf_gwcs_eval_2d(eval, xpix, ypix, xfwd, yfwd, NPTS), ==, ASDF_GWCS_OK);
+    assert_memory_equal(sizeof(xfwd), xfwd, xworld);
+    assert_memory_equal(sizeof(yfwd), yfwd, yworld);
+
+    free(xpix);
+    free(ypix);
+    free(xworld);
+    free(yworld);
+    asdf_gwcs_eval_destroy(inverse);
+    asdf_gwcs_eval_destroy(eval);
+    asdf_gwcs_destroy(wcs);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
+/**
+ * Inverting twice restores the forward direction, and copying an inverted
+ * context keeps it inverted
+ */
+MU_TEST(test_asdf_gwcs_eval_invert_twice_and_copy) {
+    copy_fixture_t fx;
+    double xpix[COPY_N_POINTS], ypix[COPY_N_POINTS];
+    double xworld[COPY_N_POINTS], yworld[COPY_N_POINTS];
+    double xback[COPY_N_POINTS], yback[COPY_N_POINTS];
+
+    if (!copy_fixture_open(&fx))
+        return MUNIT_SKIP;
+
+    copy_inputs(xpix, ypix);
+    copy_reference(fx.eval, xworld, yworld);
+
+    asdf_gwcs_err_t err = ASDF_GWCS_ERR_OOM;
+    asdf_gwcs_eval_t *inverse = asdf_gwcs_eval_invert(fx.eval, &err);
+    assert_int(err, ==, ASDF_GWCS_OK);
+    assert_not_null(inverse);
+    assert_int(asdf_gwcs_eval_2d(inverse, xworld, yworld, xback, yback, COPY_N_POINTS),
+               ==, ASDF_GWCS_OK);
+
+    asdf_gwcs_eval_t *inverse_copy = asdf_gwcs_eval_copy(inverse, &err);
+    assert_int(err, ==, ASDF_GWCS_OK);
+    assert_not_null(inverse_copy);
+    assert_eval_matches_at(inverse_copy, xworld, yworld, xback, yback);
+
+    asdf_gwcs_eval_t *forward = asdf_gwcs_eval_invert(inverse_copy, &err);
+    assert_int(err, ==, ASDF_GWCS_OK);
+    assert_not_null(forward);
+    assert_eval_matches(forward, xworld, yworld);
+
+    /* Each is independent of the context it was made from */
+    asdf_gwcs_eval_destroy(inverse);
+    copy_fixture_close(&fx);
+    assert_eval_matches_at(inverse_copy, xworld, yworld, xback, yback);
+    assert_eval_matches(forward, xworld, yworld);
+
+    asdf_gwcs_eval_destroy(inverse_copy);
+    asdf_gwcs_eval_destroy(forward);
+    return MUNIT_OK;
+}
+
+
+/** Destroy every declared inverse in a transform tree */
+static void strip_inverses(const asdf_gwcs_transform_t *transform) {
+    if (!transform)
+        return;
+
+    asdf_gwcs_transform_t *mutable = (asdf_gwcs_transform_t *)transform;
+    asdf_gwcs_transform_destroy((asdf_gwcs_transform_t *)mutable->inverse);
+    mutable->inverse = NULL;
+
+    uint32_t n_children = asdf_gwcs_transform_n_children(transform);
+
+    for (uint32_t idx = 0; idx < n_children; idx++) {
+        asdf_gwcs_transform_iter_t child = {0};
+
+        if (asdf_gwcs_transform_get_child(transform, idx, &child))
+            strip_inverses(child.value);
+    }
+}
+
+
+/**
+ * Without its declared inverses, the Roman L2 pipeline cannot be inverted:
+ * neither its `divide` nor its degree-5 distortion polynomials have an
+ * inverse of their own.
+ */
+MU_TEST(test_asdf_gwcs_eval_invert_no_inverse) {
+    const asdf_gwcs_backend_t *backend = asdf_gwcs_backend_get("ast_yaml");
+
+    if (!backend)
+        return MUNIT_SKIP;
+
+    asdf_file_t *file = asdf_open(get_fixture_file_path("roman_l2_wcs.asdf"), "r");
+    assert_not_null(file);
+
+    asdf_gwcs_t *wcs = NULL;
+    assert_int(asdf_get_gwcs(file, "roman/meta/wcs", &wcs), ==, ASDF_VALUE_OK);
+    assert_not_null(wcs);
+
+    for (uint32_t idx = 0; idx < wcs->n_steps; idx++)
+        strip_inverses(wcs->steps[idx].transform);
+
+    asdf_gwcs_err_t err = ASDF_GWCS_OK;
+    asdf_gwcs_eval_t *eval = asdf_gwcs_eval_create(file, wcs, backend, &err);
+    assert_int(err, ==, ASDF_GWCS_OK);
+    assert_not_null(eval);
+
+    assert_null(asdf_gwcs_eval_invert(eval, &err));
+    assert_int(err, ==, ASDF_GWCS_ERR_NO_INVERSE);
+
+    /* The forward direction is unaffected */
+    static const double xin[1] = {100.0}, yin[1] = {100.0};
+    double xout[1], yout[1];
+    assert_int(asdf_gwcs_eval_2d(eval, xin, yin, xout, yout, 1), ==, ASDF_GWCS_OK);
+
+    asdf_gwcs_eval_destroy(eval);
+    asdf_gwcs_destroy(wcs);
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
+MU_TEST(test_asdf_gwcs_eval_invert_invalid) {
+    asdf_gwcs_err_t err = ASDF_GWCS_OK;
+
+    assert_null(asdf_gwcs_eval_invert(NULL, &err));
+    assert_int(err, ==, ASDF_GWCS_ERR_INVAL);
+
+    /* err_out is optional */
+    assert_null(asdf_gwcs_eval_invert(NULL, NULL));
+    return MUNIT_OK;
+}
+
+
 #ifdef HAVE_PTHREAD
 /* Utilities for the multi-threaded copy tests */
 
@@ -683,9 +895,16 @@ static void gate_open(gate_t *gate) {
 }
 
 
+/** asdf_gwcs_eval_copy or asdf_gwcs_eval_invert */
+typedef asdf_gwcs_eval_t *(*eval_duplicate_t)(asdf_gwcs_eval_t *, asdf_gwcs_err_t *);
+
+
 typedef struct {
     gate_t *gate;
     asdf_gwcs_eval_t *shared;
+    eval_duplicate_t duplicate;
+    const double *xin;
+    const double *yin;
     const double *xref;
     const double *yref;
     /** evaluations that returned an error or the wrong answer */
@@ -697,16 +916,12 @@ typedef struct {
 static void *copy_worker(void *arg) {
     worker_t *w = arg;
     asdf_gwcs_err_t err = ASDF_GWCS_OK;
-    double xin[COPY_N_POINTS];
-    double yin[COPY_N_POINTS];
     double xout[COPY_N_POINTS];
     double yout[COPY_N_POINTS];
 
-    copy_inputs(xin, yin);
-
     /* Copy only once every worker is ready, so the copies really do overlap */
     gate_wait(w->gate);
-    asdf_gwcs_eval_t *eval = asdf_gwcs_eval_copy(w->shared, &err);
+    asdf_gwcs_eval_t *eval = w->duplicate(w->shared, &err);
 
     if (!eval || err != ASDF_GWCS_OK) {
         w->failures++;
@@ -715,7 +930,7 @@ static void *copy_worker(void *arg) {
 
     for (size_t idx = 0; idx < COPY_N_ITERS; idx++) {
         if (ASDF_GWCS_OK !=
-            asdf_gwcs_eval_2d(eval, xin, yin, xout, yout, COPY_N_POINTS)) {
+            asdf_gwcs_eval_2d(eval, w->xin, w->yin, xout, yout, COPY_N_POINTS)) {
             w->failures++;
             continue;
         }
@@ -730,9 +945,13 @@ static void *copy_worker(void *arg) {
 }
 
 
-/** Run COPY_N_THREADS workers against *shared* and assert none failed */
-static void run_workers(asdf_gwcs_eval_t *shared, const double *xref,
-                        const double *yref) {
+/**
+ * Run COPY_N_THREADS workers, each duplicating *shared* and evaluating the
+ * result at (xin, yin), and assert none failed to match the reference
+ */
+static void run_workers(asdf_gwcs_eval_t *shared, eval_duplicate_t duplicate,
+                        const double *xin, const double *yin,
+                        const double *xref, const double *yref) {
 
     pthread_t threads[COPY_N_THREADS];
     worker_t workers[COPY_N_THREADS];
@@ -744,6 +963,9 @@ static void run_workers(asdf_gwcs_eval_t *shared, const double *xref,
         workers[idx] = (worker_t){
             .gate = &gate,
             .shared = shared,
+            .duplicate = duplicate,
+            .xin = xin,
+            .yin = yin,
             .xref = xref,
             .yref = yref,
         };
@@ -766,13 +988,15 @@ static void run_workers(asdf_gwcs_eval_t *shared, const double *xref,
 
 MU_TEST(test_asdf_gwcs_eval_copy_threaded) {
     copy_fixture_t fx;
+    double xin[COPY_N_POINTS], yin[COPY_N_POINTS];
     double xref[COPY_N_POINTS], yref[COPY_N_POINTS];
 
     if (!copy_fixture_open(&fx))
         return MUNIT_SKIP;
 
+    copy_inputs(xin, yin);
     copy_reference(fx.eval, xref, yref);
-    run_workers(fx.eval, xref, yref);
+    run_workers(fx.eval, asdf_gwcs_eval_copy, xin, yin, xref, yref);
 
     /* The original survives having been borrowed by every worker */
     assert_eval_matches(fx.eval, xref, yref);
@@ -781,9 +1005,43 @@ MU_TEST(test_asdf_gwcs_eval_copy_threaded) {
     return MUNIT_OK;
 }
 
+
+/* Workers all invert the same forward context at once */
+MU_TEST(test_asdf_gwcs_eval_invert_threaded) {
+    copy_fixture_t fx;
+    double xworld[COPY_N_POINTS], yworld[COPY_N_POINTS];
+    double xref[COPY_N_POINTS], yref[COPY_N_POINTS];
+
+    if (!copy_fixture_open(&fx))
+        return MUNIT_SKIP;
+
+    copy_reference(fx.eval, xworld, yworld);
+
+    asdf_gwcs_err_t err = ASDF_GWCS_ERR_OOM;
+    asdf_gwcs_eval_t *inverse = asdf_gwcs_eval_invert(fx.eval, &err);
+    assert_int(err, ==, ASDF_GWCS_OK);
+    assert_not_null(inverse);
+    assert_int(asdf_gwcs_eval_2d(inverse, xworld, yworld, xref, yref, COPY_N_POINTS),
+               ==, ASDF_GWCS_OK);
+    asdf_gwcs_eval_destroy(inverse);
+
+    run_workers(fx.eval, asdf_gwcs_eval_invert, xworld, yworld, xref, yref);
+
+    /* The original is still the forward transform */
+    assert_eval_matches(fx.eval, xworld, yworld);
+    copy_fixture_close(&fx);
+
+    return MUNIT_OK;
+}
+
 #else /* !HAVE_PTHREAD */
 
 MU_TEST(test_asdf_gwcs_eval_copy_threaded) {
+    return MUNIT_SKIP;
+}
+
+
+MU_TEST(test_asdf_gwcs_eval_invert_threaded) {
     return MUNIT_SKIP;
 }
 
@@ -802,7 +1060,12 @@ MU_TEST_SUITE(
     MU_RUN_TEST(test_asdf_gwcs_eval_rotate3d_round_trip),
     MU_RUN_TEST(test_asdf_gwcs_eval_copy),
     MU_RUN_TEST(test_asdf_gwcs_eval_copy_invalid),
-    MU_RUN_TEST(test_asdf_gwcs_eval_copy_threaded)
+    MU_RUN_TEST(test_asdf_gwcs_eval_copy_threaded),
+    MU_RUN_TEST(test_asdf_gwcs_eval_invert_roman_l2),
+    MU_RUN_TEST(test_asdf_gwcs_eval_invert_twice_and_copy),
+    MU_RUN_TEST(test_asdf_gwcs_eval_invert_no_inverse),
+    MU_RUN_TEST(test_asdf_gwcs_eval_invert_invalid),
+    MU_RUN_TEST(test_asdf_gwcs_eval_invert_threaded)
 );
 
 

@@ -15,14 +15,10 @@ frame.  In practice it usually starts on the detector and ends on the sky, so
 evaluating it maps pixels to world coordinates, but that is a property of the
 particular WCS, not of the format.
 
-What libasdf-gwcs guarantees is narrower: it evaluates the **forward**
-transformation of the pipeline as stored in the file.
-
-.. note::
-
-   Evaluating a transformation in the *reverse* direction is not yet supported,
-   whether by using a stored analytic inverse or by solving numerically for one.
-   Only the pipeline's forward direction is available.
+What libasdf-gwcs guarantees is narrower: an evaluation context evaluates the
+**forward** transformation of the pipeline as stored in the file.  The reverse
+direction is available by asking for an inverted context; see
+:ref:`inverse-evaluation`.
 
 
 The evaluation context
@@ -131,8 +127,7 @@ proportional to the row length rather than the whole grid:
        }
 
        asdf_file_t *file = asdf_open(argv[1], "r");
-       asdf_value_t *root = asdf_get_value(file, "");
-       asdf_value_t *found = asdf_value_find(root, asdf_value_is_gwcs);
+       asdf_value_t *found = asdf_find(file, asdf_value_is_gwcs);
 
        if (!found) {
            fprintf(stderr, "no GWCS found in %s\n", argv[1]);
@@ -182,7 +177,6 @@ proportional to the row length rather than the whole grid:
        free(dec);
        asdf_gwcs_eval_destroy(eval);
        asdf_value_destroy(found);
-       asdf_value_destroy(root);
        asdf_gwcs_destroy(wcs);
        asdf_close(file);
        return 0;
@@ -202,6 +196,129 @@ which prints:
    ``[-180, 180]``.  Python's GWCS reports the same positions with longitude in
    ``[0, 360)``, so a value of ``-90.013`` here corresponds to ``269.987``
    there.  Add 360 to negative longitudes if you need to match.
+
+
+.. _inverse-evaluation:
+
+Inverting the evaluation
+------------------------
+
+`asdf_gwcs_eval_invert` takes an evaluation context and returns a new one whose
+forward direction is the original's inverse: it accepts coordinates in the
+pipeline's last frame and returns them in its first, for example world
+coordinates to pixels.  It is evaluated, copied and destroyed like any other
+context, so code that only ever needs the inverse holds one inverted context
+and calls `asdf_gwcs_eval_2d` on it, with no per-call direction to choose.
+
+.. code:: c
+   :test: test-gwcs-invert
+   :fixture: roman_l2_wcs.asdf
+
+   #include <stdio.h>
+   #include <asdf.h>
+   #include <asdf/gwcs/gwcs.h>
+
+   int main(int argc, char **argv) {
+       if (argc < 2) {
+           fprintf(stderr, "usage: %s FILE\n", argv[0]);
+           return 1;
+       }
+
+       const asdf_gwcs_backend_t *backend = asdf_gwcs_backend_get("ast_yaml");
+
+       if (!backend) {
+           fprintf(stderr, "built without the ast_yaml backend\n");
+           return 0;
+       }
+
+       asdf_file_t *file = asdf_open(argv[1], "r");
+       asdf_value_t *found = asdf_find(file, asdf_value_is_gwcs);
+
+       if (!found) {
+           fprintf(stderr, "no GWCS found in %s\n", argv[1]);
+           return 1;
+       }
+
+       asdf_gwcs_t *wcs = NULL;
+       asdf_value_as_gwcs(found, &wcs);
+
+       asdf_gwcs_err_t err = ASDF_GWCS_OK;
+       asdf_gwcs_eval_t *eval = asdf_gwcs_eval_create(file, wcs, backend, &err);
+
+       if (!eval) {
+           fprintf(stderr, "could not prepare the WCS: %s\n",
+                   asdf_gwcs_strerror(err));
+           return 1;
+       }
+
+       asdf_gwcs_eval_t *inverse = asdf_gwcs_eval_invert(eval, &err);
+
+       if (!inverse) {
+           fprintf(stderr, "could not invert the WCS: %s\n",
+                   asdf_gwcs_strerror(err));
+           return 1;
+       }
+
+       double x[3] = {0.0, 2043.0, 4087.0};
+       double y[3] = {0.0, 2043.0, 4087.0};
+       double ra[3], dec[3];
+       double xback[3], yback[3];
+
+       // Pixels to sky, then back again through the inverse
+       asdf_gwcs_eval_2d(eval, x, y, ra, dec, 3);
+       asdf_gwcs_eval_2d(inverse, ra, dec, xback, yback, 3);
+
+       for (int idx = 0; idx < 3; idx++) {
+           printf("(%6.1f, %6.1f) -> (%11.7f, %10.7f) -> (%8.3f, %8.3f)\n",
+                  x[idx], y[idx], ra[idx], dec[idx], xback[idx], yback[idx]);
+       }
+
+       asdf_gwcs_eval_destroy(inverse);
+       asdf_gwcs_eval_destroy(eval);
+       asdf_value_destroy(found);
+       asdf_gwcs_destroy(wcs);
+       asdf_close(file);
+       return 0;
+   }
+
+which prints:
+
+.. code:: text
+
+   (   0.0,    0.0) -> (-90.0130916, 65.9742799) -> (  -0.000,   -0.001)
+   (2043.0, 2043.0) -> (-90.1674364, 66.0354945) -> (2043.000, 2043.000)
+   (4087.0, 4087.0) -> (-90.3231788, 66.0971805) -> (4087.001, 4087.001)
+
+The pixels do not come back exactly: this file's distortion has a declared
+inverse that is a fitted approximation (see below).
+
+The original context is left untouched, and either may be destroyed first.
+Inverting an inverted context gives one that evaluates forward again, and
+`asdf_gwcs_eval_copy` of an inverted context is itself inverted.
+
+Not every WCS can be inverted.  When the backend has no way to evaluate a
+particular pipeline backwards, `asdf_gwcs_eval_invert` returns ``NULL`` with
+`ASDF_GWCS_ERR_NO_INVERSE`; that is checked before anything is copied, so
+asking is cheap.
+
+.. admonition:: Where the inverse comes from
+   :class: hint
+
+   A transform in the file may declare an explicit ``inverse``.  Where it
+   does, that declared inverse is what gets evaluated, exactly as given.  This
+   matches what Python's GWCS does with the same file.  Declared inverses are
+   frequently fitted approximations rather than exact inverses: for example,
+   at time of writing a Roman L2 WCS tested against has a distortion correction
+   step whose inverse, a fitted polynomial, round-trips to within a few
+   thousandths of a pixel, not to machine precision.  No check is made that a
+   declared inverse really inverts its transform.
+
+   Where no inverse is declared, it is up to the backend.  The AST backend
+   inverts transforms with an analytic inverse (shifts, scales, affine
+   matrices, rotations, projections and so on) and composes those in reverse
+   order.  It does *not* numerically invert transforms that lack one, such as
+   a higher-order ``polynomial`` or a ``divide`` with no declared inverse;
+   a pipeline containing one is reported as having no inverse.
 
 
 Evaluation backends
@@ -247,7 +364,8 @@ Three things follow from this:
   ``ASDF_GWCS_ERR_TRANSFORM_NOT_SUPPORTED``.
 * AST works internally in radians.  When the pipeline's output frame is a
   :gwcs-schema:`celestial frame <celestial_frame-1.0.0>` the results are
-  converted to degrees to match the GWCS convention. This conversion is
+  converted to degrees to match the GWCS convention, and an inverted context
+  likewise takes its celestial inputs in degrees. This conversion is
   currently keyed on the frame type rather than on real unit handling, which is
   a known rough edge.
 

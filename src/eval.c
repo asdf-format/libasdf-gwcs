@@ -1,5 +1,11 @@
 #include <stdlib.h>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <asdf/log.h>
+
 #include "asdf/gwcs/eval.h"
 #include "asdf/gwcs/backend.h"
 #include "asdf/gwcs/core.h"
@@ -72,6 +78,27 @@ asdf_gwcs_eval_t *asdf_gwcs_eval_copy(asdf_gwcs_eval_t *eval, asdf_gwcs_err_t *e
     }
 
     return eval->copy(eval, err_out);
+}
+
+
+asdf_gwcs_eval_t *asdf_gwcs_eval_invert(asdf_gwcs_eval_t *eval, asdf_gwcs_err_t *err_out) {
+    asdf_gwcs_err_t err = ASDF_GWCS_OK;
+    asdf_gwcs_eval_t *inverse = NULL;
+
+    if (!eval)
+        err = ASDF_GWCS_ERR_INVAL;
+    else if (!eval->invert)
+        err = ASDF_GWCS_ERR_NOT_IMPLEMENTED;
+    else
+        inverse = eval->invert(eval, &err);
+
+    if (err == ASDF_GWCS_ERR_NOT_IMPLEMENTED || err == ASDF_GWCS_ERR_NO_INVERSE)
+        ASDF_LOG(NULL, ASDF_LOG_WARN, "cannot invert WCS evaluation: %s", asdf_gwcs_strerror(err));
+
+    if (err_out)
+        *err_out = err;
+
+    return inverse;
 }
 
 

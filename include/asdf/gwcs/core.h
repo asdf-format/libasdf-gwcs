@@ -52,6 +52,8 @@ typedef enum {
     ASDF_GWCS_ERR_PARSE_FAILED,
     /** An error occurred during coordinate evaluation */
     ASDF_GWCS_ERR_EVALUATION_FAILED,
+    /** The backend cannot evaluate the inverse of this WCS */
+    ASDF_GWCS_ERR_NO_INVERSE,
 } asdf_gwcs_err_t;
 
 

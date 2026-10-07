@@ -1,4 +1,3 @@
-#include <math.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -24,12 +23,9 @@ typedef struct {
     AstFrameSet *frameset;
     /** stays locked to the thread that owns this context; what eval_2d uses */
     AstMapping *mapping;
-    /** output frame is a SkyFrame -> outputs are in radians */
-    bool is_sky_frame;
+    /** the mapping can be evaluated in reverse; never changes once set */
+    bool has_inverse;
 } asdf_gwcs_ast_eval_t;
-
-
-static const double R2D = 180.0 / M_PI;
 
 
 /* Give up the frameset, leaving it owned by no thread.
@@ -69,14 +65,6 @@ static asdf_gwcs_err_t ast_eval_2d(
     if (!astOK) {
         astClearStatus;
         return ASDF_GWCS_ERR_EVALUATION_FAILED;
-    }
-
-    /* AST SkyFrame outputs are in radians; convert to degrees. */
-    if (ctx->is_sky_frame) {
-        for (size_t kdx = 0; kdx < n; kdx++) {
-            xout[kdx] *= R2D;
-            yout[kdx] *= R2D;
-        }
     }
 
     return ASDF_GWCS_OK;
@@ -124,7 +112,75 @@ static AstMapping *ast_mapping_of(AstFrameSet *frameset) {
 }
 
 
-static asdf_gwcs_eval_t *ast_eval_copy(asdf_gwcs_eval_t *self, asdf_gwcs_err_t *err_out) {
+static bool ast_frame_is_sky(AstFrameSet *frameset, int iframe) {
+    AstFrame *frame = astGetFrame(frameset, iframe);
+    bool is_sky = frame ? astIsASkyFrame(frame) : false;
+
+    if (frame)
+        astAnnul(frame);
+
+    return is_sky;
+}
+
+
+/* Compose mapping in series with a ZoomMap by zoom on both axes, applied
+ * before mapping if first is true, after it otherwise.  Takes ownership of
+ * mapping and returns the composite, or NULL on failure. */
+static AstMapping *ast_mapping_zoom(AstMapping *mapping, double zoom, bool first) {
+    AstZoomMap *zoom_map = astZoomMap(2, zoom, " ");
+    AstMapping *composite = NULL;
+
+    if (zoom_map) {
+        composite = (AstMapping *)(first ? astCmpMap(zoom_map, mapping, 1, " ")
+                                         : astCmpMap(mapping, zoom_map, 1, " "));
+        astAnnul(zoom_map);
+    }
+
+    astAnnul(mapping);
+    return astOK ? composite : NULL;
+}
+
+
+/* Derive everything eval_2d needs from ctx->frameset, which must be locked to
+ * the calling thread.  Returns false if the mapping could not be obtained. */
+static bool ast_eval_init(asdf_gwcs_ast_eval_t *ctx) {
+    AstMapping *mapping = ast_mapping_of(ctx->frameset);
+
+    if (!mapping || !astOK)
+        return false;
+
+    /* TODO: When dealing with sky frames, by default the units of the AST
+     * input/output are in radians, while the default units in GWCS are
+     * degrees.  A correct fix would be to integrate proper units handling (we
+     * may still want radians for example) so this is just a temporary fix to
+     * get the correct results in the common case
+     */
+    if (ast_frame_is_sky(ctx->frameset, AST__BASE))
+        mapping = ast_mapping_zoom(mapping, AST__DD2R, true);
+
+    if (mapping && ast_frame_is_sky(ctx->frameset, AST__CURRENT))
+        mapping = ast_mapping_zoom(mapping, AST__DR2D, false);
+
+    ctx->mapping = mapping;
+
+    if (!mapping || !astOK)
+        return false;
+
+    ctx->has_inverse = astGetI(mapping, "TranInverse");
+    astClearStatus;
+    return true;
+}
+
+
+/* Copy self into a new context, optionally in the inverse direction.
+ *
+ * The inversion is applied to the new context's own frameset, which swaps its
+ * base and current frames, so copies of an inverted context stay inverted and
+ * inverting one again restores the forward direction.  It must never be
+ * applied to the shared frameset: astInvert flips a flag on the object, and
+ * would reverse the original context too. */
+static asdf_gwcs_eval_t *ast_eval_copy_impl(
+    asdf_gwcs_eval_t *self, bool invert, asdf_gwcs_err_t *err_out) {
     asdf_gwcs_ast_eval_t *ctx = (asdf_gwcs_ast_eval_t *)self;
     asdf_gwcs_ast_eval_t *new_ctx = calloc(1, sizeof(*new_ctx));
     asdf_gwcs_err_t err = ASDF_GWCS_OK;
@@ -135,7 +191,6 @@ static asdf_gwcs_eval_t *ast_eval_copy(asdf_gwcs_eval_t *self, asdf_gwcs_err_t *
     }
 
     new_ctx->base = ctx->base;
-    new_ctx->is_sky_frame = ctx->is_sky_frame;
 
     /* Take a handle of our own to the frameset, then wait for the object
      * through it.  astClone does not require us to own the object (it only
@@ -152,11 +207,11 @@ static asdf_gwcs_eval_t *ast_eval_copy(asdf_gwcs_eval_t *self, asdf_gwcs_err_t *
         astAnnul(handle);
     }
 
-    if (new_ctx->frameset)
-        new_ctx->mapping = ast_mapping_of(new_ctx->frameset);
+    if (new_ctx->frameset && invert)
+        astInvert(new_ctx->frameset);
 
     /* An astCopy failure here is an allocation failure in practice. */
-    if (!astOK || !new_ctx->frameset || !new_ctx->mapping) {
+    if (!astOK || !new_ctx->frameset || !ast_eval_init(new_ctx)) {
         astClearStatus;
         err = ASDF_GWCS_ERR_OOM;
         goto done;
@@ -184,6 +239,25 @@ done:
     }
 
     return &new_ctx->base;
+}
+
+
+static asdf_gwcs_eval_t *ast_eval_copy(asdf_gwcs_eval_t *self, asdf_gwcs_err_t *err_out) {
+    return ast_eval_copy_impl(self, false, err_out);
+}
+
+
+static asdf_gwcs_eval_t *ast_eval_invert(asdf_gwcs_eval_t *self, asdf_gwcs_err_t *err_out) {
+    asdf_gwcs_ast_eval_t *ctx = (asdf_gwcs_ast_eval_t *)self;
+
+    if (!ctx->has_inverse) {
+        if (err_out)
+            *err_out = ASDF_GWCS_ERR_NO_INVERSE;
+
+        return NULL;
+    }
+
+    return ast_eval_copy_impl(self, true, err_out);
 }
 
 
@@ -259,7 +333,6 @@ static asdf_gwcs_eval_t *ast_pipeline_create(
     line_cursor_t cur = {0};
     AstYamlChan *chan = NULL;
     AstObject *obj = NULL;
-    AstFrame *frame = NULL;
 
     /* Force all ndarrays inline so AST's YamlChan can read them without
      * needing access to binary block data. */
@@ -321,29 +394,16 @@ static asdf_gwcs_eval_t *ast_pipeline_create(
     ctx->base.eval_2d = ast_eval_2d;
     ctx->base.destroy = ast_eval_destroy;
     ctx->base.copy = ast_eval_copy;
+    ctx->base.invert = ast_eval_invert;
     ctx->frameset = (AstFrameSet *)obj;
-    ctx->mapping = ast_mapping_of(ctx->frameset);
     obj = NULL;
 
-    if (!ctx->mapping || !astOK) {
+    if (!ast_eval_init(ctx)) {
         astClearStatus;
         err = ASDF_GWCS_ERR_PARSE_FAILED;
         goto done;
     }
 
-    /* TODO: When dealing with sky frames, by default the units of the AST
-     * output are in radians, while the default units in GWCS are degrees.
-     * A correct fix would be to integrate proper units handling (we may
-     * still want radians for example) so this is just a temporary fix to
-     * get the correct results in the common case
-     */
-    frame = astGetFrame(ctx->frameset, AST__CURRENT);
-    ctx->is_sky_frame = frame ? astIsASkyFrame(frame) : false;
-
-    if (frame)
-        astAnnul(frame);
-
-    astClearStatus;
     ast_eval_rest(ctx);
 
 done:
