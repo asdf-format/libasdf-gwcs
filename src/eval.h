@@ -17,4 +17,6 @@ struct asdf_gwcs_eval {
     void (*destroy)(asdf_gwcs_eval_t *self);
     /** Deep-copy for use by another thread; NULL if the backend cannot */
     asdf_gwcs_eval_t *(*copy)(asdf_gwcs_eval_t *self, asdf_gwcs_err_t *err_out);
+    /** Copy evaluating in the inverse direction; NULL if the backend cannot */
+    asdf_gwcs_eval_t *(*invert)(asdf_gwcs_eval_t *self, asdf_gwcs_err_t *err_out);
 };

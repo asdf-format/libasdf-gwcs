@@ -48,8 +48,7 @@ libasdf's tree traversal expects, so it can be used directly as a predicate:
 
 .. code:: c
 
-   asdf_value_t *root = asdf_get_value(file, "");
-   asdf_value_t *found = asdf_value_find(root, asdf_value_is_gwcs);
+   asdf_value_t *found = asdf_find(file, asdf_value_is_gwcs);
 
    if (found) {
        asdf_gwcs_t *wcs = NULL;
@@ -58,7 +57,6 @@ libasdf's tree traversal expects, so it can be used directly as a predicate:
    }
 
    asdf_value_destroy(found);
-   asdf_value_destroy(root);
 
 .. note::
 

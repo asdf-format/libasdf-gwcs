@@ -53,11 +53,15 @@ ASDF_EXPORT asdf_gwcs_eval_t *asdf_gwcs_eval_create(
     const asdf_gwcs_backend_t *backend, asdf_gwcs_err_t *err_out);
 
 /**
- * Evaluate a 2-D WCS transform at *n* pixel positions
+ * Evaluate a 2-D WCS transform at *n* positions
  *
- * The input arrays *xin* and *yin* must each contain *n* elements.  On
- * success *xout* and *yout* are filled with the corresponding world
- * coordinates.
+ * The input arrays *xin* and *yin* must each contain *n* elements, given in
+ * the context's input frame.  On success *xout* and *yout* are filled with
+ * the corresponding coordinates in its output frame.  For a context from
+ * `asdf_gwcs_eval_create` these are the WCS's first and last frames
+ * (typically pixel and world coordinates); a context from
+ * `asdf_gwcs_eval_invert` runs the other way.  Sky coordinates are in degrees
+ * in either direction.
  *
  * Evaluating many points in one call is far cheaper than calling this once
  * per point, since each call carries the backend's own per-call overhead.
@@ -66,10 +70,10 @@ ASDF_EXPORT asdf_gwcs_eval_t *asdf_gwcs_eval_create(
  * coordinates in memory.
  *
  * :param eval: Evaluation context from `asdf_gwcs_eval_create`.
- * :param xin: Pixel x-coordinates (length *n*).
- * :param yin: Pixel y-coordinates (length *n*).
- * :param xout: Output world x-coordinates (length *n*).
- * :param yout: Output world y-coordinates (length *n*).
+ * :param xin: Input x-coordinates (length *n*).
+ * :param yin: Input y-coordinates (length *n*).
+ * :param xout: Output x-coordinates (length *n*).
+ * :param yout: Output y-coordinates (length *n*).
  * :param n: Number of coordinate pairs to evaluate.
  * :return: `ASDF_GWCS_OK` on success, or an error code.
  */
@@ -98,6 +102,35 @@ ASDF_EXPORT asdf_gwcs_err_t asdf_gwcs_eval_2d(
  * :return: A new `asdf_gwcs_eval_t`, or NULL on error.
  */
 ASDF_EXPORT asdf_gwcs_eval_t *asdf_gwcs_eval_copy(
+    asdf_gwcs_eval_t *eval, asdf_gwcs_err_t *err_out);
+
+/**
+ * Create a new evaluation context for the inverse of an existing one
+ *
+ * The returned context's forward direction is the inverse of *eval*'s: it
+ * takes coordinates in *eval*'s output frame and returns them in its input
+ * frame.  Evaluate it with `asdf_gwcs_eval_2d` like any other context.
+ *
+ * Where the WCS declares an explicit ``inverse`` for a transform, that
+ * declared inverse is what gets evaluated, exactly as given in the file; no
+ * check is made that it accurately inverts the forward transform.
+ * Otherwise it is up to the backend whether, and how, it can invert the
+ * transform.
+ *
+ * Inverting the returned context again gives a context evaluating in the
+ * original direction, and `asdf_gwcs_eval_copy` of an inverted context is
+ * also inverted.
+ *
+ * This has the same thread-safety guarantees as `asdf_gwcs_eval_copy`.
+ * Destroy it with `asdf_gwcs_eval_destroy`.
+ *
+ * :param eval: The context to invert.
+ * :param err_out: If non-NULL, receives the error code on failure.  This is
+ *   `ASDF_GWCS_ERR_NO_INVERSE` if the backend cannot invert this particular
+ *   WCS, or `ASDF_GWCS_ERR_NOT_IMPLEMENTED` if it cannot invert any.
+ * :return: A new `asdf_gwcs_eval_t`, or NULL on error.
+ */
+ASDF_EXPORT asdf_gwcs_eval_t *asdf_gwcs_eval_invert(
     asdf_gwcs_eval_t *eval, asdf_gwcs_err_t *err_out);
 
 /**

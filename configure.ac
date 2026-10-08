@@ -30,6 +30,8 @@ AC_INIT(
 #   - 1:0:1 (0.2.0):  Support for asdf_gwcs_rotate3d_t adds new generated
 #                     extension methods.
 #                     Added asdf_gwcs_eval_copy API.
+#                     Added asdf_gwcs_eval_invert API and
+#                     ASDF_GWCS_ERR_NO_INVERSE.
 LIBASDF_GWCS_VERSION_INFO=1:0:1
 AC_SUBST([LIBASDF_GWCS_VERSION_INFO])
 

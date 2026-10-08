@@ -128,7 +128,7 @@ It takes the file as its first argument and, optionally, the path to the WCS
 within the ASDF tree as its second.  With no path given it searches the tree for
 the first GWCS it can find—``asdf_value_is_gwcs`` is one of the predicates
 the extension generates, and has exactly the signature libasdf's
-``asdf_value_find`` expects, so the two compose directly.
+``asdf_find`` expects, so the two compose directly.
 
 .. code:: c
    :test: test-gwcs-inspect
@@ -159,7 +159,6 @@ the extension generates, and has exactly the signature libasdf's
        }
 
        asdf_gwcs_t *wcs = NULL;
-       asdf_value_t *root = NULL;
        asdf_value_t *found = NULL;
 
        if (argc > 2) {
@@ -172,8 +171,7 @@ the extension generates, and has exactly the signature libasdf's
            printf("WCS at: %s\n", argv[2]);
        } else {
            // Otherwise search the tree for the first GWCS in it.
-           root = asdf_get_value(file, "");
-           found = asdf_value_find(root, asdf_value_is_gwcs);
+           found = asdf_find(file, asdf_value_is_gwcs);
 
            if (!found) {
                fprintf(stderr, "no GWCS found in %s\n", argv[1]);
@@ -260,7 +258,6 @@ the extension generates, and has exactly the signature libasdf's
        }
 
        asdf_value_destroy(found);
-       asdf_value_destroy(root);
        asdf_gwcs_destroy(wcs);
        asdf_close(file);
        return 0;
@@ -393,7 +390,6 @@ The second example evaluates the same WCS on a handful of pixels.
        }
 
        asdf_gwcs_t *wcs = NULL;
-       asdf_value_t *root = NULL;
        asdf_value_t *found = NULL;
 
        if (argc > 2) {
@@ -402,8 +398,7 @@ The second example evaluates the same WCS on a handful of pixels.
                return 1;
            }
        } else {
-           root = asdf_get_value(file, "");
-           found = asdf_value_find(root, asdf_value_is_gwcs);
+           found = asdf_find(file, asdf_value_is_gwcs);
 
            if (!found) {
                fprintf(stderr, "no GWCS found in %s\n", argv[1]);
@@ -445,7 +440,6 @@ The second example evaluates the same WCS on a handful of pixels.
 
        asdf_gwcs_eval_destroy(eval);
        asdf_value_destroy(found);
-       asdf_value_destroy(root);
        asdf_gwcs_destroy(wcs);
        asdf_close(file);
        return 0;
