@@ -1,3 +1,54 @@
+libasdf-gwcs 0.2.0 (2026-10-09)
+===============================
+
+Feature
+-------
+
+- Added `asdf_gwcs_eval_copy`, which makes an independent copy of an evaluation
+  context.
+
+  This is handled in a thread-safe manner with the AST backend, making it
+  possible for user code to copy an evaluation context safely between threads.
+  This is necessary at least for the AST backend since otherwise the context
+  can only be used from the thread which created it. (`#34
+  <https://github.com/asdf-format/libasdf-gwcs/issues/34>`_)
+- The ``inverse`` property of transforms is now read into
+  ``asdf_gwcs_transform_t.inverse`` and written back out on serialization.
+
+  Previously any declared inverse was silently dropped, so a GWCS read and
+  re-written (including the copy passed to the AST evaluation backend) lost it.
+  (`#39 <https://github.com/asdf-format/libasdf-gwcs/issues/39>`_)
+- Added `asdf_gwcs_eval_invert`, which returns a new evaluation context that
+  evaluates the inverse of an existing one (e.g. world to pixel coordinates).
+
+  Declared ``inverse`` transforms in the file are used as given.  If the
+  backend cannot invert a WCS it returns ``NULL`` with the new error code
+  `ASDF_GWCS_ERR_NO_INVERSE`. (`#41
+  <https://github.com/asdf-format/libasdf-gwcs/issues/41>`_)
+- Added support for the ``transform/rotate3d`` transform, as
+  `asdf_gwcs_rotate3d_t`.
+
+  This is the transform astropy writes for ``RotateNative2Celestial``,
+  ``RotateCelestial2Native`` and ``EulerAngleRotation``.
+
+
+Bugfix
+------
+
+- Fixed the use of the public asdf/gwcs headers in C++ sources.
+
+  This deletes the accidental ``static const ... ASDF_GWCS_TRANSFORM_INVALID``
+  from the public headers--it was never meant to be there (maybe accidental
+  paste).  C accepted it anyways, but C++ does not accept the uninitialized
+  static const. (`#33
+  <https://github.com/asdf-format/libasdf-gwcs/issues/33>`_)
+- Fixed a bug in the build system where AST's headers (i.e. ast.h) was used
+  preferentially from an installed AST in the target prefix, rather than the
+  built copy of the vendored AST, resulting in compiling against
+  stale/incorrect versions of ast.h. (`#36
+  <https://github.com/asdf-format/libasdf-gwcs/issues/36>`_)
+
+
 libasdf-gwcs 0.1.0 (2026-09-21)
 ===============================
 

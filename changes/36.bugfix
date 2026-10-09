@@ -1,4 +1,0 @@
-Fixed a bug in the build system where AST's headers (i.e. ast.h) was used
-preferentially from an installed AST in the target prefix, rather than the
-built copy of the vendored AST, resulting in compiling against stale/incorrect
-versions of ast.h.
