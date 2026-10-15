@@ -226,6 +226,62 @@ MU_TEST(test_asdf_get_gwcs_fits) {
 }
 
 
+/**
+ * Read one of the fitswcs_imaging transforms out of the fitswcs_imaging
+ * fixture and assert its arrays arrived intact.
+ *
+ * Each WCS in that fixture differs only in how crpix/crval/cdelt/pc are
+ * stored, so they all carry the same values.
+ */
+static void check_fits_fixture(const char *pointer) {
+    const char *path = get_fixture_file_path("fitswcs_imaging.asdf");
+    asdf_file_t *file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_fits_t *fits = NULL;
+    asdf_value_err_t err = asdf_get_gwcs_fits(file, pointer, &fits);
+    assert_int(err, ==, ASDF_VALUE_OK);
+    assert_not_null(fits);
+
+    check_fits_values(fits);
+
+    asdf_gwcs_fits_destroy(fits);
+    asdf_close(file);
+}
+
+
+MU_TEST(test_asdf_get_gwcs_fits_lz4) {
+    // The arrays live in lz4-compressed blocks
+    check_fits_fixture("lz4/steps/0/transform");
+    return MUNIT_OK;
+}
+
+
+MU_TEST(test_asdf_get_gwcs_fits_big_endian) {
+    // The arrays are stored big-endian
+    check_fits_fixture("big_endian/steps/0/transform");
+    return MUNIT_OK;
+}
+
+
+MU_TEST(test_asdf_get_gwcs_fits_bad_shape) {
+    // crval is stored with a shape of [1]: the transform must be rejected,
+    // not returned with crval left unfilled
+    const char *path = get_fixture_file_path("fitswcs_imaging.asdf");
+    asdf_file_t *file = asdf_open(path, "r");
+    assert_not_null(file);
+
+    asdf_gwcs_fits_t *fits = NULL;
+    asdf_value_err_t err =
+        asdf_get_gwcs_fits(file, "bad_shape/steps/0/transform", &fits);
+    assert_int(err, ==, ASDF_VALUE_ERR_PARSE_FAILURE);
+    assert_null(fits);
+
+    asdf_close(file);
+    return MUNIT_OK;
+}
+
+
 MU_TEST(test_asdf_get_gwcs) {
     const char *path = get_fixture_file_path("roman_l3_wcs.asdf");
     asdf_file_t *file = asdf_open(path, "r");
@@ -1367,6 +1423,9 @@ MU_TEST(test_asdf_set_gwcs_fk4_no_obstime) {
 MU_TEST_SUITE(
     gwcs,
     MU_RUN_TEST(test_asdf_get_gwcs_fits),
+    MU_RUN_TEST(test_asdf_get_gwcs_fits_lz4),
+    MU_RUN_TEST(test_asdf_get_gwcs_fits_big_endian),
+    MU_RUN_TEST(test_asdf_get_gwcs_fits_bad_shape),
     MU_RUN_TEST(test_asdf_get_gwcs),
     MU_RUN_TEST(test_asdf_set_gwcs_fits),
     MU_RUN_TEST(test_asdf_set_gwcs),

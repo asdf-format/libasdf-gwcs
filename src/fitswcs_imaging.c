@@ -17,12 +17,17 @@
 #include "util.h"
 
 
-/** Helper to read crpix, crval, etc. */
-static asdf_value_err_t get_coordinates_prop(asdf_mapping_t *value, const char *name, double *out) {
+/**
+ * Helper to read the crpix, crval, cdelt and pc arrays
+ *
+ * ``ndim`` is the required dimensionality; every axis must have length 2, so
+ * ``out`` receives 2 doubles for a vector and 4 for a matrix.
+ */
+static asdf_value_err_t get_double_array_prop(
+    asdf_mapping_t *value, const char *name, uint32_t ndim, double *out) {
     asdf_value_err_t err = ASDF_VALUE_ERR_PARSE_FAILURE;
     asdf_ndarray_t *ndarray = NULL;
-    const void *data = NULL;
-    size_t size = 0;
+    double *data = NULL;
     asdf_value_t *mapping_val = asdf_value_of_mapping(value);
     const asdf_file_t *file = asdf_value_file(mapping_val);
 
@@ -32,76 +37,39 @@ static asdf_value_err_t get_coordinates_prop(asdf_mapping_t *value, const char *
         value, name, ASDF_VALUE_EXTENSION, ASDF_CORE_NDARRAY_TAG, (void *)&ndarray);
 
     if (ASDF_IS_ERR(err))
-        goto failure;
+        goto cleanup;
 
     assert(ndarray);
 
-    if (ndarray->ndim != 1 || ndarray->shape[0] != 2 ||
-        ndarray->datatype.type != ASDF_DATATYPE_FLOAT64) {
+    // Every axis has length 2, so a vector holds 2 values and a matrix 4
+    size_t n_elements = (size_t)1 << ndim;
+    bool valid = ndarray->ndim == ndim;
+
+    for (uint32_t idx = 0; valid && idx < ndim; idx++)
+        valid = ndarray->shape[idx] == 2;
+
+    if (!valid) {
 #ifdef ASDF_LOG_ENABLED
         const char *path = asdf_value_path(mapping_val);
         ASDF_LOG(file, ASDF_LOG_ERROR, "invalid %s array in %s", name, path);
 #endif
-        goto failure;
+        err = ASDF_VALUE_ERR_PARSE_FAILURE;
+        goto cleanup;
     }
 
-    data = asdf_ndarray_data_raw(ndarray, &size);
-
-    if (size != 2 * sizeof(double)) {
+    if (asdf_ndarray_read_all(ndarray, ASDF_DATATYPE_FLOAT64, (void **)&data) != ASDF_NDARRAY_OK) {
 #ifdef ASDF_LOG_ENABLED
         const char *path = asdf_value_path(mapping_val);
         ASDF_LOG(file, ASDF_LOG_ERROR, "invalid array data for %s in %s", name, path);
 #endif
-        goto failure;
+        err = ASDF_VALUE_ERR_PARSE_FAILURE;
+        goto cleanup;
     }
 
-    memcpy(out, data, size);
+    memcpy(out, data, n_elements * sizeof(*out));
     err = ASDF_VALUE_OK;
-failure:
-    asdf_ndarray_destroy(ndarray);
-    return err;
-}
-
-
-/** Helper to read the pc matrix */
-static asdf_value_err_t get_matrix_prop(asdf_mapping_t *value, const char *name, double *out) {
-    asdf_value_err_t err = ASDF_VALUE_ERR_PARSE_FAILURE;
-    asdf_ndarray_t *ndarray = NULL;
-    const void *data = NULL;
-    size_t size = 0;
-    asdf_value_t *mapping_val = asdf_value_of_mapping(value);
-    const asdf_file_t *file = asdf_value_file(mapping_val);
-
-    assert(value);
-
-    err = asdf_get_required_property(
-        value, name, ASDF_VALUE_EXTENSION, ASDF_CORE_NDARRAY_TAG, (void *)&ndarray);
-
-    if (ASDF_IS_ERR(err))
-        goto failure;
-
-    if (ndarray->ndim != 2 || ndarray->shape[0] != 2 || ndarray->shape[1] != 2 ||
-        ndarray->datatype.type != ASDF_DATATYPE_FLOAT64) {
-#ifdef ASDF_LOG_ENABLED
-        const char *path = asdf_value_path(mapping_val);
-        ASDF_LOG(file, ASDF_LOG_ERROR, "invalid %s array in %s", name, path);
-#endif
-        goto failure;
-    }
-
-    data = asdf_ndarray_data_raw(ndarray, &size);
-
-    if (size != 2UL * 2UL * sizeof(double)) {
-#ifdef ASDF_LOG_ENABLED
-        const char *path = asdf_value_path(mapping_val);
-        ASDF_LOG(file, ASDF_LOG_ERROR, "invalid array data for %s in %s", name, path);
-#endif
-        goto failure;
-    }
-
-    memcpy(out, data, size);
-    err = ASDF_VALUE_OK;
-failure:
+cleanup:
+    free(data);
     asdf_ndarray_destroy(ndarray);
     return err;
 }
@@ -121,22 +89,22 @@ static asdf_value_err_t asdf_gwcs_fits_deserialize(
 
     asdf_gwcs_transform_arity_set(&fits->base, asdf_value_file(value), 2, 2);
 
-    err = get_coordinates_prop(transform_map, "crpix", (double *)fits->crpix);
+    err = get_double_array_prop(transform_map, "crpix", 1, (double *)fits->crpix);
 
     if (ASDF_IS_ERR(err))
         goto cleanup;
 
-    err = get_coordinates_prop(transform_map, "crval", (double *)fits->crval);
+    err = get_double_array_prop(transform_map, "crval", 1, (double *)fits->crval);
 
     if (ASDF_IS_ERR(err))
         goto cleanup;
 
-    err = get_coordinates_prop(transform_map, "cdelt", (double *)fits->cdelt);
+    err = get_double_array_prop(transform_map, "cdelt", 1, (double *)fits->cdelt);
 
     if (ASDF_IS_ERR(err))
         goto cleanup;
 
-    err = get_matrix_prop(transform_map, "pc", (double *)fits->pc);
+    err = get_double_array_prop(transform_map, "pc", 2, (double *)fits->pc);
 
     if (ASDF_IS_ERR(err))
         goto cleanup;

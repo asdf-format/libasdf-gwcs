@@ -1,0 +1,6 @@
+Fixed bugs in parsing of the fitswcs_imaging transform:
+- crval/crpix/cdelt/pc array data was not read properly if their arrays were
+  in compressed blocks, or not host endianness, etc.
+- Structurally invalid data in certain cases (e.g. wrong array dimensionality)
+  warned about in the logs, but did not return an error status, resulting in
+  misleading deserialization success.

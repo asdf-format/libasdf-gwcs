@@ -176,9 +176,11 @@ EXTRA_DIST = \
     munit/munit.h \
     fixtures/roman_l2_wcs.asdf \
     fixtures/roman_l3_wcs.asdf \
+    fixtures/fitswcs_imaging.asdf \
     $(roman_build21_fixtures) \
     $(roman_build21_refs) \
     scripts/create_roman_fixture.py \
+    scripts/make_test_fixtures.py \
     scripts/generate_test_cpp_headers.sh \
     scripts/extract_doc_examples.py
 
